@@ -1,0 +1,2569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>技能库 · 自定义技能入口原型（新 Tab 方案）</title>
+<style>
+  /* ── 方案切换栏 ── */
+  #variant-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+    height: 40px; background: #1a1a2e;
+    display: flex; align-items: center; gap: 4px; padding: 0 16px;
+    font-family: -apple-system, sans-serif;
+  }
+  #variant-bar .label { color: #888; font-size: 12px; margin-right: 8px; }
+  .v-tab {
+    padding: 4px 14px; border-radius: 4px; border: none; cursor: pointer;
+    font-size: 12px; background: transparent; color: #aaa;
+  }
+  .v-tab.active { background: #0047FD; color: #fff; }
+  .v-tab:hover:not(.active) { background: rgba(255,255,255,0.1); color: #fff; }
+  .v-tab.disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+</style>
+<style>
+  /* ── 设计 Token（来自 palette.constant.ts & tailwind.theme.constant.ts） ── */
+  :root {
+    --brand-6:       #2562FF;
+    --brand-7:       #0047FD;
+    --brand-8:       #003CD7;
+    --neutral-0:     #FFFFFF;
+    --neutral-1:     #F7F8FA;
+    --neutral-2:     #F0F1F5;
+    --neutral-3:     #E6E8ED;
+    --neutral-4:     #DADDE5;
+    --neutral-9:     #5D6581;
+    --neutral-10:    #222D53;
+    --neutral-11:    #091640;
+    --shadow-card:   0px 0px 6px 0px rgba(9,30,64,0.08);
+    --shadow-large:  0px 6px 20px 0px rgba(9,30,64,0.16);
+    --radius-md:     6px;
+    --radius-lg:     8px;
+    --radius-xl:     10px;
+    --radius-xxl:    12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+    background: var(--neutral-2);
+    height: 100vh;
+    display: flex;
+    flex-direction: row; /* nav + main 横向排列 */
+    overflow: hidden;
+    color: var(--neutral-10);
+    font-size: 14px;
+    padding-top: 40px; /* 为切换栏留空间 */
+  }
+
+  /* ── 左侧导航（上下文参考，非本次设计焦点） ── */
+  .sidebar {
+    width: 200px;
+    background: var(--neutral-0);
+    border-right: 1px solid var(--neutral-3);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 12px 0;
+  }
+  .sidebar-header {
+    padding: 0 16px 12px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--neutral-11);
+    border-bottom: 1px solid var(--neutral-3);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    color: var(--neutral-9);
+    cursor: pointer;
+    border-radius: 0;
+    user-select: none;
+  }
+  .nav-item:hover { background: var(--neutral-1); }
+  .nav-item.active {
+    color: var(--brand-7);
+    background: #ECF4FF;
+    font-weight: 500;
+  }
+  .nav-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── Agent 管理页 ── */
+  .agent-mgmt-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    background: var(--neutral-0);
+    border: 1px solid var(--neutral-3);
+    border-radius: var(--radius-xl);
+    cursor: pointer;
+    transition: box-shadow 120ms;
+  }
+  .agent-mgmt-card:hover { box-shadow: var(--shadow-card); }
+  .agent-mgmt-avatar {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  .agent-mgmt-info { flex: 1; min-width: 0; }
+  .agent-mgmt-name { font-size: 14px; font-weight: 600; color: var(--neutral-10); }
+  .agent-mgmt-meta { font-size: 12px; color: var(--neutral-9); margin-top: 2px; }
+  .agent-mgmt-status {
+    font-size: 11px; padding: 3px 8px; border-radius: 4px; flex-shrink: 0;
+  }
+  .agent-mgmt-status.published {
+    background: #E8F8F0; color: #1A8C52;
+  }
+
+
+  /* ── 前台入口按钮 ── */
+  .btn-frontend-entry {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--brand-7);
+    background: transparent;
+    color: var(--brand-7);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 100ms;
+    margin-top: 4px;
+  }
+  .btn-frontend-entry:hover { background: #ECF4FF; }
+
+  /* ══════════════════════════════════════════
+     前台对话页面 覆盖层
+  ══════════════════════════════════════════ */
+  #frontend-overlay {
+    display: none;
+    position: fixed;
+    inset: 40px 0 0 0; /* 方案切换栏高度 40px */
+    z-index: 1000;
+    background: var(--neutral-1);
+    flex-direction: column;
+  }
+  #frontend-overlay.open { display: flex; }
+
+  /* ── AgentHome ── */
+  .fe-home {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+    background: linear-gradient(150deg,
+      #D8CAFF 0%, #C8DCFF 35%, #B8F0E8 65%, #EBD9FF 100%);
+  }
+  /* 背景装饰光晕 */
+  .fe-home::before {
+    content: '';
+    position: absolute;
+    top: -120px; left: 50%;
+    transform: translateX(-50%);
+    width: 900px; height: 600px;
+    background: radial-gradient(ellipse, rgba(255,255,255,0.55) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .fe-home-inner {
+    position: relative;
+    z-index: 1;
+    width: 680px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 80px;
+    padding-bottom: 80px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  /* Hero 标题 */
+  .fe-home-hero-title {
+    font-size: 52px;
+    font-weight: 800;
+    color: var(--neutral-11);
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .fe-home-hero-title span { color: var(--brand-7); }
+  .fe-home-hero-sub {
+    margin-top: 14px;
+    font-size: 16px;
+    color: var(--neutral-9);
+    letter-spacing: 0.1px;
+    text-align: center;
+    line-height: 1.6;
+    flex-shrink: 0;
+  }
+
+  /* dora 英雄区 */
+  .fe-dora-hero {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    flex-shrink: 0;
+    margin-top: 56px;
+  }
+  .fe-dora-hero-agent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .fe-dora-hero-avatar-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .fe-dora-hero-avatar-wrap::before {
+    content: '';
+    position: absolute;
+    inset: -12px;
+    background: radial-gradient(circle, rgba(37,98,255,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .fe-dora-hero-name {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--neutral-11);
+    letter-spacing: -0.3px;
+  }
+  .fe-dora-hero-tagline {
+    font-size: 13px;
+    color: var(--neutral-9);
+    margin-top: -6px;
+  }
+  /* 输入框在首页加强阴影 */
+  .fe-dora-hero .fe-chat-input-box {
+    box-shadow: 0 8px 32px rgba(9,30,64,0.14), 0 1px 4px rgba(9,30,64,0.08);
+    border-color: rgba(255,255,255,0.9);
+  }
+  .fe-dora-hero .fe-chat-input-box:focus-within {
+    border-color: var(--brand-6);
+    box-shadow: 0 8px 32px rgba(37,98,255,0.18), 0 1px 4px rgba(9,30,64,0.06);
+  }
+  /* 快捷提示标签 */
+  .fe-home-suggestions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .fe-suggestion-chip {
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.6);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.85);
+    font-size: 12px;
+    color: var(--neutral-10);
+    cursor: pointer;
+    transition: background 120ms, box-shadow 120ms;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .fe-suggestion-chip:hover {
+    background: rgba(255,255,255,0.88);
+    box-shadow: 0 2px 8px rgba(9,30,64,0.10);
+  }
+  .fe-dora-hero-disclaimer {
+    font-size: 11px;
+    color: rgba(100,110,140,0.7);
+    text-align: center;
+  }
+
+  /* 其他助手区 */
+  .fe-others-section {
+    width: 100%;
+    margin-top: 48px;
+    flex-shrink: 0;
+  }
+  .fe-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(93,101,129,0.7);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .fe-agent-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .fe-glass-card {
+    background: rgba(255,255,255,0.37);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.9);
+    border-radius: var(--radius-xxl);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .fe-toolbar { display: none; }
+  .fe-search { display: none; }
+
+  /* 管理后台按钮（右下角） */
+  .fe-admin-entry {
+    position: absolute; bottom: 24px; right: 24px;
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 20px;
+    background: rgba(255,255,255,0.7); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.9);
+    box-shadow: 0 2px 8px rgba(9,30,64,.1);
+    font-size: 13px; color: var(--neutral-9); cursor: pointer;
+    transition: background 120ms, color 120ms, box-shadow 120ms;
+    user-select: none;
+  }
+  .fe-admin-entry:hover {
+    background: rgba(255,255,255,0.95);
+    color: var(--neutral-10);
+    box-shadow: 0 4px 12px rgba(9,30,64,.14);
+  }
+  .fe-agent-card {
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.9);
+    border-radius: var(--radius-xl);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    cursor: pointer;
+    box-shadow: 0 2px 12px rgba(9,30,64,0.07);
+    transition: box-shadow 150ms, background 150ms, transform 150ms;
+    flex-shrink: 0;
+  }
+  .fe-agent-card:hover {
+    background: rgba(255,255,255,0.9);
+    box-shadow: 0 6px 24px rgba(9,30,64,0.13);
+    transform: translateY(-2px);
+  }
+  .fe-agent-card-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .fe-agent-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .fe-agent-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--neutral-10);
+  }
+  .fe-agent-date {
+    font-size: 11px;
+    color: var(--neutral-9);
+    margin-top: 1px;
+  }
+  .fe-agent-desc {
+    font-size: 12px;
+    line-height: 18px;
+    color: #5D6581;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ── AgentChat 布局 ── */
+  .fe-chat-layout {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* ── 左侧 Sidebar ── */
+  .fe-sidebar-wrap {
+    width: 276px;
+    height: 100%;
+    flex-shrink: 0;
+    overflow: hidden;
+    transition: width 240ms ease-out;
+  }
+  .fe-sidebar-wrap.collapsed { width: 0; }
+  .fe-sidebar {
+    width: 276px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0 0 8px;
+    flex-shrink: 0;
+  }
+  .fe-sidebar-inner {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: transparent;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+  }
+  .fe-sidebar-header {
+    height: 52px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .fe-sidebar-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--neutral-11);
+  }
+  .fe-icon-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-md);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--neutral-9);
+    flex-shrink: 0;
+    transition: background 100ms;
+  }
+  .fe-icon-btn:hover { background: var(--neutral-2); }
+  .fe-sidebar-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .fe-sidebar-body::-webkit-scrollbar { width: 4px; }
+  .fe-sidebar-body::-webkit-scrollbar-thumb { background: var(--neutral-4); border-radius: 2px; }
+
+  /* Agent 列表项 */
+  .fe-agent-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    height: 40px;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: background 100ms, box-shadow 100ms;
+    flex-shrink: 0;
+  }
+  .fe-agent-item:hover { background: var(--neutral-0); box-shadow: var(--shadow-card); }
+  .fe-agent-item.selected { background: var(--neutral-0); box-shadow: var(--shadow-card); }
+  .fe-agent-item-name {
+    flex: 1;
+    font-size: 13px;
+    color: var(--neutral-10);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .fe-agent-item.selected .fe-agent-item-name { font-weight: 600; color: var(--brand-7); }
+  .fe-agent-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--brand-7);
+    flex-shrink: 0;
+    display: none;
+  }
+  .fe-agent-item.selected .fe-agent-dot { display: block; }
+  .fe-agent-small-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  /* 分割线 */
+  .fe-divider {
+    height: 1px;
+    background: var(--neutral-3);
+    flex-shrink: 0;
+    margin: 0 4px;
+  }
+
+  /* 新对话按钮 */
+  .fe-new-chat-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    height: 40px;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 100ms;
+  }
+  .fe-new-chat-btn.active { background: #ECF4FF; }
+  .fe-new-chat-btn:not(.active):hover { background: #ECF4FF; }
+  .fe-new-chat-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--brand-7);
+    flex: 1;
+  }
+
+  /* 会话列表 */
+  .fe-session-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    overflow-y: auto;
+  }
+  .fe-session-list::-webkit-scrollbar { width: 4px; }
+  .fe-session-list::-webkit-scrollbar-thumb { background: var(--neutral-4); border-radius: 2px; }
+  .fe-session-item {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    height: 40px;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: background 100ms;
+    position: relative;
+  }
+  .fe-session-item:hover { background: var(--neutral-0); }
+  .fe-session-item.selected { background: var(--neutral-2); }
+  .fe-session-name {
+    flex: 1;
+    font-size: 13px;
+    color: var(--neutral-10);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .fe-session-item.selected .fe-session-name { font-weight: 600; }
+  .fe-session-actions {
+    display: none;
+    align-items: center;
+    gap: 2px;
+  }
+  .fe-session-item:hover .fe-session-actions { display: flex; }
+  .fe-session-item.selected .fe-session-actions { display: flex; }
+  .fe-session-action-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--neutral-9);
+    transition: background 80ms;
+  }
+  .fe-session-action-btn:hover { background: var(--neutral-3); }
+  .fe-session-action-btn.del:hover { color: #E03535; }
+
+  /* sidebar footer */
+  .fe-sidebar-footer {
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    border-top: 1px solid var(--neutral-3);
+    flex-shrink: 0;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .fe-user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: white;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .fe-user-name { font-size: 12px; color: var(--neutral-9); flex: 1; }
+
+  /* ── 右侧主区域 ── */
+  .fe-main {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+  }
+  .fe-chat-box {
+    flex: 1;
+    background: var(--neutral-0);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
+    border: 2px solid var(--neutral-0);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* chat header */
+  .fe-chat-header {
+    height: 52px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .fe-chat-header.with-border { border-bottom: 1px solid var(--neutral-3); }
+  .fe-chat-session-name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--neutral-10);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* welcome screen */
+  .fe-welcome {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    padding: 0 24px 24px;
+    overflow: hidden;
+    position: relative;
+  }
+  .fe-welcome-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 60% 30%, rgba(221,233,255,0.5) 0%, transparent 60%),
+                radial-gradient(ellipse at 20% 70%, rgba(236,224,255,0.4) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .fe-welcome-content {
+    position: relative;
+    z-index: 1;
+    width: 75%;
+    min-width: 420px;
+    max-width: 880px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .fe-welcome-agent {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .fe-welcome-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+  .fe-welcome-name {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--neutral-10);
+    line-height: 32px;
+  }
+  .fe-welcome-card {
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--neutral-3);
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
+    font-size: 13px;
+    line-height: 20px;
+    color: var(--neutral-10);
+  }
+
+  /* chat input */
+  .fe-input-wrap {
+    position: relative;
+    z-index: 1;
+    width: 75%;
+    min-width: 420px;
+    max-width: 880px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .fe-chat-input-box {
+    width: 100%;
+    border: 1.5px solid var(--neutral-3);
+    border-radius: var(--radius-xl);
+    background: var(--neutral-0);
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: border-color 120ms;
+  }
+  .fe-chat-input-box:focus-within { border-color: var(--brand-6); }
+  .fe-chat-textarea {
+    width: 100%;
+    min-height: 52px;
+    max-height: 160px;
+    padding: 14px 16px 0;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--neutral-10);
+    line-height: 22px;
+    background: transparent;
+  }
+  .fe-chat-textarea::placeholder { color: var(--neutral-9); }
+  .fe-chat-input-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 8px 12px;
+    gap: 6px;
+  }
+  .fe-send-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: var(--brand-7);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 100ms;
+  }
+  .fe-send-btn:hover { background: var(--brand-8); }
+  .fe-disclaimer {
+    font-size: 11px;
+    color: #999;
+  }
+
+  /* message list (选中历史会话后) */
+  .fe-msg-view {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .fe-msg-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+  .fe-msg-list::-webkit-scrollbar { width: 6px; }
+  .fe-msg-list::-webkit-scrollbar-thumb { background: var(--neutral-4); border-radius: 3px; }
+  .fe-msg-pair {
+    width: 75%;
+    min-width: 420px;
+    max-width: 880px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  /* 用户消息 */
+  .fe-msg-user {
+    align-self: flex-end;
+    max-width: 80%;
+    background: #EEF4FF;
+    border-radius: 12px 12px 2px 12px;
+    padding: 10px 14px;
+    font-size: 14px;
+    line-height: 22px;
+    color: var(--neutral-10);
+  }
+  /* AI 消息 */
+  .fe-msg-ai {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .fe-msg-ai-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .fe-msg-ai-bubble {
+    flex: 1;
+    font-size: 14px;
+    line-height: 22px;
+    color: var(--neutral-10);
+    padding: 10px 14px;
+    background: var(--neutral-1);
+    border-radius: 2px 12px 12px 12px;
+  }
+  /* 底部输入区 (在 msg 视图中) */
+  .fe-msg-input-wrap {
+    padding: 0 0 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  /* ══ 流式输出 ══ */
+  @keyframes blink { 50% { opacity: 0; } }
+  .fe-streaming-cursor {
+    display: inline-block; width: 2px; height: 14px;
+    background: var(--neutral-10); vertical-align: middle;
+    animation: blink .8s step-end infinite; margin-left: 1px;
+  }
+  @keyframes thinking-bounce {
+    0%,60%,100% { transform: translateY(0); opacity: .4; }
+    30% { transform: translateY(-4px); opacity: 1; }
+  }
+  .fe-thinking-dots { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
+  .fe-thinking-dots span {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--neutral-9);
+    animation: thinking-bounce 1.2s ease-in-out infinite;
+  }
+  .fe-thinking-dots span:nth-child(2) { animation-delay: .2s; }
+  .fe-thinking-dots span:nth-child(3) { animation-delay: .4s; }
+
+  /* ══ 技能卡片（对话中） ══ */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .fe-skill-card {
+    margin-top: 12px; border: 1.5px solid var(--neutral-3);
+    border-radius: var(--radius-xl); overflow: hidden;
+    background: var(--neutral-0); box-shadow: var(--shadow-card);
+    animation: fadeInUp .25s ease-out;
+  }
+  .fe-skill-card-header { display: flex; align-items: center; gap: 10px; padding: 14px 16px 10px; }
+  .fe-skill-card-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .fe-skill-card-meta { flex: 1; min-width: 0; }
+  .fe-skill-card-name { font-size: 14px; font-weight: 600; color: var(--neutral-10); }
+  .fe-skill-card-tag { display: inline-block; margin-top: 3px; font-size: 11px; color: var(--brand-7); background: #EEF4FF; border-radius: 4px; padding: 1px 6px; }
+  .fe-skill-card-badge { font-size: 11px; color: #009880; background: #E8F8F5; border-radius: 4px; padding: 2px 7px; flex-shrink: 0; }
+  .fe-skill-card-desc { padding: 0 16px 12px; font-size: 12px; line-height: 18px; color: var(--neutral-9); }
+  .fe-skill-card-actions { border-top: 1px solid var(--neutral-3); display: flex; }
+  .fe-skill-card-btn { flex: 1; padding: 10px; border: none; background: transparent; font-size: 13px; cursor: pointer; color: var(--neutral-10); transition: background 80ms; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .fe-skill-card-btn:hover { background: var(--neutral-1); }
+  .fe-skill-card-btn + .fe-skill-card-btn { border-left: 1px solid var(--neutral-3); }
+  .fe-skill-card-btn.primary { color: var(--brand-7); font-weight: 500; }
+
+  /* ══ 技能预览抽屉 ══ */
+  .fe-drawer-backdrop { position: fixed; inset: 40px 0 0 0; z-index: 2000; background: rgba(0,0,0,.2); display: none; }
+  .fe-drawer-backdrop.open { display: block; }
+  .fe-drawer { position: absolute; top: 0; right: 0; bottom: 0; width: 440px; background: var(--neutral-0); display: flex; flex-direction: column; box-shadow: -4px 0 24px rgba(9,30,64,.16); transform: translateX(100%); transition: transform 200ms ease-out; }
+  .fe-drawer-backdrop.open .fe-drawer { transform: translateX(0); }
+  .fe-drawer-header { height: 52px; padding: 0 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--neutral-3); flex-shrink: 0; }
+  .fe-drawer-title { flex: 1; font-size: 15px; font-weight: 600; color: var(--neutral-10); }
+  .fe-drawer-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .fe-drawer-footer { padding: 14px 20px; border-top: 1px solid var(--neutral-3); flex-shrink: 0; }
+  .fe-drawer-section-title { font-size: 11px; font-weight: 600; color: var(--neutral-9); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
+  .fe-code-block { background: #F7F8FA; border-radius: 8px; padding: 16px; font-family: 'SF Mono','Fira Code','Consolas',monospace; font-size: 12px; line-height: 20px; color: #3D4155; overflow-x: auto; white-space: pre; }
+  .fe-code-key { color: #7B50D8; } .fe-code-val { color: #009880; } .fe-code-str { color: #E05C6A; } .fe-code-comment { color: #999; }
+
+  /* ══ 添加到 Agent 弹窗 ══ */
+  .fe-modal-backdrop { position: fixed; inset: 40px 0 0 0; z-index: 3000; background: rgba(0,0,0,.3); display: none; align-items: center; justify-content: center; }
+  .fe-modal-backdrop.open { display: flex; }
+  .fe-modal { width: 480px; max-height: 560px; background: var(--neutral-0); border-radius: var(--radius-xxl); box-shadow: var(--shadow-large); display: flex; flex-direction: column; overflow: hidden; animation: fadeInUp .2s ease-out; }
+  .fe-modal-header { padding: 20px 20px 12px; flex-shrink: 0; }
+  .fe-modal-title { font-size: 16px; font-weight: 600; color: var(--neutral-10); }
+  .fe-modal-subtitle { font-size: 13px; color: var(--neutral-9); margin-top: 4px; }
+  .fe-modal-body { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
+  .fe-agent-option { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: var(--radius-lg); cursor: pointer; transition: background 80ms; }
+  .fe-agent-option:hover { background: var(--neutral-1); }
+  .fe-agent-option-avatar { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .fe-agent-option-name { font-size: 14px; font-weight: 500; color: var(--neutral-10); }
+  .fe-agent-option-desc { font-size: 12px; color: var(--neutral-9); margin-top: 2px; }
+  .fe-agent-option.new-agent .fe-agent-option-name { color: var(--brand-7); }
+  .fe-modal-footer { padding: 12px 20px; border-top: 1px solid var(--neutral-3); display: flex; justify-content: flex-end; flex-shrink: 0; }
+  .fe-btn-cancel { padding: 6px 16px; border-radius: var(--radius-md); border: 1px solid var(--neutral-3); background: var(--neutral-0); font-size: 13px; color: var(--neutral-10); cursor: pointer; }
+  .fe-btn-cancel:hover { background: var(--neutral-1); }
+
+  /* ══ Agent 配置页 ══ */
+  #fe-agent-config { display: none; flex-direction: column; position: fixed; inset: 40px 0 0 0; z-index: 1500; background: var(--neutral-1); }
+  #fe-agent-config.open { display: flex; }
+  .fe-acp-header { height: 48px; background: var(--neutral-0); border-bottom: 1px solid var(--neutral-3); display: flex; align-items: center; gap: 8px; padding: 0 16px; flex-shrink: 0; }
+  .fe-back-btn { width: 28px; height: 28px; border-radius: var(--radius-md); border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--neutral-9); transition: background 80ms; flex-shrink: 0; }
+  .fe-back-btn:hover { background: var(--neutral-2); }
+  .fe-acp-name { font-size: 14px; font-weight: 600; color: var(--neutral-10); }
+  .fe-status-badge { font-size: 11px; color: #009880; background: #E8F8F5; border-radius: 4px; padding: 2px 8px; flex-shrink: 0; }
+  .fe-acp-link { font-size: 13px; color: var(--neutral-9); cursor: pointer; }
+  .fe-acp-spacer { flex: 1; }
+  .fe-acp-save-info { font-size: 12px; color: var(--neutral-9); }
+  .fe-btn-sm { height: 30px; padding: 0 14px; border-radius: var(--radius-md); font-size: 13px; cursor: pointer; transition: background 80ms; white-space: nowrap; }
+  .fe-btn-sm.ghost { border: 1px solid var(--neutral-3); background: var(--neutral-0); color: var(--neutral-10); }
+  .fe-btn-sm.ghost:hover { background: var(--neutral-1); }
+  .fe-btn-sm.primary-btn { border: none; background: var(--brand-7); color: white; }
+  .fe-btn-sm.primary-btn:hover { background: var(--brand-8); }
+  .fe-acp-body { flex: 1; display: flex; min-height: 0; }
+  .fe-config-panel { width: 380px; background: var(--neutral-0); border-right: 1px solid var(--neutral-3); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
+  .fe-config-panel::-webkit-scrollbar { width: 4px; }
+  .fe-config-panel::-webkit-scrollbar-thumb { background: var(--neutral-4); border-radius: 2px; }
+  .fe-config-panel-title { padding: 14px 20px 10px; font-size: 15px; font-weight: 600; color: var(--neutral-10); }
+  .fe-config-section { border-top: 1px solid var(--neutral-2); }
+  .fe-config-section-hd { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; user-select: none; }
+  .fe-config-section-title { font-size: 13px; font-weight: 500; color: var(--neutral-10); }
+  .fe-config-section-bd { padding: 0 20px 14px; }
+  .fe-field-label { font-size: 12px; color: var(--neutral-9); margin-bottom: 5px; }
+  .fe-field-label .req { color: #E03535; }
+  .fe-select-mock { width: 100%; height: 34px; border: 1px solid var(--neutral-3); border-radius: var(--radius-md); padding: 0 10px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--neutral-10); background: var(--neutral-0); margin-bottom: 10px; }
+  .fe-textarea-mock { width: 100%; min-height: 72px; border: 1px solid var(--neutral-3); border-radius: var(--radius-md); padding: 8px 10px; font-size: 13px; color: var(--neutral-9); resize: none; font-family: inherit; outline: none; }
+  .fe-section-empty { padding: 14px; text-align: center; color: var(--neutral-9); font-size: 13px; cursor: pointer; border: 1.5px dashed var(--neutral-3); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .fe-section-empty:hover { color: var(--brand-7); border-color: var(--brand-6); }
+  .fe-config-skill-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--radius-lg); background: var(--neutral-1); margin-bottom: 6px; }
+  .fe-config-skill-icon { width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .fe-config-skill-name { flex: 1; font-size: 13px; color: var(--neutral-10); }
+  .fe-config-skill-new { font-size: 11px; color: #009880; background: #E8F8F5; padding: 1px 6px; border-radius: 4px; }
+  .fe-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
+  .fe-toggle-label { font-size: 13px; color: var(--neutral-10); }
+  .fe-toggle { width: 34px; height: 18px; border-radius: 9px; display: flex; align-items: center; padding: 2px; flex-shrink: 0; }
+  .fe-toggle.on { background: var(--brand-7); justify-content: flex-end; }
+  .fe-toggle.off { background: var(--neutral-4); justify-content: flex-start; }
+  .fe-toggle-knob { width: 14px; height: 14px; border-radius: 50%; background: white; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+  .fe-conversation-input { width: 100%; border: 1px solid var(--neutral-3); border-radius: var(--radius-md); padding: 7px 10px; font-size: 13px; color: var(--neutral-9); font-family: inherit; outline: none; margin-top: 6px; }
+  .fe-preview-panel { flex: 1; display: flex; flex-direction: column; padding: 14px; min-width: 0; }
+  .fe-preview-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .fe-preview-label { font-size: 12px; color: var(--neutral-9); }
+  .fe-preview-label b { color: var(--neutral-10); font-weight: 500; }
+  .fe-preview-reset { font-size: 12px; color: var(--brand-7); cursor: pointer; }
+  .fe-preview-box { flex: 1; background: linear-gradient(135deg,#ECE0FF 0%,#DDE9FF 50%,#D6FFF6 100%); border-radius: var(--radius-xl); overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; }
+  .fe-preview-agent-icon { width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+  .fe-preview-agent-name { font-size: 18px; font-weight: 700; color: var(--neutral-10); }
+  .fe-preview-input-wrap { width: 100%; max-width: 360px; background: white; border-radius: var(--radius-xl); padding: 12px 14px; font-size: 13px; color: var(--neutral-9); box-shadow: 0 2px 8px rgba(9,30,64,.1); display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+  .fe-preview-send { width: 28px; height: 28px; border-radius: 8px; background: var(--brand-7); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .fe-preview-disclaimer { font-size: 11px; color: #999; }
+
+  /* 技能库管理侧：hover 显示「添加到 Agent 中试用」 */
+  .skill-card { position: relative; }
+  .skill-card-add-btn {
+    display: none; position: absolute; bottom: 10px; right: 10px;
+    padding: 4px 10px; border-radius: var(--radius-md); border: none;
+    background: var(--brand-7); color: white; font-size: 12px; cursor: pointer;
+    white-space: nowrap; transition: background 80ms;
+  }
+  .skill-card:hover .skill-card-add-btn { display: block; }
+  .skill-card-add-btn:hover { background: var(--brand-8); }
+
+  /* ── 主内容区 ── */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: var(--neutral-0);
+  }
+
+  /* ── 页面标题栏 ── */
+  .module-header {
+    height: 52px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--neutral-3);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--neutral-10);
+    flex-shrink: 0;
+  }
+
+  /* ── 工具栏（搜索 + 按钮） ── */
+  .toolbar {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  /* ── 搜索框 ── */
+  .search-box {
+    width: 240px;
+    height: 32px;
+    border: 1px solid var(--neutral-3);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    background: var(--neutral-0);
+    color: var(--neutral-9);
+    font-size: 14px;
+  }
+  .search-box svg { flex-shrink: 0; opacity: 0.5; }
+
+  /* ── 自定义技能按钮 ── */
+  .btn-primary {
+    height: 32px;
+    padding: 0 14px;
+    background: var(--brand-7);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+    user-select: none;
+    transition: background 100ms;
+  }
+  .btn-primary:hover { background: var(--brand-8); }
+  .btn-primary.active { background: var(--brand-8); }
+
+  /* ── 下拉菜单 ── */
+  .dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    min-width: 180px;
+    background: var(--neutral-0);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-large);
+    padding: 6px 0;
+    z-index: 100;
+    display: none;
+  }
+  .dropdown.open { display: block; }
+
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    font-size: 14px;
+    color: var(--neutral-10);
+    cursor: pointer;
+    user-select: none;
+    transition: background 80ms;
+  }
+  .dropdown-item:hover { background: var(--neutral-1); }
+  .dropdown-item svg { flex-shrink: 0; color: var(--neutral-9); }
+
+  /* ── 技能卡片网格 ── */
+  .card-grid {
+    padding: 0 20px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    overflow-y: auto;
+    flex: 1;
+    align-content: flex-start;
+  }
+
+  .skill-card {
+    width: 220px;
+    height: 130px;
+    padding: 6px;
+    border-radius: var(--radius-xl);
+    background: linear-gradient(to bottom, var(--neutral-2), var(--neutral-1));
+    flex-shrink: 0;
+  }
+  .skill-card-inner {
+    width: 100%;
+    height: 100%;
+    background: var(--neutral-0);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .skill-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .skill-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 16px;
+  }
+  .skill-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--neutral-10);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .skill-desc {
+    font-size: 12px;
+    line-height: 18px;
+    color: var(--neutral-9);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>
+</head>
+<body>
+
+<!-- 方案切换栏 -->
+<div id="variant-bar">
+  <span class="label">方案对比：</span>
+  <button class="v-tab disabled" title="此原型仅展示「新 Tab」方案">跳转</button>
+  <button class="v-tab active">新 Tab</button>
+</div>
+
+<!-- 左侧导航 -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    Dora 管理
+    <a class="btn-frontend-entry" id="sidebar-fe-link" onclick="handleSidebarFe(event)" title="进入前台对话页面">
+      <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 2H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8"/>
+        <polyline points="9,1 13,1 13,5"/>
+        <line x1="7" y1="7" x2="13" y2="1"/>
+      </svg>
+      前台对话
+    </a>
+  </div>
+  <div class="nav-item" id="nav-agent-mgmt" onclick="showAdminPage('agent-mgmt')">
+    <span class="nav-icon">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+    </span>
+    Agent 管理
+  </div>
+  <div class="nav-item active" id="nav-skill-library" onclick="showAdminPage('skill-library')">
+    <span class="nav-icon">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2H2V3zm0 4h12v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7zm3 2a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1H5z"/></svg>
+    </span>
+    技能库
+  </div>
+  <div class="nav-item">
+    <span class="nav-icon">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm5.5-2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z"/></svg>
+    </span>
+    知识库
+  </div>
+  <div class="nav-item">
+    <span class="nav-icon">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm4 5a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm4 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm4 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>
+    </span>
+    数据中心
+  </div>
+</nav>
+
+<!-- 主内容 -->
+<main class="main" id="page-skill-library">
+  <!-- 标题栏 -->
+  <header class="module-header">技能库</header>
+
+  <!-- 工具栏 -->
+  <div class="toolbar">
+    <!-- 搜索框 -->
+    <div class="search-box">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="6.5" cy="6.5" r="4.5"/>
+        <line x1="10.5" y1="10.5" x2="14" y2="14"/>
+      </svg>
+      搜索名称或描述
+    </div>
+
+    <!-- 自定义技能按钮 + 下拉菜单 -->
+    <div style="position:relative;" id="dropdown-root">
+      <button class="btn-primary" id="custom-skill-btn" onclick="toggleDropdown()">
+        <!-- + icon -->
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="7" y1="2" x2="7" y2="12"/>
+          <line x1="2" y1="7" x2="12" y2="7"/>
+        </svg>
+        自定义技能
+      </button>
+
+      <div class="dropdown" id="custom-skill-dropdown">
+        <!-- 通过 Dora 创建 -->
+        <a class="dropdown-item" id="dora-dropdown-link" onclick="handleDoraPick(event)">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="1.5" y="1.5" width="5" height="5" rx="1"/>
+            <rect x="9.5" y="1.5" width="5" height="5" rx="1"/>
+            <rect x="1.5" y="9.5" width="5" height="5" rx="1"/>
+            <rect x="9.5" y="9.5" width="5" height="5" rx="1"/>
+          </svg>
+          通过 Dora 创建
+        </a>
+        <!-- 导入社区技能 -->
+        <div class="dropdown-item" onclick="handleSelect('community')">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="1.5" y="1.5" width="5" height="5" rx="1"/>
+            <rect x="9.5" y="1.5" width="5" height="5" rx="1"/>
+            <rect x="1.5" y="9.5" width="5" height="5" rx="1"/>
+            <rect x="9.5" y="9.5" width="5" height="5" rx="1"/>
+          </svg>
+          导入社区技能
+        </div>
+        <!-- 上传技能包 -->
+        <div class="dropdown-item" onclick="handleSelect('upload')">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="2" y="10" width="12" height="4" rx="1"/>
+            <polyline points="8,2 8,9"/>
+            <polyline points="5,5 8,2 11,5"/>
+          </svg>
+          上传技能包
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 技能卡片列表 -->
+  <div class="card-grid">
+    <!-- 卡片数据：来自 SkillType 枚举 mock -->
+    <div class="skill-card">
+      <div class="skill-card-inner">
+        <div class="skill-card-title">
+          <div class="skill-icon" style="background:#EEF3FF;">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="#0047FD" stroke-width="1.5"/><path d="M6 9h6M9 6v6" stroke="#0047FD" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <span class="skill-name">数据查询</span>
+        </div>
+        <div class="skill-desc">通过自然语言查询数据库，自动生成 SQL 并返回结构化结果，支持多数据源联查。</div>
+      </div>
+      <button class="skill-card-add-btn" onclick="openAddToAgent({id:'skill_data_query',name:'数据查询',emoji:'⚡',iconBg:'#EEF3FF'}, true)">添加到 Agent 中试用</button>
+    </div>
+
+    <div class="skill-card">
+      <div class="skill-card-inner">
+        <div class="skill-card-title">
+          <div class="skill-icon" style="background:#E8F8F5;">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="12" height="12" rx="2" stroke="#009880" stroke-width="1.5"/><path d="M6 9l2 2 4-4" stroke="#009880" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <span class="skill-name">代码生成</span>
+        </div>
+        <div class="skill-desc">根据描述生成 Python/SQL 代码片段，可直接运行，支持数据分析场景。</div>
+      </div>
+    </div>
+
+    <div class="skill-card">
+      <div class="skill-card-inner">
+        <div class="skill-card-title">
+          <div class="skill-icon" style="background:#F3EEFF;">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 14h12M3 10h12M3 6h8" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <span class="skill-name">报表生成</span>
+        </div>
+        <div class="skill-desc">基于数据源自动生成带格式的分析报告，支持图文混排和自定义模板。</div>
+      </div>
+    </div>
+
+    <div class="skill-card">
+      <div class="skill-card-inner">
+        <div class="skill-card-title">
+          <div class="skill-icon" style="background:#E8F5FF;">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><polyline points="3,13 7,8 10,11 14,5" stroke="#019EDF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <span class="skill-name">图表生成</span>
+        </div>
+        <div class="skill-desc">将数据转化为 ECharts 可视化图表，支持折线、柱状、饼图等多种类型。</div>
+      </div>
+    </div>
+
+    <div class="skill-card">
+      <div class="skill-card-inner">
+        <div class="skill-card-title">
+          <div class="skill-icon" style="background:#F3EEFF;">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="6" stroke="#7B50D8" stroke-width="1.5"/><path d="M6 9l2 2 4-4" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <span class="skill-name">看板检索</span>
+        </div>
+        <div class="skill-desc">在 FineBI 看板中快速检索目标图表或分析结论，结果直接嵌入对话。</div>
+      </div>
+    </div>
+
+    <div class="skill-card">
+      <div class="skill-card-inner">
+        <div class="skill-card-title">
+          <div class="skill-icon" style="background:#F3EEFF;">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="12" height="12" rx="2" stroke="#7B50D8" stroke-width="1.5"/><path d="M6 6h6M6 9h4" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <span class="skill-name">前端设计</span>
+        </div>
+        <div class="skill-desc">根据数据描述生成前端组件代码，支持响应式布局和主题适配。</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ══ Agent 管理页 ══ -->
+<main class="main" id="page-agent-mgmt" style="display:none;">
+  <header class="module-header">Agent 管理</header>
+  <div style="padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+    <!-- dora -->
+    <div class="agent-mgmt-card">
+      <div class="agent-mgmt-avatar" style="background:#EEF3FF;">🤖</div>
+      <div class="agent-mgmt-info">
+        <div class="agent-mgmt-name">dora</div>
+        <div class="agent-mgmt-meta">通用数据分析助手，支持技能创建 · 上次发布 2025-12-10</div>
+      </div>
+      <span class="agent-mgmt-status published">已发布</span>
+    </div>
+    <!-- 数据分析师 -->
+    <div class="agent-mgmt-card">
+      <div class="agent-mgmt-avatar" style="background:#E8F8F5;">📊</div>
+      <div class="agent-mgmt-info">
+        <div class="agent-mgmt-name">数据分析师</div>
+        <div class="agent-mgmt-meta">销售与运营数据深度分析 · 上次发布 2026-01-03</div>
+      </div>
+      <span class="agent-mgmt-status published">已发布</span>
+    </div>
+    <!-- 财务小助手 -->
+    <div class="agent-mgmt-card">
+      <div class="agent-mgmt-avatar" style="background:#FFF8EC;">💰</div>
+      <div class="agent-mgmt-info">
+        <div class="agent-mgmt-name">财务小助手</div>
+        <div class="agent-mgmt-meta">财务报表与预算查询 · 上次发布 2026-02-18</div>
+      </div>
+      <span class="agent-mgmt-status published">已发布</span>
+    </div>
+  </div>
+</main>
+
+<!-- ══ 技能预览抽屉 ══ -->
+<div class="fe-drawer-backdrop" id="fe-drawer-backdrop" onclick="handleDrawerBackdropClick(event)">
+  <div class="fe-drawer" id="fe-skill-drawer">
+    <div class="fe-drawer-header">
+      <span class="fe-drawer-title" id="fe-drawer-title">技能配置预览</span>
+      <button class="fe-icon-btn" onclick="closeSkillPreview()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg>
+      </button>
+    </div>
+    <div class="fe-drawer-body" id="fe-drawer-body">
+      <!-- 动态填充 -->
+    </div>
+    <div class="fe-drawer-footer">
+      <button class="fe-skill-card-btn primary" style="width:100%;border:1.5px solid #2562FF;border-radius:8px;padding:10px;" id="fe-drawer-add-btn" onclick="openAddToAgentFromDrawer()">
+        添加到 Agent 中试用
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 添加到 Agent 弹窗 ══ -->
+<div class="fe-modal-backdrop" id="fe-modal-backdrop" onclick="handleModalBackdropClick(event)">
+  <div class="fe-modal">
+    <div class="fe-modal-header">
+      <div class="fe-modal-title">选择要添加到的 Agent</div>
+      <div class="fe-modal-subtitle" id="fe-modal-skill-name">将「技能」添加到以下 Agent 中试用</div>
+    </div>
+    <div class="fe-modal-body">
+      <div class="fe-agent-option" onclick="selectAgentForSkill('analyst')">
+        <div class="fe-agent-option-avatar" style="background:#E8F8F5;">📊</div>
+        <div>
+          <div class="fe-agent-option-name">数据分析师</div>
+          <div class="fe-agent-option-desc">销售与运营数据深度分析</div>
+        </div>
+      </div>
+      <div class="fe-agent-option" onclick="selectAgentForSkill('finance')">
+        <div class="fe-agent-option-avatar" style="background:#FFF8EC;">💰</div>
+        <div>
+          <div class="fe-agent-option-name">财务小助手</div>
+          <div class="fe-agent-option-desc">财务报表与预算查询</div>
+        </div>
+      </div>
+      <div class="fe-agent-option new-agent" onclick="createNewAgentWithSkill()">
+        <div class="fe-agent-option-avatar" style="background:#EEF4FF;">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#2562FF" stroke-width="1.8" stroke-linecap="round"><circle cx="10" cy="10" r="8"/><line x1="10" y1="6" x2="10" y2="14"/><line x1="6" y1="10" x2="14" y2="10"/></svg>
+        </div>
+        <div>
+          <div class="fe-agent-option-name">新建 Agent</div>
+          <div class="fe-agent-option-desc">创建一个新的 Agent 并添加该技能</div>
+        </div>
+      </div>
+    </div>
+    <div class="fe-modal-footer">
+      <button class="fe-btn-cancel" onclick="closeAddToAgent()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Agent 配置页 ══ -->
+<div id="fe-agent-config">
+  <div class="fe-acp-header">
+    <button class="fe-back-btn" id="fe-acp-back" onclick="closeAgentConfig()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="10,3 5,8 10,13"/></svg>
+    </button>
+    <span class="fe-acp-name" id="fe-acp-name">dora</span>
+    <span class="fe-status-badge">已发布</span>
+    <span class="fe-acp-link">工作台</span>
+    <span class="fe-acp-spacer"></span>
+    <span class="fe-acp-save-info">最近保存 2026/04/17 16:43:57</span>
+    <button class="fe-btn-sm ghost">保存</button>
+    <button class="fe-btn-sm ghost">取消发布</button>
+    <button class="fe-btn-sm primary-btn">发布</button>
+  </div>
+  <div class="fe-acp-body">
+    <!-- 左侧配置面板 -->
+    <div class="fe-config-panel">
+      <div class="fe-config-panel-title">封装 Agent</div>
+
+      <!-- 基础配置 -->
+      <div class="fe-config-section">
+        <div class="fe-config-section-hd">
+          <span class="fe-config-section-title">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" style="margin-right:4px;vertical-align:middle;"><path d="M6 1l1.2 3.6H11L8.1 6.9l1.2 3.6L6 8.2 2.7 10.5l1.2-3.6L1 4.6h3.8z"/></svg>
+            基础配置
+          </span>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3,5 6,8 9,5"/></svg>
+        </div>
+        <div class="fe-config-section-bd">
+          <div class="fe-field-label">模型选择 <span class="req">*</span></div>
+          <div class="fe-select-mock">
+            <span>deepseek-v3.2</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3,5 6,8 9,5"/></svg>
+          </div>
+          <div class="fe-field-label">系统提示词</div>
+          <textarea class="fe-textarea-mock" rows="3">用于数据查询，报告生成</textarea>
+        </div>
+      </div>
+
+      <!-- 数据 -->
+      <div class="fe-config-section">
+        <div class="fe-config-section-hd">
+          <span class="fe-config-section-title">数据</span>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg>
+        </div>
+        <div class="fe-config-section-bd">
+          <div class="fe-section-empty">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg>
+            添加需要让 Agent 处理的业务数据
+          </div>
+        </div>
+      </div>
+
+      <!-- 知识 -->
+      <div class="fe-config-section">
+        <div class="fe-config-section-hd">
+          <span class="fe-config-section-title">知识</span>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg>
+        </div>
+        <div class="fe-config-section-bd">
+          <div class="fe-section-empty">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- 技能 -->
+      <div class="fe-config-section">
+        <div class="fe-config-section-hd">
+          <span class="fe-config-section-title">技能</span>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg>
+        </div>
+        <div class="fe-config-section-bd" id="fe-acp-skills">
+          <!-- 已有技能 -->
+          <div class="fe-config-skill-item">
+            <div class="fe-config-skill-icon" style="background:#F3EEFF;">📋</div>
+            <span class="fe-config-skill-name">报表生成技能</span>
+          </div>
+          <!-- 新添加技能由 JS 动态插入 -->
+        </div>
+      </div>
+
+      <!-- 会话体验 -->
+      <div class="fe-config-section">
+        <div class="fe-config-section-hd">
+          <span class="fe-config-section-title">会话体验</span>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3,5 6,8 9,5"/></svg>
+        </div>
+        <div class="fe-config-section-bd">
+          <div class="fe-toggle-row">
+            <span class="fe-toggle-label">多轮对话</span>
+            <div class="fe-toggle on"><div class="fe-toggle-knob"></div></div>
+          </div>
+          <div class="fe-toggle-row">
+            <span class="fe-toggle-label">双召唤</span>
+            <div class="fe-toggle on"><div class="fe-toggle-knob"></div></div>
+          </div>
+          <input class="fe-conversation-input" placeholder="请输入" />
+          <div class="fe-toggle-row">
+            <span class="fe-toggle-label">首轮推荐问题</span>
+            <div class="fe-toggle off"><div class="fe-toggle-knob"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧预览 -->
+    <div class="fe-preview-panel">
+      <div class="fe-preview-hd">
+        <span class="fe-preview-label">预览 <b>当前为测试环境</b></span>
+        <span class="fe-preview-reset">重置对话</span>
+      </div>
+      <div class="fe-preview-box">
+        <div class="fe-preview-agent-icon" id="fe-acp-preview-icon">🤖</div>
+        <div class="fe-preview-agent-name" id="fe-acp-preview-name">dora</div>
+        <div class="fe-preview-input-wrap">
+          <span style="flex:1;color:#999;">在此输入任何您感兴趣查询或分析的问题</span>
+          <div class="fe-preview-send">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="12" x2="7" y2="2"/><polyline points="3,6 7,2 11,6"/></svg>
+          </div>
+        </div>
+        <div class="fe-preview-disclaimer">内容由 AI 生成，仅供参考</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     前台对话页面 覆盖层
+     结构：AgentHome → 点击 Agent → AgentChat（Sidebar + 主区域）
+══════════════════════════════════════════ -->
+<div id="frontend-overlay">
+
+  <!-- ① AgentHome 视图 -->
+  <div id="fe-view-home" class="fe-home" style="display:flex;">
+    <div class="fe-home-inner">
+
+      <!-- Hero 标题 -->
+      <div class="fe-home-hero-title">Data <span>Agent</span></div>
+      <div class="fe-home-hero-sub">与数据对话，让洞察触手可及</div>
+
+      <!-- dora 首屏区域 -->
+      <div class="fe-dora-hero">
+        <div class="fe-dora-hero-agent">
+          <div class="fe-dora-hero-avatar-wrap">
+            <div class="fe-welcome-avatar" style="background:#EEF3FF; width:64px; height:64px; border-radius:18px; font-size:34px;">🤖</div>
+          </div>
+          <div class="fe-dora-hero-name">dora</div>
+          <div class="fe-dora-hero-tagline">通用数据分析助手，也可通过对话创建新技能</div>
+        </div>
+        <div class="fe-chat-input-box" style="width:100%;">
+          <textarea
+            class="fe-chat-textarea"
+            id="fe-home-dora-input"
+            placeholder="向 dora 提问，或输入「帮我创建一个技能」…"
+            rows="1"
+            oninput="autoResize(this)"
+            onkeydown="handleHomeDoraKeydown(event)"
+          ></textarea>
+          <div class="fe-chat-input-footer">
+            <button class="fe-send-btn" onclick="sendFromHomeDora()">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="7" y1="12" x2="7" y2="2"/>
+                <polyline points="3,6 7,2 11,6"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <!-- 快捷提示 -->
+        <div class="fe-home-suggestions">
+          <div class="fe-suggestion-chip" onclick="fillHomeDora('帮我创建一个销售数据查询技能')">💡 帮我创建数据查询技能</div>
+          <div class="fe-suggestion-chip" onclick="fillHomeDora('上周各渠道销售额对比')">📊 上周销售额对比</div>
+          <div class="fe-suggestion-chip" onclick="fillHomeDora('分析最近的用户留存率变化')">📈 用户留存率分析</div>
+        </div>
+        <span class="fe-dora-hero-disclaimer">内容由 AI 生成，请注意甄别</span>
+      </div>
+
+      <!-- 其他助手 -->
+      <div class="fe-others-section">
+        <div class="fe-section-label">其他助手</div>
+        <div class="fe-agent-grid">
+          <!-- 数据分析师 -->
+          <div class="fe-agent-card" onclick="enterAgent('analyst')">
+            <div class="fe-agent-card-top">
+              <div class="fe-agent-avatar" style="background:#E8F8F5;">📊</div>
+              <div>
+                <div class="fe-agent-name">数据分析师</div>
+                <div class="fe-agent-date">上次发布 2026-01-03</div>
+              </div>
+            </div>
+            <div class="fe-agent-desc">专注于销售与运营数据的深度分析，自动识别趋势、异常与优化机会，给出可执行建议。</div>
+          </div>
+          <!-- 财务小助手 -->
+          <div class="fe-agent-card" onclick="enterAgent('finance')">
+            <div class="fe-agent-card-top">
+              <div class="fe-agent-avatar" style="background:#FFF8EC;">💰</div>
+              <div>
+                <div class="fe-agent-name">财务小助手</div>
+                <div class="fe-agent-date">上次发布 2026-02-18</div>
+              </div>
+            </div>
+            <div class="fe-agent-desc">快速解答预算、成本、利润等财务问题，支持多维度报表查询和月度财务汇总。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 管理后台入口（右下角） -->
+    <button class="fe-admin-entry" onclick="closeFrontend()">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/>
+        <rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/>
+      </svg>
+      管理后台
+    </button>
+  </div>
+
+  <!-- ② AgentChat 视图 -->
+  <div id="fe-view-chat" class="fe-chat-layout" style="display:none;">
+
+    <!-- 左侧 Sidebar -->
+    <div class="fe-sidebar-wrap" id="fe-sidebar-wrap">
+      <div class="fe-sidebar">
+        <div class="fe-sidebar-inner">
+          <!-- Sidebar Header -->
+          <div class="fe-sidebar-header">
+            <button class="fe-icon-btn" onclick="goHome()" title="返回首页">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 6.5L8 2l6 4.5V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6.5z"/>
+                <path d="M6 15V9h4v6"/>
+              </svg>
+            </button>
+            <span class="fe-sidebar-title">Data Agent</span>
+          </div>
+
+          <!-- Sidebar Body -->
+          <div class="fe-sidebar-body">
+            <!-- Agent 列表 -->
+            <div id="fe-agent-list" style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;"></div>
+
+            <div class="fe-divider"></div>
+
+            <!-- 新对话按钮 -->
+            <div class="fe-new-chat-btn" id="fe-new-chat-btn" onclick="startNewChat()">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#2562FF" stroke-width="1.8" stroke-linecap="round">
+                <path d="M2 2h10a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H6l-4 3V4a2 2 0 0 1 2-2z"/>
+                <line x1="8" y1="5" x2="8" y2="9"/>
+                <line x1="6" y1="7" x2="10" y2="7"/>
+              </svg>
+              <span class="fe-new-chat-label">新对话</span>
+            </div>
+
+            <div class="fe-divider"></div>
+
+            <!-- 历史会话列表 -->
+            <div id="fe-session-list" class="fe-session-list"></div>
+          </div>
+
+          <!-- Sidebar Footer -->
+          <div class="fe-sidebar-footer">
+            <div class="fe-user-avatar">A</div>
+            <span class="fe-user-name">用户 A</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧主区域 -->
+    <div class="fe-main">
+      <div class="fe-chat-box" id="fe-chat-box">
+
+        <!-- 欢迎屏（新对话，未选中历史） -->
+        <div id="fe-welcome-view" class="fe-welcome">
+          <div class="fe-welcome-bg"></div>
+          <!-- Header：折叠按钮（欢迎屏下无边框） -->
+          <div class="fe-chat-header" style="position:absolute;top:0;left:0;right:0;z-index:1;">
+            <button class="fe-icon-btn" onclick="toggleSidebar()">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <rect x="2" y="3" width="12" height="10" rx="1.5"/>
+                <line x1="6" y1="3" x2="6" y2="13"/>
+              </svg>
+            </button>
+          </div>
+          <!-- Welcome 内容 -->
+          <div class="fe-welcome-content" id="fe-welcome-content">
+            <div class="fe-welcome-agent">
+              <div class="fe-welcome-avatar" id="fe-welcome-avatar">🤖</div>
+              <span class="fe-welcome-name" id="fe-welcome-name">dora</span>
+            </div>
+            <div class="fe-welcome-card" id="fe-welcome-words"></div>
+          </div>
+          <!-- 输入框 -->
+          <div class="fe-input-wrap">
+            <div class="fe-chat-input-box">
+              <textarea class="fe-chat-textarea" id="fe-welcome-textarea" placeholder="向我提问…" rows="1"
+                oninput="autoResize(this)"
+                onkeydown="handleInputKeydown(event, 'welcome')"></textarea>
+              <div class="fe-chat-input-footer">
+                <button class="fe-send-btn" onclick="sendFromWelcome()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="7" y1="12" x2="7" y2="2"/>
+                    <polyline points="3,6 7,2 11,6"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <span class="fe-disclaimer">内容由 AI 生成，请注意甄别</span>
+          </div>
+        </div>
+
+        <!-- 历史消息视图（选中已有会话 或 发送后） -->
+        <div id="fe-msg-view" class="fe-msg-view" style="display:none;">
+          <!-- Header -->
+          <div class="fe-chat-header with-border">
+            <button class="fe-icon-btn" onclick="toggleSidebar()">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <rect x="2" y="3" width="12" height="10" rx="1.5"/>
+                <line x1="6" y1="3" x2="6" y2="13"/>
+              </svg>
+            </button>
+            <span class="fe-chat-session-name" id="fe-chat-session-name">会话标题</span>
+          </div>
+          <!-- 消息列表 -->
+          <div class="fe-msg-list" id="fe-msg-list"></div>
+          <!-- 底部输入框 -->
+          <div class="fe-msg-input-wrap">
+            <div class="fe-input-wrap" style="margin-right:16px;">
+              <div class="fe-chat-input-box">
+                <textarea class="fe-chat-textarea" id="fe-msg-textarea" placeholder="继续提问…" rows="1"
+                  oninput="autoResize(this)"
+                  onkeydown="handleInputKeydown(event, 'msg')"></textarea>
+                <div class="fe-chat-input-footer">
+                  <button class="fe-send-btn" onclick="sendFromMsg()">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="7" y1="12" x2="7" y2="2"/>
+                      <polyline points="3,6 7,2 11,6"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <span class="fe-disclaimer">内容由 AI 生成，请注意甄别</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- end fe-view-chat -->
+
+</div><!-- end frontend-overlay -->
+
+<!-- ══ 方案 B 模拟浏览器 Tab 栏（全局，仅在方案 B + 前台打开时显示） ══ -->
+
+<script>
+  /* ══════════════════════════════════════════
+     前台对话页面 状态机
+  ══════════════════════════════════════════ */
+
+  // ── Mock 数据 ──
+  const AGENTS = {
+    dora: {
+      id: 'dora',
+      name: 'dora',
+      emoji: '🤖',
+      avatarBg: '#EEF3FF',
+      welcomeWords: '你好！我是 dora，你的通用数据分析助手。有什么数据问题需要解答，或者想通过对话创建新技能，尽管来问我吧～',
+      sessions: [
+        { id: 'skill_demo', name: '创建销售数据查询技能' },
+        { id: 's1', name: '上周销售额环比分析' },
+        { id: 's2', name: '华东区活跃用户趋势' },
+        { id: 's3', name: '库存周转率异常排查' },
+      ],
+    },
+    analyst: {
+      id: 'analyst',
+      name: '数据分析师',
+      emoji: '📊',
+      avatarBg: '#E8F8F5',
+      welcomeWords: '你好！我是数据分析师。专注销售与运营数据，给你清晰的数据洞察和决策建议。',
+      sessions: [
+        { id: 's4', name: 'Q1 销售漏斗分析' },
+        { id: 's5', name: '各渠道 ROI 对比' },
+        { id: 's6', name: '用户留存率下降原因' },
+      ],
+    },
+    finance: {
+      id: 'finance',
+      name: '财务小助手',
+      emoji: '💰',
+      avatarBg: '#FFF8EC',
+      welcomeWords: '你好！我是财务小助手。预算、成本、利润都在我这里，有什么财务问题随时问我。',
+      sessions: [
+        { id: 's7', name: '3月成本超支分析' },
+        { id: 's8', name: '部门预算执行进度' },
+        { id: 's9', name: '毛利率下滑原因分析' },
+      ],
+    },
+  };
+
+  // 当前预览的技能卡片数据（给抽屉用）
+  let currentPreviewSkill = null;
+
+  // Mock 历史消息（每条会话 2 轮对话）
+  const SESSION_MESSAGES = {
+    skill_demo: [
+      {
+        user: '帮我创建一个销售数据查询技能',
+        ai: '好的，我来帮你创建一个销售数据查询技能。\n\n正在分析需求，生成技能配置…\n\n技能已生成！该技能支持：\n• 自然语言转 SQL 查询\n• 销售维度多表联查\n• 结果以结构化表格返回',
+        skillCard: {
+          id: 'skill_sales_query',
+          name: '销售数据查询',
+          tag: '数据工具',
+          emoji: '⚡',
+          iconBg: '#EEF3FF',
+          desc: '通过自然语言查询销售相关数据，自动生成 SQL 并返回结构化结果，支持区域、时间、产品等多维度筛选。',
+        },
+      },
+    ],
+    s1: [
+      { user: '上周销售额和前一周比较怎么样？', ai: '上周（4月7日-4月13日）总销售额为 **¥1,284 万**，较前一周（3月31日-4月6日）¥1,106 万，**环比增长 16.1%**。增长主要来自华东区和华南区，建议关注华北区的轻微下滑趋势。' },
+      { user: '华东区增长的主要原因是什么？', ai: '华东区上周销售额增长 22.3%，主要驱动因素有三点：① 新客数量同比提升 18%；② 均单价从 ¥3,200 提升至 ¥3,580；③ 上海门店完成了一场线下活动带来约 ¥45 万增量。' },
+    ],
+    s2: [
+      { user: '过去 30 天华东区活跃用户的趋势是怎样的？', ai: '过去 30 天华东区日均活跃用户为 **12,480 人**，整体呈上升趋势，月初至月末增长约 8.4%。其中周末活跃度比工作日高出约 23%，4 月 6 日出现峰值 15,200 人（与促销活动吻合）。' },
+      { user: '哪个城市活跃用户增速最快？', ai: '苏州活跃用户增速最快，30 天内增长 **34.2%**，主要源于新功能上线带来的拉新效应。其次是南京（+21.8%）和杭州（+15.4%）。上海体量最大但增速相对放缓（+6.1%）。' },
+    ],
+    s3: [
+      { user: '最近库存周转率异常是哪些 SKU？', ai: '发现 **7 个 SKU** 库存周转率低于行业基准值（12 次/年）。最严重的是 SKU-4821（电子类），当前周转率仅 4.2 次/年，滞销库存金额 ¥86 万。建议优先处理 TOP3 滞销品。' },
+      { user: '给出处理建议', ai: '针对 SKU-4821 等滞销品，建议三步处理：① **促销清仓**：设置 7 折限时促销，目标 30 天内清出 60%；② **采购暂停**：立即暂停该 SKU 的下一轮采购计划；③ **供应商协商**：联系供应商协商退货或换货，预计可减少损失约 ¥30 万。' },
+    ],
+    s4: [
+      { user: '帮我分析 Q1 的销售漏斗', ai: 'Q1 销售漏斗数据：线索 **18,400** → 商机 **4,920**（转化率 26.7%）→ 报价 **2,108**（转化率 42.8%）→ 成交 **761**（转化率 36.1%）。整体成交率约 **4.1%**，其中线索→商机阶段流失最大，建议重点优化线索质量。' },
+      { user: '如何提升线索到商机的转化？', ai: '当前线索→商机转化率 26.7%，低于行业均值 35%。建议：① 加强线索评分机制（MQL 标准更严格）；② 缩短响应时长（目前平均 47 小时，建议降至 4 小时内）；③ 优化话术，对高意向线索触发专项跟进流程，预计可提升转化率至 32%+。' },
+    ],
+    s5: [
+      { user: '各渠道的 ROI 如何？', ai: '2026 Q1 各渠道 ROI：搜索广告 **4.2x**、信息流广告 **2.8x**、社交媒体 **3.6x**、KOL 合作 **5.1x**、官网 SEO **8.3x**。SEO 和 KOL 合作 ROI 最高，信息流广告偏低，建议预算向前两者倾斜。' },
+      { user: '信息流广告 ROI 为什么偏低？', ai: '信息流广告 ROI 偏低（2.8x）主要原因：① 受众定向过宽，有效点击占比仅 38%；② 落地页跳出率高达 72%；③ 竞价策略激进导致 CPM 偏高。建议重新收窄受众包并优化落地页，预计可将 ROI 提升至 3.8x 以上。' },
+    ],
+    s6: [
+      { user: '用户留存率为什么在下滑？', ai: '过去 3 个月次月留存率从 **52%** 下滑至 **41%**，主要原因：① 新版本上线后功能学习成本上升，新用户 7 日留存降低；② 核心功能（数据看板）加载速度变慢（P90 从 1.2s → 3.8s）；③ 竞品推出相似功能吸引部分流失。' },
+      { user: '优先解决哪个问题？', ai: '建议优先解决**性能问题**，因为影响面最大且可量化：加载速度从 3.8s 优化至 1.5s 以内，预计可将 7 日留存提升 6-9 个百分点。性能优化周期约 2 周，成本低、见效快。其次再系统性优化新手引导流程。' },
+    ],
+    s7: [
+      { user: '3月成本超支了哪些科目？', ai: '3月发生超支的科目共 **4 项**：人力成本超出预算 12.3%（约 ¥38 万）、差旅费超出 28.6%（约 ¥17 万）、营销费用超出 8.1%（约 ¥22 万）、IT 基础设施费超出 44.2%（约 ¥9 万）。四项合计超支约 **¥86 万**。' },
+      { user: 'IT 基础设施费超支这么多是什么原因？', ai: 'IT 基础设施费超支 44.2%，主要来自两笔计划外支出：① 云服务器紧急扩容（双十一大促备战，¥5.2 万）；② 一套老旧安全设备到期强制更换（¥3.8 万）。两项均属紧急/合规性支出，建议备注说明并在下月预算中预留弹性缓冲。' },
+    ],
+    s8: [
+      { user: '各部门预算执行进度怎么样？', ai: '截至 4 月 15 日，全年预算整体执行进度 **28.3%**（合理区间 25-30%）。执行偏快的部门：销售部 34.1%（含 Q1 大客户活动集中支出）、市场部 38.7%（品牌投放提前）。执行偏慢：研发部 19.2%、行政部 22.8%，建议 Q2 补齐节奏。' },
+      { user: '市场部为什么执行这么快？', ai: '市场部预算执行偏快（38.7%）主要因为将全年品牌投放集中在 Q1 旺季（春节+315）实施，属于主动策略性前置。其中 Q1 品牌曝光量完成全年目标的 43%，CPM 成本低于年度均值 18%，整体效益正向，不建议强制压缩节奏。' },
+    ],
+    s9: [
+      { user: '毛利率为什么在下滑？', ai: '近 6 个月综合毛利率从 **43.2%** 降至 **38.6%**，下滑 4.6 个百分点。主因：① 原材料成本上涨（占影响 55%）；② 产品结构变化——低毛利 SKU 占比从 28% 升至 37%；③ 促销折扣力度加大。三者合计贡献了毛利率下滑的 91%。' },
+      { user: '如何改善产品结构？', ai: '建议三个方向改善产品结构：① **主推高毛利产品**：对毛利率 > 50% 的 TOP20 SKU 加大推广预算，目标提升占比至 35%；② **收缩低毛利线**：对毛利率 < 25% 且销量不增长的 SKU 逐步停产或提价；③ **捆绑销售**：将高毛利配件与主品捆绑，预计可提升综合毛利率 2-3 个百分点。' },
+    ],
+  };
+
+  let currentAgentId = null;
+  let currentSessionId = null;
+  let sidebarCollapsed = false;
+
+  // 是否为「新 Tab」方案下被新开的前台 tab
+  const isFrontendTab = location.hash === '#fe' || location.hash === '#fe-dora';
+
+  // 打开前台
+  function openFrontend() {
+    document.getElementById('frontend-overlay').classList.add('open');
+    showView('home');
+  }
+
+  // 关闭前台 → 前台跳后台，新开 Tab
+  function closeFrontend() {
+    window.open(location.href.split('#')[0] + '#admin', '_blank');
+  }
+
+  // 切换视图
+  function showView(view) {
+    document.getElementById('fe-view-home').style.display = view === 'home' ? 'flex' : 'none';
+    document.getElementById('fe-view-chat').style.display = view === 'chat' ? 'flex' : 'none';
+  }
+
+  // 进入 Agent 对话页
+  function enterAgent(agentId) {
+    currentAgentId = agentId;
+    currentSessionId = null;
+
+    const agent = AGENTS[agentId];
+    renderSidebar(agentId);
+    renderWelcome(agent);
+    showView('chat');
+
+    // 欢迎屏显示、msg 视图隐藏
+    document.getElementById('fe-welcome-view').style.display = 'flex';
+    document.getElementById('fe-msg-view').style.display = 'none';
+    // 新对话高亮
+    document.getElementById('fe-new-chat-btn').classList.add('active');
+  }
+
+  // 渲染 sidebar
+  function renderSidebar(agentId) {
+    const agentListEl = document.getElementById('fe-agent-list');
+    agentListEl.innerHTML = Object.values(AGENTS).map(a => `
+      <div class="fe-agent-item${a.id === agentId ? ' selected' : ''}" onclick="switchAgent('${a.id}')">
+        <div class="fe-agent-small-avatar" style="background:${a.avatarBg}">${a.emoji}</div>
+        <span class="fe-agent-item-name">${a.name}</span>
+        <span class="fe-agent-dot"></span>
+      </div>
+    `).join('');
+
+    renderSessionList(agentId, null);
+  }
+
+  // 渲染会话列表
+  function renderSessionList(agentId, selectedId) {
+    const agent = AGENTS[agentId];
+    const sessionListEl = document.getElementById('fe-session-list');
+    sessionListEl.innerHTML = agent.sessions.map(s => `
+      <div class="fe-session-item${s.id === selectedId ? ' selected' : ''}" onclick="selectSession('${s.id}')">
+        <span class="fe-session-name">${s.name}</span>
+        <div class="fe-session-actions">
+          <button class="fe-session-action-btn" onclick="event.stopPropagation();/* rename */" title="重命名">
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M9 2l3 3-7 7H2v-3L9 2z"/></svg>
+          </button>
+          <button class="fe-session-action-btn del" onclick="event.stopPropagation();/* delete */" title="删除">
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 3.5h10M5 3.5V2.5h4v1M3 3.5l.8 8.5h6.4L11 3.5"/></svg>
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // 渲染欢迎屏 agent 信息
+  function renderWelcome(agent) {
+    document.getElementById('fe-welcome-avatar').style.background = agent.avatarBg;
+    document.getElementById('fe-welcome-avatar').textContent = agent.emoji;
+    document.getElementById('fe-welcome-name').textContent = agent.name;
+    const wordsEl = document.getElementById('fe-welcome-words');
+    wordsEl.textContent = agent.welcomeWords;
+  }
+
+  // 切换 Agent
+  function switchAgent(agentId) {
+    enterAgent(agentId);
+  }
+
+  // 选中已有会话
+  function selectSession(sessionId) {
+    currentSessionId = sessionId;
+
+    // 更新会话列表高亮
+    renderSessionList(currentAgentId, sessionId);
+    // 新对话按钮取消高亮
+    document.getElementById('fe-new-chat-btn').classList.remove('active');
+
+    // 获取会话名称
+    const agent = AGENTS[currentAgentId];
+    const session = agent.sessions.find(s => s.id === sessionId);
+    document.getElementById('fe-chat-session-name').textContent = session ? session.name : '';
+
+    // 渲染历史消息
+    renderMessages(sessionId);
+
+    // 切换到 msg 视图
+    document.getElementById('fe-welcome-view').style.display = 'none';
+    document.getElementById('fe-msg-view').style.display = 'flex';
+  }
+
+  // 渲染历史消息（支持 skillCard）
+  function renderMessages(sessionId) {
+    const messages = SESSION_MESSAGES[sessionId] || [];
+    const listEl = document.getElementById('fe-msg-list');
+    const agent = AGENTS[currentAgentId];
+
+    listEl.innerHTML = messages.map((msg, idx) => `
+      <div class="fe-msg-pair">
+        <div style="display:flex;justify-content:flex-end;">
+          <div class="fe-msg-user">${escapeHtml(msg.user)}</div>
+        </div>
+        <div class="fe-msg-ai">
+          <div class="fe-msg-ai-avatar" style="background:${agent.avatarBg}">${agent.emoji}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="fe-msg-ai-bubble">${renderMarkdownSimple(msg.ai)}</div>
+            ${msg.skillCard ? renderSkillCard(msg.skillCard) : ''}
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    setTimeout(() => { listEl.scrollTop = listEl.scrollHeight; }, 50);
+  }
+
+  // 渲染技能卡片 HTML
+  function renderSkillCard(sc) {
+    const scJson = JSON.stringify(sc).replace(/"/g, '&quot;');
+    return `
+      <div class="fe-skill-card">
+        <div class="fe-skill-card-header">
+          <div class="fe-skill-card-icon" style="background:${sc.iconBg}">${sc.emoji}</div>
+          <div class="fe-skill-card-meta">
+            <div class="fe-skill-card-name">${escapeHtml(sc.name)}</div>
+            <span class="fe-skill-card-tag">${sc.tag}</span>
+          </div>
+          <span class="fe-skill-card-badge">新生成</span>
+        </div>
+        <div class="fe-skill-card-desc">${escapeHtml(sc.desc)}</div>
+        <div class="fe-skill-card-actions">
+          <button class="fe-skill-card-btn" onclick='openSkillPreview(${scJson})'>
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="2" width="10" height="10" rx="1.5"/><line x1="5" y1="5" x2="9" y2="5"/><line x1="5" y1="7.5" x2="8" y2="7.5"/></svg>
+            预览文件
+          </button>
+          <button class="fe-skill-card-btn primary" onclick='openAddToAgent(${scJson})'>
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="5" cy="5" r="3"/><path d="M1 13c0-2.2 1.8-4 4-4"/><line x1="10" y1="8" x2="10" y2="13"/><line x1="7.5" y1="10.5" x2="12.5" y2="10.5"/></svg>
+            添加到 Agent 中试用
+          </button>
+        </div>
+      </div>`;
+  }
+
+  // 简单 markdown & 转义
+  function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function renderMarkdownSimple(text) {
+    return escapeHtml(text)
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
+  }
+
+  // ── 流式输出 ──
+  let streamingTimer = null;
+
+  function startStreaming(sessionId, userMsg, aiText, skillCard) {
+    const listEl = document.getElementById('fe-msg-list');
+    const agent = AGENTS[currentAgentId];
+
+    // 用户消息
+    const pairEl = document.createElement('div');
+    pairEl.className = 'fe-msg-pair';
+    pairEl.innerHTML = `
+      <div style="display:flex;justify-content:flex-end;">
+        <div class="fe-msg-user">${escapeHtml(userMsg)}</div>
+      </div>
+      <div class="fe-msg-ai">
+        <div class="fe-msg-ai-avatar" style="background:${agent.avatarBg}">${agent.emoji}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="fe-msg-ai-bubble" id="fe-streaming-bubble">
+            <div class="fe-thinking-dots"><span></span><span></span><span></span></div>
+          </div>
+        </div>
+      </div>`;
+    listEl.appendChild(pairEl);
+    listEl.scrollTop = listEl.scrollHeight;
+
+    const bubble = document.getElementById('fe-streaming-bubble');
+    let phase = 0; // 0=thinking, 1=streaming text, 2=done
+
+    // 思考 1.5s 后开始输出
+    streamingTimer = setTimeout(() => {
+      bubble.innerHTML = '<span class="fe-streaming-cursor"></span>';
+      let i = 0;
+      const chars = aiText.split('');
+      const interval = setInterval(() => {
+        if (i < chars.length) {
+          const cursor = bubble.querySelector('.fe-streaming-cursor');
+          const textNode = document.createTextNode(chars[i]);
+          bubble.insertBefore(textNode, cursor);
+          if (chars[i] === '\n') {
+            bubble.insertBefore(document.createElement('br'), cursor);
+          }
+          i++;
+          listEl.scrollTop = listEl.scrollHeight;
+        } else {
+          clearInterval(interval);
+          // 移除光标，输出完毕
+          const cursor = bubble.querySelector('.fe-streaming-cursor');
+          if (cursor) cursor.remove();
+          // 重新渲染文字为 markdown
+          bubble.innerHTML = renderMarkdownSimple(aiText);
+          // 技能卡片淡入
+          if (skillCard) {
+            const cardEl = document.createElement('div');
+            cardEl.innerHTML = renderSkillCard(skillCard);
+            bubble.parentElement.appendChild(cardEl.firstElementChild);
+            listEl.scrollTop = listEl.scrollHeight;
+          }
+          // 存入 session_messages
+          if (!SESSION_MESSAGES[sessionId]) SESSION_MESSAGES[sessionId] = [];
+          SESSION_MESSAGES[sessionId].push({ user: userMsg, ai: aiText, skillCard });
+        }
+      }, 18);
+    }, 1500);
+  }
+
+  // 判断是否技能创建意图
+  function isSkillCreationIntent(text) {
+    return /创建|生成|新建|制作|技能|skill/i.test(text);
+  }
+
+  // 发起新对话（从欢迎屏发送）
+  function sendFromWelcome() {
+    const ta = document.getElementById('fe-welcome-textarea');
+    const content = ta.value.trim();
+    if (!content) return;
+
+    ta.value = '';
+    autoResize(ta);
+
+    const newSessionName = content.length > 16 ? content.slice(0, 16) + '…' : content;
+    const newSessionId = 'new_' + Date.now();
+    const agent = AGENTS[currentAgentId];
+    agent.sessions.unshift({ id: newSessionId, name: newSessionName });
+
+    currentSessionId = newSessionId;
+    document.getElementById('fe-chat-session-name').textContent = newSessionName;
+    document.getElementById('fe-msg-list').innerHTML = '';
+    renderSessionList(currentAgentId, newSessionId);
+    document.getElementById('fe-new-chat-btn').classList.remove('active');
+    document.getElementById('fe-welcome-view').style.display = 'none';
+    document.getElementById('fe-msg-view').style.display = 'flex';
+
+    // 判断是否技能创建意图（仅 dora）
+    if (currentAgentId === 'dora' && isSkillCreationIntent(content)) {
+      const skillName = extractSkillName(content);
+      const aiText = `好的，我来帮你创建「${skillName}」。\n\n正在分析需求，生成技能配置…\n\n技能已生成！该技能支持：\n• 自然语言转 SQL 查询\n• 多维度数据筛选与聚合\n• 结果以结构化表格返回`;
+      const skillCard = {
+        id: 'skill_' + Date.now(),
+        name: skillName,
+        tag: '数据工具',
+        emoji: '⚡',
+        iconBg: '#EEF3FF',
+        desc: `通过自然语言查询${skillName.replace('技能','').replace('创建','').replace('帮我','').trim()}相关数据，自动生成 SQL 并返回结构化结果。`,
+      };
+      startStreaming(newSessionId, content, aiText, skillCard);
+    } else {
+      const aiText = '好的，我已收到你的问题，正在分析数据中…（此为原型演示）';
+      startStreaming(newSessionId, content, aiText, null);
+    }
+  }
+
+  function extractSkillName(text) {
+    const m = text.match(/[「"'"](.+?)[」"'"]/);
+    if (m) return m[1];
+    const cleaned = text.replace(/帮我|创建|生成|新建|制作|一个|技能|skill/gi, '').trim();
+    return (cleaned || '数据查询') + '技能';
+  }
+
+  // 在 msg 视图中继续发送消息
+  function sendFromMsg() {
+    const ta = document.getElementById('fe-msg-textarea');
+    const content = ta.value.trim();
+    if (!content) return;
+
+    ta.value = '';
+    autoResize(ta);
+
+    const aiText = '好的，我已收到。（此为原型演示）';
+    startStreaming(currentSessionId, content, aiText, null);
+  }
+
+  // 键盘事件：Enter 发送，Shift+Enter 换行
+  function handleInputKeydown(e, source) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (source === 'welcome') sendFromWelcome();
+      else sendFromMsg();
+    }
+  }
+
+  // 新对话按钮
+  function startNewChat() {
+    currentSessionId = null;
+    renderSessionList(currentAgentId, null);
+    document.getElementById('fe-new-chat-btn').classList.add('active');
+    renderWelcome(AGENTS[currentAgentId]);
+    document.getElementById('fe-welcome-view').style.display = 'flex';
+    document.getElementById('fe-msg-view').style.display = 'none';
+    document.getElementById('fe-welcome-textarea').value = '';
+    autoResize(document.getElementById('fe-welcome-textarea'));
+  }
+
+  // 首页 dora 输入框 — 发送
+  function sendFromHomeDora() {
+    const input = document.getElementById('fe-home-dora-input');
+    const content = input.value.trim();
+    if (!content) { enterAgent('dora'); return; }
+    input.value = '';
+    input.style.height = '';
+
+    // 建立新 session 并直接进入流式输出
+    const newSessionName = content.length > 16 ? content.slice(0, 16) + '…' : content;
+    const newSessionId = 'home_' + Date.now();
+    AGENTS.dora.sessions.unshift({ id: newSessionId, name: newSessionName });
+
+    currentAgentId = 'dora';
+    currentSessionId = newSessionId;
+    renderSidebar('dora');
+    document.getElementById('fe-new-chat-btn').classList.remove('active');
+    document.getElementById('fe-chat-session-name').textContent = newSessionName;
+    document.getElementById('fe-msg-list').innerHTML = '';
+    renderSessionList('dora', newSessionId);
+    document.getElementById('fe-welcome-view').style.display = 'none';
+    document.getElementById('fe-msg-view').style.display = 'flex';
+    showView('chat');
+
+    // 技能创建意图判断
+    if (isSkillCreationIntent(content)) {
+      const skillName = extractSkillName(content);
+      const aiText = `好的，我来帮你创建「${skillName}」。\n\n正在分析需求，生成技能配置…\n\n技能已生成！该技能支持：\n• 自然语言转 SQL 查询\n• 多维度数据筛选与聚合\n• 结果以结构化表格返回`;
+      startStreaming(newSessionId, content, aiText, {
+        id: 'skill_' + Date.now(), name: skillName, tag: '数据工具',
+        emoji: '⚡', iconBg: '#EEF3FF',
+        desc: `通过自然语言查询${skillName.replace(/技能|创建|帮我/g,'').trim()}相关数据，自动生成 SQL 并返回结构化结果。`,
+      });
+    } else {
+      startStreaming(newSessionId, content, '好的，我已收到你的问题，正在分析数据中…（此为原型演示）', null);
+    }
+  }
+
+  function handleHomeDoraKeydown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendFromHomeDora(); }
+  }
+
+  function fillHomeDora(text) {
+    const input = document.getElementById('fe-home-dora-input');
+    input.value = text;
+    autoResize(input);
+    input.focus();
+  }
+
+  // 返回首页
+  function goHome() {
+    currentAgentId = null;
+    currentSessionId = null;
+    showView('home');
+  }
+
+  // 折叠/展开 sidebar
+  function toggleSidebar() {
+    sidebarCollapsed = !sidebarCollapsed;
+    const wrap = document.getElementById('fe-sidebar-wrap');
+    if (sidebarCollapsed) {
+      wrap.classList.add('collapsed');
+    } else {
+      wrap.classList.remove('collapsed');
+    }
+  }
+
+  // textarea 自适应高度
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+  }
+
+  // 下拉菜单「通过 Dora 创建」— 仅关闭下拉，链接由 href+target 处理
+  function handleDoraPick(event) {
+    closeDropdown();
+  }
+
+  // 侧边栏「前台对话」按钮 — href+target 已在初始化时设置，此处为空占位
+  function handleSidebarFe(event) {}
+
+  /* ── 下拉菜单 ── */
+  const btn = document.getElementById('custom-skill-btn');
+  const dropdown = document.getElementById('custom-skill-dropdown');
+
+  function toggleDropdown() {
+    const isOpen = dropdown.classList.contains('open');
+    if (isOpen) {
+      closeDropdown();
+    } else {
+      dropdown.classList.add('open');
+      btn.classList.add('active');
+    }
+  }
+
+  function closeDropdown() {
+    dropdown.classList.remove('open');
+    btn.classList.remove('active');
+  }
+
+  function handleSelect(type) {
+    closeDropdown();
+    if (type === 'dora') {
+      openFrontend();
+      enterAgent('dora');
+    }
+  }
+
+  /* ══ 技能预览抽屉 ══ */
+  function openSkillPreview(skill) {
+    currentPreviewSkill = skill;
+    document.getElementById('fe-drawer-title').textContent = skill.name + ' · 技能配置';
+    document.getElementById('fe-drawer-body').innerHTML = buildSkillDrawerContent(skill);
+    document.getElementById('fe-drawer-backdrop').classList.add('open');
+  }
+
+  function buildSkillDrawerContent(sc) {
+    return `
+      <div>
+        <div class="fe-drawer-section-title">基本信息</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--neutral-1);border-radius:8px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:${sc.iconBg};display:flex;align-items:center;justify-content:center;font-size:20px;">${sc.emoji}</div>
+          <div>
+            <div style="font-size:14px;font-weight:600;color:var(--neutral-10);">${escapeHtml(sc.name)}</div>
+            <div style="font-size:12px;color:var(--brand-7);margin-top:2px;">${sc.tag}</div>
+          </div>
+        </div>
+        <div style="font-size:13px;line-height:20px;color:var(--neutral-9);margin-top:10px;">${escapeHtml(sc.desc)}</div>
+      </div>
+      <div>
+        <div class="fe-drawer-section-title">配置文件（skill.yaml）</div>
+        <div class="fe-code-block"><span class="fe-code-comment"># 由 Dora 自动生成</span>
+<span class="fe-code-key">name</span>: <span class="fe-code-str">"${escapeHtml(sc.name)}"</span>
+<span class="fe-code-key">version</span>: <span class="fe-code-val">1.0.0</span>
+<span class="fe-code-key">type</span>: <span class="fe-code-str">data_tool</span>
+<span class="fe-code-key">description</span>: <span class="fe-code-str">"${escapeHtml(sc.desc)}"</span>
+
+<span class="fe-code-key">inputs</span>:
+  - <span class="fe-code-key">name</span>: <span class="fe-code-str">query</span>
+    <span class="fe-code-key">type</span>: <span class="fe-code-str">string</span>
+    <span class="fe-code-key">description</span>: <span class="fe-code-str">"自然语言查询"</span>
+    <span class="fe-code-key">required</span>: <span class="fe-code-val">true</span>
+
+<span class="fe-code-key">outputs</span>:
+  - <span class="fe-code-key">name</span>: <span class="fe-code-str">result</span>
+    <span class="fe-code-key">type</span>: <span class="fe-code-str">table</span>
+    <span class="fe-code-key">description</span>: <span class="fe-code-str">"结构化查询结果"</span>
+
+<span class="fe-code-key">runtime</span>:
+  <span class="fe-code-key">executor</span>: <span class="fe-code-str">nl2sql</span>
+  <span class="fe-code-key">model</span>: <span class="fe-code-str">deepseek-v3.2</span>
+  <span class="fe-code-key">datasource</span>: <span class="fe-code-str">default</span></div>
+      </div>`;
+  }
+
+  function closeSkillPreview() {
+    document.getElementById('fe-drawer-backdrop').classList.remove('open');
+  }
+
+  function handleDrawerBackdropClick(e) {
+    if (e.target === document.getElementById('fe-drawer-backdrop')) closeSkillPreview();
+  }
+
+  function openAddToAgentFromDrawer() {
+    if (currentPreviewSkill) {
+      closeSkillPreview();
+      openAddToAgent(currentPreviewSkill);
+    }
+  }
+
+  /* ══ 添加到 Agent 弹窗 ══ */
+  let pendingSkill = null;
+  let pendingSkillFromBackend = false; // 区分调用来源：后台=true，前台=false
+
+  function openAddToAgent(skill, fromBackend = false) {
+    pendingSkill = skill;
+    pendingSkillFromBackend = fromBackend;
+    document.getElementById('fe-modal-skill-name').textContent = `将「${skill.name}」添加到以下 Agent 中试用`;
+    document.getElementById('fe-modal-backdrop').classList.add('open');
+  }
+
+  function closeAddToAgent() {
+    document.getElementById('fe-modal-backdrop').classList.remove('open');
+  }
+
+  function handleModalBackdropClick(e) {
+    if (e.target === document.getElementById('fe-modal-backdrop')) closeAddToAgent();
+  }
+
+  function selectAgentForSkill(agentId) {
+    closeAddToAgent();
+    if (pendingSkillFromBackend) {
+      // 后台内跳转（技能库 → Agent配置页），同 Tab
+      openAgentConfig(agentId, pendingSkill);
+    } else {
+      // 前台 → 后台，新开 Tab
+      localStorage.setItem('pendingAgentConfig', JSON.stringify({ agentId, skill: pendingSkill }));
+      window.open(location.href.split('#')[0] + '#agent-config', '_blank');
+    }
+  }
+
+  /* ══ Agent 配置页 ══ */
+  let configBackTarget = null;
+
+  function openAgentConfig(agentId, skill) {
+    const agent = AGENTS[agentId];
+
+    // 更新 header
+    document.getElementById('fe-acp-name').textContent = agent ? agent.name : agentId;
+    document.getElementById('fe-acp-preview-icon').textContent = agent ? agent.emoji : '🤖';
+    document.getElementById('fe-acp-preview-name').textContent = agent ? agent.name : agentId;
+
+    // 重置技能列表（保留默认"报表生成技能"，追加新技能）
+    const skillsEl = document.getElementById('fe-acp-skills');
+    skillsEl.innerHTML = `
+      <div class="fe-config-skill-item">
+        <div class="fe-config-skill-icon" style="background:#F3EEFF;">📋</div>
+        <span class="fe-config-skill-name">报表生成技能</span>
+      </div>`;
+    if (skill) {
+      const newItem = document.createElement('div');
+      newItem.className = 'fe-config-skill-item';
+      newItem.innerHTML = `
+        <div class="fe-config-skill-icon" style="background:${skill.iconBg}">${skill.emoji}</div>
+        <span class="fe-config-skill-name">${escapeHtml(skill.name)}</span>
+        <span class="fe-config-skill-new">新加入</span>`;
+      skillsEl.appendChild(newItem);
+    }
+
+    document.getElementById('fe-agent-config').classList.add('open');
+  }
+
+  function createNewAgentWithSkill() {
+    closeAddToAgent();
+
+    document.getElementById('fe-acp-name').textContent = '未命名 Agent';
+    document.getElementById('fe-acp-preview-icon').textContent = '🤖';
+    document.getElementById('fe-acp-preview-name').textContent = '未命名 Agent';
+    const skillsEl = document.getElementById('fe-acp-skills');
+    skillsEl.innerHTML = '';
+    if (pendingSkill) {
+      const newItem = document.createElement('div');
+      newItem.className = 'fe-config-skill-item';
+      newItem.innerHTML = `
+        <div class="fe-config-skill-icon" style="background:${pendingSkill.iconBg}">${pendingSkill.emoji}</div>
+        <span class="fe-config-skill-name">${escapeHtml(pendingSkill.name)}</span>
+        <span class="fe-config-skill-new">新加入</span>`;
+      skillsEl.appendChild(newItem);
+    }
+
+    if (pendingSkillFromBackend) {
+      // 后台内：同 Tab 直接打开配置页
+      document.getElementById('fe-agent-config').classList.add('open');
+    } else {
+      // 前台 → 后台：新开 Tab
+      localStorage.setItem('pendingAgentConfig', JSON.stringify({ agentId: null, skill: pendingSkill }));
+      window.open(location.href.split('#')[0] + '#agent-config', '_blank');
+    }
+  }
+
+  function closeAgentConfig() {
+    // 已在后台 Tab 内，直接跳回 Agent 管理页，无需新开 Tab
+    document.getElementById('fe-agent-config').classList.remove('open');
+    showAdminPage('agent-mgmt');
+  }
+
+  function showAdminPage(page) {
+    const pages = ['skill-library', 'agent-mgmt'];
+    pages.forEach(p => {
+      const el = document.getElementById('page-' + p);
+      if (el) el.style.display = p === page ? 'flex' : 'none';
+      const nav = document.getElementById('nav-' + p);
+      if (nav) nav.classList.toggle('active', p === page);
+    });
+  }
+
+  // 点击外部收起
+  document.addEventListener('click', (e) => {
+    const root = document.getElementById('dropdown-root');
+    if (!root.contains(e.target)) {
+      closeDropdown();
+    }
+  });
+
+  // ── 初始化：固定新 Tab 方案 ──
+  (function initNewTabMode() {
+    const baseUrl = location.href.split('#')[0];
+
+    // 前台对话入口：始终以新 Tab 打开
+    const sidebarLink = document.getElementById('sidebar-fe-link');
+    sidebarLink.href = baseUrl + '#fe';
+    sidebarLink.target = '_blank';
+
+    // 通过 Dora 创建：始终以新 Tab 打开
+    const doraLink = document.getElementById('dora-dropdown-link');
+    doraLink.href = baseUrl + '#fe-dora';
+    doraLink.target = '_blank';
+
+    // Hash 路由
+    if (location.hash === '#fe-dora') {
+      document.getElementById('frontend-overlay').classList.add('open');
+      enterAgent('dora');
+    } else if (location.hash === '#agent-config') {
+      // 前台「添加到Agent」跳转而来（前台→后台），读取 localStorage 还原配置页
+      const raw = localStorage.getItem('pendingAgentConfig');
+      localStorage.removeItem('pendingAgentConfig');
+      if (raw) {
+        const { agentId, skill } = JSON.parse(raw);
+        if (agentId) {
+          openAgentConfig(agentId, skill);
+        } else {
+          document.getElementById('fe-acp-name').textContent = '未命名 Agent';
+          document.getElementById('fe-acp-preview-icon').textContent = '🤖';
+          document.getElementById('fe-acp-preview-name').textContent = '未命名 Agent';
+          const skillsEl = document.getElementById('fe-acp-skills');
+          skillsEl.innerHTML = '';
+          if (skill) {
+            const newItem = document.createElement('div');
+            newItem.className = 'fe-config-skill-item';
+            newItem.innerHTML = `
+              <div class="fe-config-skill-icon" style="background:${skill.iconBg}">${skill.emoji}</div>
+              <span class="fe-config-skill-name">${escapeHtml(skill.name)}</span>
+              <span class="fe-config-skill-new">新加入</span>`;
+            skillsEl.appendChild(newItem);
+          }
+          document.getElementById('fe-agent-config').classList.add('open');
+        }
+      }
+    } else if (location.hash === '#admin') {
+      // 管理后台 — 默认技能库（skill-library 已默认显示，无需额外操作）
+    } else if (location.hash === '#agent-mgmt') {
+      showAdminPage('agent-mgmt');
+    } else {
+      // 默认进入前台首页（含无 hash 的情况）
+      document.getElementById('frontend-overlay').classList.add('open');
+      showView('home');
+    }
+  })();
+</script>
+</body>
+</html>

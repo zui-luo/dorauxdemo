@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UX Demo · 原型索引</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand-6: #2562FF;
+      --brand-7: #0047FD;
+      --neutral-0: #FFFFFF;
+      --neutral-1: #F7F8FA;
+      --neutral-2: #F0F1F5;
+      --neutral-3: #E6E8ED;
+      --neutral-9: #5D6581;
+      --neutral-10: #222D53;
+      --neutral-11: #091640;
+      --shadow-card: 0px 0px 6px 0px rgba(9,30,64,0.08);
+      --shadow-hover: 0px 6px 20px 0px rgba(9,30,64,0.16);
+      --radius-lg: 8px;
+      --radius-xl: 10px;
+      --radius-xxl: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+      background: var(--neutral-1);
+      color: var(--neutral-10);
+      min-height: 100vh;
+      padding: 48px 24px 80px;
+    }
+
+    .page-header {
+      max-width: 800px;
+      margin: 0 auto 40px;
+    }
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--neutral-11);
+      letter-spacing: -0.3px;
+    }
+
+    .page-subtitle {
+      margin-top: 8px;
+      font-size: 14px;
+      color: var(--neutral-9);
+    }
+
+    .section {
+      max-width: 800px;
+      margin: 0 auto 32px;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--neutral-9);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 12px;
+    }
+
+    .card-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .card {
+      background: var(--neutral-0);
+      border: 1px solid var(--neutral-3);
+      border-radius: var(--radius-xl);
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: var(--shadow-card);
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-hover);
+      transform: translateY(-1px);
+      border-color: var(--brand-6);
+    }
+
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-lg);
+      background: var(--neutral-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .card-icon svg {
+      width: 20px;
+      height: 20px;
+      color: var(--brand-7);
+    }
+
+    .card-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .card-name {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--neutral-11);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-desc {
+      margin-top: 3px;
+      font-size: 13px;
+      color: var(--neutral-9);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-variants {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      background: var(--neutral-2);
+      color: var(--neutral-9);
+      border: 1px solid var(--neutral-3);
+      white-space: nowrap;
+    }
+
+    .card-arrow {
+      flex-shrink: 0;
+      color: var(--neutral-9);
+    }
+
+    .card-arrow svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .empty-state {
+      background: var(--neutral-0);
+      border: 1px dashed var(--neutral-3);
+      border-radius: var(--radius-xl);
+      padding: 24px 20px;
+      text-align: center;
+      color: var(--neutral-9);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <h1 class="page-title">UX Demo</h1>
+    <p class="page-subtitle">交互原型集合 · 用于设计评审</p>
+  </header>
+
+  <section class="section">
+    <div class="section-title">原型列表</div>
+    <div class="card-list" id="protoList">
+
+      <!-- ✦ custom-skill-entry -->
+      <a class="card" href="custom-skill-entry/prototype.html">
+        <div class="card-icon">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 2v16M2 10h16"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-name">自定义技能入口</div>
+          <div class="card-desc">技能库 · 自定义技能入口交互原型，含跳转方案与新 Tab 方案对比</div>
+        </div>
+        <div class="card-variants">
+          <span class="badge">跳转方案</span>
+          <span class="badge">新 Tab 方案</span>
+        </div>
+        <div class="card-arrow">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 3l5 5-5 5"/>
+          </svg>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+</body>
+</html>
