@@ -19,6 +19,17 @@
   }
   .v-tab.active { background: #0047FD; color: #fff; }
   .v-tab:hover:not(.active) { background: rgba(255,255,255,0.1); color: #fff; }
+  /* 交互说明开关 */
+  .v-demo-toggle {
+    padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 11px;
+    background: transparent; color: #666; border: 1px solid rgba(255,255,255,0.15);
+    transition: background 120ms, color 120ms, border-color 120ms;
+  }
+  .v-demo-toggle.active { background: rgba(255,200,0,0.12); color: #FFC107; border-color: rgba(255,193,7,0.35); }
+  .v-demo-toggle:hover:not(.active) { background: rgba(255,255,255,0.08); color: #bbb; }
+  /* 演示控件：默认隐藏，开启「交互说明」后显示 */
+  .demo-control { display: none !important; }
+  body.demo-mode .demo-control { display: block !important; }
   /* .variant rules removed — variants share the same content, only JS behavior differs */
 </style>
 <style>
@@ -132,6 +143,102 @@
     background: #E8F8F0; color: #1A8C52;
   }
 
+  /* ── Agent 管理页新版卡片 ── */
+  .agent-card-grid-new {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    padding: 0 20px 20px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .agc {
+    background: var(--neutral-0);
+    border: 1px solid var(--neutral-3);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    cursor: pointer;
+    transition: box-shadow 120ms, border-color 120ms;
+    display: flex;
+    flex-direction: column;
+    height: 168px;
+  }
+  .agc:hover { box-shadow: var(--shadow-card); border-color: var(--neutral-4); }
+  .agc-top {
+    padding: 14px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .agc-top.pub { background: linear-gradient(135deg, #EEF3FF 0%, #D8E4FF 100%); }
+  .agc-top.unpub { background: var(--neutral-2); }
+  .agc-avatar {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+    background: white;
+    box-shadow: 0 1px 3px rgba(9,30,64,0.12);
+  }
+  .agc-info { flex: 1; min-width: 0; }
+  .agc-name { font-size: 13px; font-weight: 600; color: var(--neutral-11); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .agc-sub { font-size: 11px; color: var(--neutral-9); margin-top: 2px; }
+  .agc-badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 10px; color: var(--neutral-9); background: rgba(255,255,255,0.65); margin-top: 4px; border: 1px solid rgba(0,0,0,0.06); }
+  .agc-body { padding: 8px 16px; flex: 1; overflow: hidden; }
+  .agc-desc { font-size: 12px; color: var(--neutral-9); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .agc-footer {
+    padding: 7px 14px;
+    border-top: 1px solid var(--neutral-2);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .agc-status { font-size: 11px; }
+  .agc-status.pub { color: #1A8C52; }
+  .agc-status.unpub { color: var(--neutral-9); }
+  .agc-more-btn { width: 22px; height: 22px; border-radius: 4px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--neutral-9); }
+  .agc-more-btn:hover { background: var(--neutral-2); }
+
+  /* ── Agent 配置页 header 72px ── */
+  .fe-acp-divider { width: 1px; height: 20px; background: var(--neutral-3); flex-shrink: 0; }
+  .fe-acp-agent-info { display: flex; align-items: center; gap: 8px; }
+  .fe-acp-agent-avatar { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .fe-acp-edit-btn { width: 24px; height: 24px; border-radius: 4px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--neutral-9); }
+  .fe-acp-edit-btn:hover { background: var(--neutral-2); }
+
+  /* ── 技能分区 + 按钮 ── */
+  .fe-section-add-btn { width: 22px; height: 22px; border-radius: 4px; border: 1px solid var(--neutral-3); background: var(--neutral-0); cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--neutral-9); transition: background 80ms, border-color 80ms; }
+  .fe-section-add-btn:hover { background: #EEF3FF; border-color: var(--brand-6); color: var(--brand-7); }
+
+  /* ── 技能项 hover 操作 ── */
+  .fe-config-skill-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--radius-lg); background: var(--neutral-1); margin-bottom: 6px; position: relative; }
+  .fe-config-skill-item:hover .fe-skill-item-actions { opacity: 1; }
+  .fe-skill-item-actions { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: flex; gap: 3px; opacity: 0; transition: opacity 80ms; }
+  .fe-skill-action-btn { width: 22px; height: 22px; border-radius: 4px; border: none; background: var(--neutral-0); cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--neutral-9); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .fe-skill-action-btn:hover { color: var(--brand-7); }
+  .fe-skill-action-btn.del:hover { color: #E03535; }
+
+  /* ── 添加技能弹窗 ── */
+  #add-skill-modal { display: none; position: fixed; inset: 0; z-index: 4000; background: rgba(0,0,0,0.3); align-items: center; justify-content: center; }
+  #add-skill-modal.open { display: flex; }
+  .add-skill-dialog { width: 640px; max-height: 500px; background: var(--neutral-0); border-radius: var(--radius-xxl); display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-large); }
+  .add-skill-dialog-hd { padding: 16px 20px 12px; border-bottom: 1px solid var(--neutral-3); flex-shrink: 0; }
+  .add-skill-dialog-title { font-size: 15px; font-weight: 600; color: var(--neutral-11); }
+  .add-skill-search-wrap { position: relative; margin-top: 10px; }
+  .add-skill-search { width: 100%; height: 34px; border: 1px solid var(--neutral-3); border-radius: var(--radius-md); padding: 0 10px 0 32px; font-size: 13px; outline: none; font-family: inherit; background: var(--neutral-1); }
+  .add-skill-search:focus { border-color: var(--brand-6); background: var(--neutral-0); }
+  .add-skill-search-icon { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--neutral-9); opacity: 0.5; pointer-events: none; }
+  .add-skill-list { flex: 1; overflow-y: auto; padding: 4px 0; }
+  .add-skill-item { display: flex; align-items: center; gap: 12px; padding: 10px 20px; transition: background 80ms; }
+  .add-skill-item:hover { background: var(--neutral-1); }
+  .add-skill-item-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .add-skill-item-info { flex: 1; min-width: 0; }
+  .add-skill-item-name { font-size: 13px; font-weight: 500; color: var(--neutral-10); }
+  .add-skill-item-desc { font-size: 12px; color: var(--neutral-9); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .add-skill-item-btn { height: 28px; padding: 0 12px; border-radius: var(--radius-md); font-size: 12px; cursor: pointer; white-space: nowrap; flex-shrink: 0; border: 1px solid var(--neutral-3); background: var(--neutral-0); color: var(--neutral-10); transition: background 80ms, border-color 80ms, color 80ms; }
+  .add-skill-item-btn:hover { border-color: var(--brand-6); color: var(--brand-7); background: #EEF3FF; }
+  .add-skill-item-btn.added { background: var(--neutral-1); color: var(--neutral-9); border-color: var(--neutral-3); }
+  .add-skill-item-btn.added:hover { border-color: #E03535; color: #E03535; background: #FFF0F0; }
+  .add-skill-dialog-ft { padding: 12px 20px; border-top: 1px solid var(--neutral-3); display: flex; justify-content: flex-end; flex-shrink: 0; }
 
   /* ── 前台入口按钮 ── */
   .btn-frontend-entry {
@@ -944,7 +1051,7 @@
   /* ══ Agent 配置页 ══ */
   #fe-agent-config { display: none; flex-direction: column; position: fixed; inset: 40px 0 0 0; z-index: 1500; background: var(--neutral-1); }
   #fe-agent-config.open { display: flex; }
-  .fe-acp-header { height: 48px; background: var(--neutral-0); border-bottom: 1px solid var(--neutral-3); display: flex; align-items: center; gap: 8px; padding: 0 16px; flex-shrink: 0; }
+  .fe-acp-header { height: 72px; background: var(--neutral-0); border-bottom: 1px solid var(--neutral-3); display: flex; align-items: center; gap: 10px; padding: 0 16px; flex-shrink: 0; }
   .fe-back-btn { width: 28px; height: 28px; border-radius: var(--radius-md); border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--neutral-9); transition: background 80ms; flex-shrink: 0; }
   .fe-back-btn:hover { background: var(--neutral-2); }
   .fe-acp-name { font-size: 14px; font-weight: 600; color: var(--neutral-10); }
@@ -976,6 +1083,7 @@
   .fe-config-skill-icon { width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; }
   .fe-config-skill-name { flex: 1; font-size: 13px; color: var(--neutral-10); }
   .fe-config-skill-new { font-size: 11px; color: #009880; background: #E8F8F5; padding: 1px 6px; border-radius: 4px; }
+  .fe-config-skill-disabled { font-size: 11px; color: var(--neutral-9); background: var(--neutral-2); padding: 1px 6px; border-radius: 4px; }
   .fe-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
   .fe-toggle-label { font-size: 13px; color: var(--neutral-10); }
   .fe-toggle { width: 34px; height: 18px; border-radius: 9px; display: flex; align-items: center; padding: 2px; flex-shrink: 0; }
@@ -1105,12 +1213,10 @@
 
   /* ── 技能卡片网格 ── */
   .card-grid {
-    padding: 0 20px 20px;
+    padding: 0 20px 24px;
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
-    overflow-y: auto;
-    flex: 1;
     align-content: flex-start;
   }
 
@@ -1165,6 +1271,143 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+  /* 技能分区 */
+  .skill-content-scroll { flex: 1; overflow-y: auto; }
+  .skill-section-heading { padding: 20px 20px 8px; font-size: 12px; font-weight: 600; color: var(--neutral-9); letter-spacing: 0.04em; text-transform: uppercase; }
+  /* Custom card controls */
+  .csc-ctrl { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .csc-badge { font-size: 11px; padding: 2px 7px; border-radius: 4px; flex-shrink: 0; line-height: 1.4; }
+  .csc-badge.active { background: #E8F8F0; color: #1A8C52; }
+  .csc-badge.disabled-badge { background: var(--neutral-2); color: var(--neutral-9); }
+  .skill-more-btn { width: 22px; height: 22px; border-radius: 4px; border: none; background: transparent; cursor: pointer; display: none; align-items: center; justify-content: center; color: var(--neutral-9); flex-shrink: 0; transition: background 80ms; }
+  .skill-card:hover .skill-more-btn { display: flex; }
+  .skill-more-btn.open { background: var(--neutral-2); display: flex !important; }
+  .skill-card.is-disabled .skill-card-inner { opacity: 0.5; }
+  .skill-card.is-disabled { background: linear-gradient(to bottom, var(--neutral-3), var(--neutral-2)); }
+  .skill-card.is-disabled .skill-card-add-btn { display: none !important; }
+  /* Upload skill modal */
+  .skill-upload-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 6000; display: none; align-items: center; justify-content: center; }
+  .skill-upload-overlay.open { display: flex; }
+  .skill-upload-modal { background: var(--neutral-0); border-radius: var(--radius-xl); width: 520px; max-width: calc(100vw - 48px); display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-large); }
+  .skill-upload-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 1px solid var(--neutral-3); flex-shrink: 0; }
+  .skill-upload-title { font-size: 15px; font-weight: 600; color: var(--neutral-10); }
+  .skill-upload-close { width: 28px; height: 28px; border: none; background: transparent; cursor: pointer; color: var(--neutral-9); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1; }
+  .skill-upload-close:hover { background: var(--neutral-2); }
+  .upload-step { display: none; flex-direction: column; }
+  .upload-step.active { display: flex; }
+  .upload-dropzone { margin: 24px 24px 8px; border: 1.5px dashed var(--neutral-5); border-radius: var(--radius-xl); padding: 36px 24px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: background 120ms, border-color 120ms; }
+  .upload-dropzone:hover { background: var(--neutral-1); border-color: var(--brand-7); }
+  .upload-dz-title { font-size: 14px; font-weight: 500; color: var(--neutral-10); margin-top: 6px; }
+  .upload-dz-hint { font-size: 12px; color: var(--neutral-9); }
+  .upload-dz-sim { text-align: center; padding: 8px 24px 20px; font-size: 12px; color: var(--neutral-7); }
+  .upload-dz-sim a { color: var(--brand-7); cursor: pointer; text-decoration: none; }
+  .upload-dz-sim a:hover { text-decoration: underline; }
+  .upload-parsing-wrap { padding: 36px 24px 32px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .upload-spinner { width: 32px; height: 32px; border: 3px solid var(--neutral-3); border-top-color: var(--brand-7); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .upload-parsing-title { font-size: 14px; font-weight: 500; color: var(--neutral-10); }
+  .upload-parse-steps { width: 100%; max-width: 280px; display: flex; flex-direction: column; gap: 4px; }
+  .upload-parse-step { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--neutral-8); padding: 5px 10px; border-radius: 6px; }
+  .upload-parse-step.step-done { color: #1A8C52; }
+  .upload-parse-step.step-active { color: var(--neutral-10); background: var(--neutral-1); font-weight: 500; }
+  .upload-parse-step.step-error { color: #E03535; }
+  .parse-step-icon { width: 16px; text-align: center; flex-shrink: 0; font-style: normal; }
+  .upload-preview-wrap { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; max-height: 340px; }
+  .upload-skill-header { display: flex; align-items: flex-start; gap: 12px; padding: 14px; background: var(--neutral-1); border-radius: var(--radius-xl); }
+  .upload-skill-emoji { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .upload-skill-meta { flex: 1; min-width: 0; }
+  .upload-skill-name { font-size: 14px; font-weight: 600; color: var(--neutral-10); margin-bottom: 4px; }
+  .upload-skill-desc-text { font-size: 12px; color: var(--neutral-9); line-height: 1.6; }
+  .upload-validation { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #1A8C52; flex-shrink: 0; white-space: nowrap; margin-top: 2px; }
+  .upload-section-title { font-size: 12px; font-weight: 500; color: var(--neutral-9); margin-bottom: 6px; }
+  .upload-file-tree { background: var(--neutral-1); border-radius: 8px; padding: 10px 14px; font-family: 'SF Mono', 'Menlo', monospace; font-size: 12px; }
+  .file-tree-item { display: flex; align-items: center; gap: 6px; color: var(--neutral-10); padding: 2px 0; }
+  .file-tree-item.indent { padding-left: 20px; color: var(--neutral-9); }
+  .file-tree-item.ok::after { content: '✓'; color: #1A8C52; margin-left: auto; font-size: 11px; }
+  .upload-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 24px; border-top: 1px solid var(--neutral-3); flex-shrink: 0; }
+  .upload-btn-cancel { padding: 7px 16px; border-radius: 6px; border: 1px solid var(--neutral-4); background: transparent; font-size: 13px; color: var(--neutral-10); cursor: pointer; font-family: inherit; }
+  .upload-btn-cancel:hover { background: var(--neutral-1); }
+  .upload-error-wrap { padding: 36px 24px 28px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+  .upload-error-title { font-size: 15px; font-weight: 600; color: var(--neutral-10); margin-top: 4px; }
+  .upload-error-desc { font-size: 13px; color: var(--neutral-9); line-height: 1.6; }
+  .upload-error-footer { display: flex; gap: 8px; margin-top: 8px; }
+  @keyframes fadeInCard { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  /* Import community skill modal — additional styles (reuses upload-* classes) */
+  .import-url-area { padding: 20px 24px 0; display: flex; flex-direction: column; gap: 6px; }
+  .import-label { font-size: 13px; font-weight: 500; color: var(--neutral-9); }
+  .import-url-input { width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid var(--neutral-4); border-radius: 8px; font-size: 13px; color: var(--neutral-10); background: var(--neutral-0); font-family: inherit; outline: none; }
+  .import-url-input:focus { border-color: var(--brand-7); box-shadow: 0 0 0 2px rgba(0,71,253,0.1); }
+  .import-url-type { display: flex; align-items: center; gap: 6px; min-height: 22px; }
+  .import-url-badge { display: inline-flex; align-items: center; gap: 4px; background: #EEF3FF; border-radius: 4px; padding: 2px 8px; font-size: 12px; color: var(--brand-7); font-weight: 500; }
+  .import-url-desc { font-size: 12px; color: var(--neutral-9); }
+  .import-hint { padding: 6px 24px 14px; font-size: 12px; color: var(--neutral-8); }
+  .import-step1-footer { display: flex; align-items: center; padding: 12px 24px 20px; gap: 8px; }
+  .import-step1-sim { flex: 1; font-size: 12px; color: var(--neutral-7); }
+  .import-step1-sim a { color: var(--brand-7); cursor: pointer; text-decoration: none; }
+  .import-step1-sim a:hover { text-decoration: underline; }
+  .import-name-row { display: flex; flex-direction: column; gap: 6px; }
+  .import-name-input { width: 100%; box-sizing: border-box; padding: 8px 12px; border: 1px solid var(--neutral-4); border-radius: 8px; font-size: 14px; color: var(--neutral-10); background: var(--neutral-0); font-family: inherit; outline: none; }
+  .import-name-input:focus { border-color: var(--brand-7); box-shadow: 0 0 0 2px rgba(0,71,253,0.1); }
+  .import-source-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--neutral-8); }
+  .import-source-row svg { flex-shrink: 0; color: var(--neutral-6); }
+  /* Context menu (fixed positioning to avoid clip by card-grid overflow) */
+  .skill-ctx-menu { position: fixed; min-width: 160px; background: var(--neutral-0); border-radius: var(--radius-xl); box-shadow: var(--shadow-large); padding: 6px 0; z-index: 5000; display: none; }
+  .skill-ctx-menu.open { display: block; }
+  .skill-ctx-item { display: flex; align-items: center; gap: 8px; padding: 9px 16px; font-size: 14px; color: var(--neutral-10); cursor: pointer; white-space: nowrap; }
+  .skill-ctx-item:hover { background: var(--neutral-1); }
+  .skill-ctx-item svg { flex-shrink: 0; color: var(--neutral-9); }
+  .skill-ctx-item.danger { color: #E03535; }
+  .skill-ctx-item.danger svg { color: #E03535; }
+  /* ── 技能详情抽屉 ── */
+  .skill-drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 7000; display: none; }
+  .skill-drawer-overlay.open { display: block; }
+  .skill-drawer { position: fixed; bottom: 0; left: 0; right: 0; height: 88vh; background: var(--neutral-0); border-radius: 12px 12px 0 0; z-index: 7001; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.28s cubic-bezier(0.4,0,0.2,1); box-shadow: 0 -4px 32px rgba(0,0,0,0.14); }
+  .skill-drawer.open { transform: translateY(0); }
+  .sd-handle { width: 36px; height: 4px; background: var(--neutral-4); border-radius: 2px; margin: 10px auto 0; flex-shrink: 0; }
+  .sd-header { display: flex; align-items: flex-start; gap: 12px; padding: 16px 24px 0; flex-shrink: 0; }
+  .sd-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .sd-title-group { flex: 1; min-width: 0; padding-top: 4px; }
+  .sd-name-row { display: flex; align-items: center; gap: 8px; }
+  .sd-name { font-size: 16px; font-weight: 600; color: var(--neutral-11); }
+  .sd-edit-btn { padding: 3px; color: var(--neutral-9); border: none; background: none; cursor: pointer; border-radius: 4px; display: none; align-items: center; }
+  .sd-edit-btn:hover { background: var(--neutral-2); color: var(--neutral-10); }
+  .sd-edit-btn.visible { display: flex; }
+  .sd-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-shrink: 0; padding-top: 2px; }
+  .sd-status-badge { padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+  .sd-status-badge.active { background: #E8F8F0; color: #1A8C52; }
+  .sd-status-badge.disabled { background: var(--neutral-2); color: var(--neutral-9); }
+  .sd-disable-btn { padding: 5px 12px; border-radius: 6px; font-size: 13px; border: 1px solid var(--neutral-4); background: var(--neutral-0); color: var(--neutral-10); cursor: pointer; display: none; }
+  .sd-disable-btn:hover { background: var(--neutral-1); }
+  .sd-disable-btn.visible { display: block; }
+  .sd-trial-btn { padding: 5px 12px; border-radius: 6px; font-size: 13px; border: none; background: var(--brand-7); color: #fff; cursor: pointer; }
+  .sd-trial-btn:hover { background: var(--brand-8); }
+  .sd-desc { padding: 10px 24px 0; font-size: 14px; color: var(--neutral-9); line-height: 1.6; flex-shrink: 0; }
+  .sd-meta { display: flex; align-items: center; gap: 10px; padding: 12px 24px 0; flex-shrink: 0; flex-wrap: wrap; }
+  .sd-src-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+  .sd-src-official { background: var(--neutral-2); color: var(--neutral-9); }
+  .sd-src-dora { background: #EEF3FF; color: var(--brand-7); }
+  .sd-src-upload { background: #FFF8EC; color: #D18700; }
+  .sd-src-import { background: #E8F5FF; color: #019EDF; }
+  .sd-meta-sep { color: var(--neutral-4); font-size: 12px; }
+  .sd-meta-path { font-size: 12px; color: var(--neutral-9); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sd-meta-time { font-size: 12px; color: var(--neutral-9); }
+  .sd-divider { height: 1px; background: var(--neutral-3); margin: 16px 0 0; flex-shrink: 0; }
+  .sd-body { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+  .sd-filetree { width: 200px; flex-shrink: 0; border-right: 1px solid var(--neutral-3); padding: 12px 0; overflow-y: auto; }
+  .sd-ft-item { display: flex; align-items: center; gap: 6px; padding: 6px 16px; font-size: 13px; color: var(--neutral-10); cursor: pointer; user-select: none; }
+  .sd-ft-item:hover { background: var(--neutral-1); }
+  .sd-ft-item.selected { background: #EEF3FF; color: var(--brand-7); font-weight: 500; }
+  .sd-ft-item.folder { color: var(--neutral-9); cursor: default; font-size: 12px; margin-top: 4px; }
+  .sd-ft-item.folder:hover { background: none; }
+  .sd-ft-indent { padding-left: 32px; }
+  .sd-preview { flex: 1; min-width: 0; overflow-y: auto; padding: 20px 24px; }
+  .sd-preview pre { font-family: "SF Mono", "Fira Code", "JetBrains Mono", monospace; font-size: 12px; line-height: 1.7; color: var(--neutral-10); white-space: pre-wrap; background: var(--neutral-1); padding: 16px; border-radius: 8px; }
+  .sd-yaml-key { color: #0047FD; }
+  .sd-yaml-val { color: #E03535; }
+  .sd-yaml-str { color: #1A8C52; }
+  .sd-yaml-comment { color: var(--neutral-9); }
+  .sd-yaml-heading { font-weight: 700; color: var(--neutral-11); }
+  .skill-card { cursor: pointer; }
 </style>
 </head>
 <body>
@@ -1174,6 +1417,8 @@
   <span class="label">方案对比：</span>
   <button class="v-tab active" onclick="switchVariant('a', this)">跳转</button>
   <button class="v-tab" onclick="switchVariant('b', this)">新 Tab</button>
+  <div style="flex:1;"></div>
+  <button class="v-demo-toggle" onclick="toggleDemoMode(this)">交互说明</button>
 </div>
 
 <!-- 左侧导航 -->
@@ -1254,7 +1499,7 @@
           通过 Dora 创建
         </a>
         <!-- 导入社区技能 -->
-        <div class="dropdown-item" onclick="handleSelect('community')">
+        <div class="dropdown-item" onclick="openSkillImport()">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
             <rect x="1.5" y="1.5" width="5" height="5" rx="1"/>
             <rect x="9.5" y="1.5" width="5" height="5" rx="1"/>
@@ -1264,7 +1509,7 @@
           导入社区技能
         </div>
         <!-- 上传技能包 -->
-        <div class="dropdown-item" onclick="handleSelect('upload')">
+        <div class="dropdown-item" onclick="openSkillUpload()">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
             <rect x="2" y="10" width="12" height="4" rx="1"/>
             <polyline points="8,2 8,9"/>
@@ -1276,114 +1521,361 @@
     </div>
   </div>
 
-  <!-- 技能卡片列表 -->
-  <div class="card-grid">
-    <!-- 卡片数据：来自 SkillType 枚举 mock -->
-    <div class="skill-card">
-      <div class="skill-card-inner">
-        <div class="skill-card-title">
-          <div class="skill-icon" style="background:#EEF3FF;">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="#0047FD" stroke-width="1.5"/><path d="M6 9h6M9 6v6" stroke="#0047FD" stroke-width="1.5" stroke-linecap="round"/></svg>
-          </div>
-          <span class="skill-name">数据查询</span>
-        </div>
-        <div class="skill-desc">通过自然语言查询数据库，自动生成 SQL 并返回结构化结果，支持多数据源联查。</div>
-      </div>
-      <button class="skill-card-add-btn" onclick="openAddToAgent({id:'skill_data_query',name:'数据查询',emoji:'⚡',iconBg:'#EEF3FF'})">添加到 Agent 中试用</button>
-    </div>
+  <div class="skill-content-scroll">
 
-    <div class="skill-card">
-      <div class="skill-card-inner">
-        <div class="skill-card-title">
-          <div class="skill-icon" style="background:#E8F8F5;">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="12" height="12" rx="2" stroke="#009880" stroke-width="1.5"/><path d="M6 9l2 2 4-4" stroke="#009880" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <!-- 官方技能 -->
+  <div class="skill-section-heading">官方</div>
+  <div id="skill-tab-official">
+    <div class="card-grid">
+      <div class="skill-card" data-skill-id="skill_data_query">
+        <div class="skill-card-inner">
+          <div class="skill-card-title">
+            <div class="skill-icon" style="background:#EEF3FF;">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="#0047FD" stroke-width="1.5"/><path d="M6 9h6M9 6v6" stroke="#0047FD" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <span class="skill-name">数据查询</span>
           </div>
-          <span class="skill-name">代码生成</span>
+          <div class="skill-desc">通过自然语言查询数据库，自动生成 SQL 并返回结构化结果，支持多数据源联查。</div>
         </div>
-        <div class="skill-desc">根据描述生成 Python/SQL 代码片段，可直接运行，支持数据分析场景。</div>
+        <button class="skill-card-add-btn" onclick="openAddToAgent({id:'skill_data_query',name:'数据查询',emoji:'⚡',iconBg:'#EEF3FF'})">添加到 Agent 中试用</button>
       </div>
-    </div>
 
-    <div class="skill-card">
-      <div class="skill-card-inner">
-        <div class="skill-card-title">
-          <div class="skill-icon" style="background:#F3EEFF;">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 14h12M3 10h12M3 6h8" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div class="skill-card" data-skill-id="skill_code_gen">
+        <div class="skill-card-inner">
+          <div class="skill-card-title">
+            <div class="skill-icon" style="background:#E8F8F5;">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="12" height="12" rx="2" stroke="#009880" stroke-width="1.5"/><path d="M6 9l2 2 4-4" stroke="#009880" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <span class="skill-name">代码生成</span>
           </div>
-          <span class="skill-name">报表生成</span>
+          <div class="skill-desc">根据描述生成 Python/SQL 代码片段，可直接运行，支持数据分析场景。</div>
         </div>
-        <div class="skill-desc">基于数据源自动生成带格式的分析报告，支持图文混排和自定义模板。</div>
+        <button class="skill-card-add-btn" onclick="openAddToAgent({id:'skill_code_gen',name:'代码生成',emoji:'💻',iconBg:'#E8F8F5'})">添加到 Agent 中试用</button>
       </div>
-    </div>
 
-    <div class="skill-card">
-      <div class="skill-card-inner">
-        <div class="skill-card-title">
-          <div class="skill-icon" style="background:#E8F5FF;">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><polyline points="3,13 7,8 10,11 14,5" stroke="#019EDF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="skill-card" data-skill-id="skill_report">
+        <div class="skill-card-inner">
+          <div class="skill-card-title">
+            <div class="skill-icon" style="background:#F3EEFF;">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 14h12M3 10h12M3 6h8" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <span class="skill-name">报表生成</span>
           </div>
-          <span class="skill-name">图表生成</span>
+          <div class="skill-desc">基于数据源自动生成带格式的分析报告，支持图文混排和自定义模板。</div>
         </div>
-        <div class="skill-desc">将数据转化为 ECharts 可视化图表，支持折线、柱状、饼图等多种类型。</div>
+        <button class="skill-card-add-btn" onclick="openAddToAgent({id:'skill_report',name:'报表生成',emoji:'📊',iconBg:'#F3EEFF'})">添加到 Agent 中试用</button>
       </div>
-    </div>
 
-    <div class="skill-card">
-      <div class="skill-card-inner">
-        <div class="skill-card-title">
-          <div class="skill-icon" style="background:#F3EEFF;">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="6" stroke="#7B50D8" stroke-width="1.5"/><path d="M6 9l2 2 4-4" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div class="skill-card" data-skill-id="skill_chart">
+        <div class="skill-card-inner">
+          <div class="skill-card-title">
+            <div class="skill-icon" style="background:#E8F5FF;">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><polyline points="3,13 7,8 10,11 14,5" stroke="#019EDF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <span class="skill-name">图表生成</span>
           </div>
-          <span class="skill-name">看板检索</span>
+          <div class="skill-desc">将数据转化为 ECharts 可视化图表，支持折线、柱状、饼图等多种类型。</div>
         </div>
-        <div class="skill-desc">在 FineBI 看板中快速检索目标图表或分析结论，结果直接嵌入对话。</div>
+        <button class="skill-card-add-btn" onclick="openAddToAgent({id:'skill_chart',name:'图表生成',emoji:'📈',iconBg:'#E8F5FF'})">添加到 Agent 中试用</button>
       </div>
-    </div>
 
-    <div class="skill-card">
-      <div class="skill-card-inner">
-        <div class="skill-card-title">
-          <div class="skill-icon" style="background:#F3EEFF;">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="12" height="12" rx="2" stroke="#7B50D8" stroke-width="1.5"/><path d="M6 6h6M6 9h4" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div class="skill-card" data-skill-id="skill_dashboard">
+        <div class="skill-card-inner">
+          <div class="skill-card-title">
+            <div class="skill-icon" style="background:#F3EEFF;">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="6" stroke="#7B50D8" stroke-width="1.5"/><path d="M6 9l2 2 4-4" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <span class="skill-name">看板检索</span>
           </div>
-          <span class="skill-name">前端设计</span>
+          <div class="skill-desc">在 FineBI 看板中快速检索目标图表或分析结论，结果直接嵌入对话。</div>
         </div>
-        <div class="skill-desc">根据数据描述生成前端组件代码，支持响应式布局和主题适配。</div>
+        <button class="skill-card-add-btn" onclick="openAddToAgent({id:'skill_dashboard',name:'看板检索',emoji:'🔍',iconBg:'#F3EEFF'})">添加到 Agent 中试用</button>
+      </div>
+
+      <div class="skill-card" data-skill-id="skill_frontend">
+        <div class="skill-card-inner">
+          <div class="skill-card-title">
+            <div class="skill-icon" style="background:#F3EEFF;">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="12" height="12" rx="2" stroke="#7B50D8" stroke-width="1.5"/><path d="M6 6h6M6 9h4" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <span class="skill-name">前端设计</span>
+          </div>
+          <div class="skill-desc">根据数据描述生成前端组件代码，支持响应式布局和主题适配。</div>
+        </div>
+        <button class="skill-card-add-btn" onclick="openAddToAgent({id:'skill_frontend',name:'前端设计',emoji:'🎨',iconBg:'#F3EEFF'})">添加到 Agent 中试用</button>
       </div>
     </div>
   </div>
+
+  <!-- 自定义技能 -->
+  <div class="skill-section-heading">自定义</div>
+  <div id="skill-tab-custom">
+    <div class="card-grid">
+
+      <!-- 自定义技能 1：可用 -->
+      <div class="skill-card" data-status="active" id="csc-card-1" data-skill-id="csc_1">
+        <div class="skill-card-inner">
+          <div class="skill-card-title">
+            <div class="skill-icon" style="background:#EEF3FF;">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9h12M9 3v12" stroke="#0047FD" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <span class="skill-name" style="flex:1;min-width:0;">销售数据查询</span>
+            <div class="csc-ctrl">
+              <span class="csc-badge active">可用</span>
+              <button class="skill-more-btn" onclick="toggleSkillMenu(this, event)" title="更多操作">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="2.5" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="7" cy="11.5" r="1.2"/></svg>
+              </button>
+              <div class="skill-ctx-menu">
+                <div class="skill-ctx-item csc-if-active" style="display:flex;" onclick="trialSkillFromLibrary({id:'csc_1',name:'销售数据查询',emoji:'📊',iconBg:'#EEF3FF'}); closeAllSkillMenus();">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><polygon points="5.5,4.5 10,7 5.5,9.5" fill="currentColor" stroke="none"/></svg>
+                  试用技能
+                </div>
+                <div class="skill-ctx-item csc-if-active" style="display:flex;" onclick="setSkillDisabled(document.getElementById('csc-card-1'), true)">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><line x1="3.5" y1="7" x2="10.5" y2="7"/></svg>
+                  禁用
+                </div>
+                <div class="skill-ctx-item csc-if-disabled" style="display:none;" onclick="setSkillDisabled(document.getElementById('csc-card-1'), false)">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><path d="M4.5 7l2 2 3-3"/></svg>
+                  取消禁用
+                </div>
+                <div class="skill-ctx-item" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="10" height="10" rx="1.5"/><path d="M5 7h4M7 5v4"/></svg>
+                  复制
+                </div>
+                <div class="skill-ctx-item" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10v1.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V10"/><path d="M7 2v7M4.5 6.5L7 9l2.5-2.5"/></svg>
+                  导出 zip
+                </div>
+                <div class="skill-ctx-item danger" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1.5,3.5 12.5,3.5"/><path d="M5.5,3.5v-1.5a.5.5,0,0,1,.5-.5h2a.5.5,0,0,1,.5.5v1.5"/><path d="M3,3.5l.7,8a.5.5,0,0,0,.5.5h5.6a.5.5,0,0,0,.5-.5l.7-8"/></svg>
+                  删除
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="skill-desc">根据销售区域、时间段和产品维度，从 CRM 系统中查询销售额及同比数据。</div>
+        </div>
+        <button class="skill-card-add-btn" onclick="trialSkillFromLibrary({id:'csc_1',name:'销售数据查询',emoji:'📊',iconBg:'#EEF3FF'})">添加到 Agent 中试用</button>
+      </div>
+
+      <!-- 自定义技能 2：可用 -->
+      <div class="skill-card" data-status="active" id="csc-card-2" data-skill-id="csc_2">
+        <div class="skill-card-inner">
+          <div class="skill-card-title">
+            <div class="skill-icon" style="background:#F3EEFF;">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="7" r="3" stroke="#7B50D8" stroke-width="1.5"/><path d="M3 15c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <span class="skill-name" style="flex:1;min-width:0;">用户行为分析</span>
+            <div class="csc-ctrl">
+              <span class="csc-badge active">可用</span>
+              <button class="skill-more-btn" onclick="toggleSkillMenu(this, event)" title="更多操作">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="2.5" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="7" cy="11.5" r="1.2"/></svg>
+              </button>
+              <div class="skill-ctx-menu">
+                <div class="skill-ctx-item csc-if-active" style="display:flex;" onclick="trialSkillFromLibrary({id:'csc_2',name:'用户行为分析',emoji:'👥',iconBg:'#F3EEFF'}); closeAllSkillMenus();">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><polygon points="5.5,4.5 10,7 5.5,9.5" fill="currentColor" stroke="none"/></svg>
+                  试用技能
+                </div>
+                <div class="skill-ctx-item csc-if-active" style="display:flex;" onclick="setSkillDisabled(document.getElementById('csc-card-2'), true)">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><line x1="3.5" y1="7" x2="10.5" y2="7"/></svg>
+                  禁用
+                </div>
+                <div class="skill-ctx-item csc-if-disabled" style="display:none;" onclick="setSkillDisabled(document.getElementById('csc-card-2'), false)">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><path d="M4.5 7l2 2 3-3"/></svg>
+                  取消禁用
+                </div>
+                <div class="skill-ctx-item" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="10" height="10" rx="1.5"/><path d="M5 7h4M7 5v4"/></svg>
+                  复制
+                </div>
+                <div class="skill-ctx-item" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10v1.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V10"/><path d="M7 2v7M4.5 6.5L7 9l2.5-2.5"/></svg>
+                  导出 zip
+                </div>
+                <div class="skill-ctx-item danger" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1.5,3.5 12.5,3.5"/><path d="M5.5,3.5v-1.5a.5.5,0,0,1,.5-.5h2a.5.5,0,0,1,.5.5v1.5"/><path d="M3,3.5l.7,8a.5.5,0,0,0,.5.5h5.6a.5.5,0,0,0,.5-.5l.7-8"/></svg>
+                  删除
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="skill-desc">分析埋点数据，追踪用户路径、留存率和关键转化漏斗，输出结构化分析结论。</div>
+        </div>
+        <button class="skill-card-add-btn" onclick="trialSkillFromLibrary({id:'csc_2',name:'用户行为分析',emoji:'👥',iconBg:'#F3EEFF'})">添加到 Agent 中试用</button>
+      </div>
+
+      <!-- 自定义技能 3：已禁用 -->
+      <div class="skill-card is-disabled" data-status="disabled" id="csc-card-3" data-skill-id="csc_3">
+        <div class="skill-card-inner">
+          <div class="skill-card-title">
+            <div class="skill-icon" style="background:#FFF8EC;">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9h12M9 3v12" stroke="#D18700" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <span class="skill-name" style="flex:1;min-width:0;">竞品价格监控</span>
+            <div class="csc-ctrl">
+              <span class="csc-badge disabled-badge">已禁用</span>
+              <button class="skill-more-btn" onclick="toggleSkillMenu(this, event)" title="更多操作">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="2.5" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="7" cy="11.5" r="1.2"/></svg>
+              </button>
+              <div class="skill-ctx-menu">
+                <div class="skill-ctx-item csc-if-active" style="display:none;" onclick="trialSkillFromLibrary({id:'csc_3',name:'竞品价格监控',emoji:'💰',iconBg:'#FFF8EC'}); closeAllSkillMenus();">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><polygon points="5.5,4.5 10,7 5.5,9.5" fill="currentColor" stroke="none"/></svg>
+                  试用技能
+                </div>
+                <div class="skill-ctx-item csc-if-active" style="display:none;" onclick="setSkillDisabled(document.getElementById('csc-card-3'), true)">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><line x1="3.5" y1="7" x2="10.5" y2="7"/></svg>
+                  禁用
+                </div>
+                <div class="skill-ctx-item csc-if-disabled" style="display:flex;" onclick="setSkillDisabled(document.getElementById('csc-card-3'), false)">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><path d="M4.5 7l2 2 3-3"/></svg>
+                  取消禁用
+                </div>
+                <div class="skill-ctx-item" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="10" height="10" rx="1.5"/><path d="M5 7h4M7 5v4"/></svg>
+                  复制
+                </div>
+                <div class="skill-ctx-item" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10v1.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V10"/><path d="M7 2v7M4.5 6.5L7 9l2.5-2.5"/></svg>
+                  导出 zip
+                </div>
+                <div class="skill-ctx-item danger" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1.5,3.5 12.5,3.5"/><path d="M5.5,3.5v-1.5a.5.5,0,0,1,.5-.5h2a.5.5,0,0,1,.5.5v1.5"/><path d="M3,3.5l.7,8a.5.5,0,0,0,.5.5h5.6a.5.5,0,0,0,.5-.5l.7-8"/></svg>
+                  删除
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="skill-desc">定时抓取竞品平台商品价格并与自身价格对比，触发价格异常告警推送。</div>
+        </div>
+        <button class="skill-card-add-btn" onclick="trialSkillFromLibrary({id:'csc_3',name:'竞品价格监控',emoji:'💰',iconBg:'#FFF8EC'})">添加到 Agent 中试用</button>
+      </div>
+
+      <!-- 自定义技能 4：已禁用 -->
+      <div class="skill-card is-disabled" data-status="disabled" id="csc-card-4" data-skill-id="csc_4">
+        <div class="skill-card-inner">
+          <div class="skill-card-title">
+            <div class="skill-icon" style="background:#E8F8F0;">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 3v4l2.5 2.5" stroke="#1A8C52" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="9" r="6" stroke="#1A8C52" stroke-width="1.5"/></svg>
+            </div>
+            <span class="skill-name" style="flex:1;min-width:0;">财务预警提醒</span>
+            <div class="csc-ctrl">
+              <span class="csc-badge disabled-badge">已禁用</span>
+              <button class="skill-more-btn" onclick="toggleSkillMenu(this, event)" title="更多操作">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="2.5" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="7" cy="11.5" r="1.2"/></svg>
+              </button>
+              <div class="skill-ctx-menu">
+                <div class="skill-ctx-item csc-if-active" style="display:none;" onclick="trialSkillFromLibrary({id:'csc_4',name:'财务预警提醒',emoji:'⚠️',iconBg:'#E8F8F0'}); closeAllSkillMenus();">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><polygon points="5.5,4.5 10,7 5.5,9.5" fill="currentColor" stroke="none"/></svg>
+                  试用技能
+                </div>
+                <div class="skill-ctx-item csc-if-active" style="display:none;" onclick="setSkillDisabled(document.getElementById('csc-card-4'), true)">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><line x1="3.5" y1="7" x2="10.5" y2="7"/></svg>
+                  禁用
+                </div>
+                <div class="skill-ctx-item csc-if-disabled" style="display:flex;" onclick="setSkillDisabled(document.getElementById('csc-card-4'), false)">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><path d="M4.5 7l2 2 3-3"/></svg>
+                  取消禁用
+                </div>
+                <div class="skill-ctx-item" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="10" height="10" rx="1.5"/><path d="M5 7h4M7 5v4"/></svg>
+                  复制
+                </div>
+                <div class="skill-ctx-item" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10v1.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V10"/><path d="M7 2v7M4.5 6.5L7 9l2.5-2.5"/></svg>
+                  导出 zip
+                </div>
+                <div class="skill-ctx-item danger" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1.5,3.5 12.5,3.5"/><path d="M5.5,3.5v-1.5a.5.5,0,0,1,.5-.5h2a.5.5,0,0,1,.5.5v1.5"/><path d="M3,3.5l.7,8a.5.5,0,0,0,.5.5h5.6a.5.5,0,0,0,.5-.5l.7-8"/></svg>
+                  删除
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="skill-desc">监控关键财务指标（资金余额、应收账款），触发阈值后向相关人员发送预警消息。</div>
+        </div>
+        <button class="skill-card-add-btn" onclick="trialSkillFromLibrary({id:'csc_4',name:'财务预警提醒',emoji:'⚠️',iconBg:'#E8F8F0'})">添加到 Agent 中试用</button>
+      </div>
+
+    </div>
+  </div>
+  </div><!-- end skill-content-scroll -->
 </main>
 
 <!-- ══ Agent 管理页 ══ -->
 <main class="main" id="page-agent-mgmt" style="display:none;">
-  <header class="module-header">Agent 管理</header>
-  <div style="padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+  <header class="module-header" style="justify-content:space-between;">
+    <span>Agent 管理</span>
+    <button class="btn-primary" style="height:30px;font-size:13px;">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="margin-right:4px;"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
+      创建 Agent
+    </button>
+  </header>
+  <div style="padding:16px 20px 12px; flex-shrink:0;">
+    <div class="search-box">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="6" r="4"/><line x1="9.5" y1="9.5" x2="13" y2="13"/></svg>
+      <span style="color:var(--neutral-9);font-size:13px;">搜索 Agent</span>
+    </div>
+  </div>
+  <div class="agent-card-grid-new">
     <!-- dora -->
-    <div class="agent-mgmt-card">
-      <div class="agent-mgmt-avatar" style="background:#EEF3FF;">🤖</div>
-      <div class="agent-mgmt-info">
-        <div class="agent-mgmt-name">dora</div>
-        <div class="agent-mgmt-meta">通用数据分析助手，支持技能创建 · 上次发布 2025-12-10</div>
+    <div class="agc" onclick="openAgentConfig('dora')">
+      <div class="agc-top pub">
+        <div class="agc-avatar">🤖</div>
+        <div class="agc-info">
+          <div class="agc-name">dora</div>
+          <div class="agc-sub">最近编辑 2025-12-10</div>
+          <span class="agc-badge">封装型</span>
+        </div>
       </div>
-      <span class="agent-mgmt-status published">已发布</span>
+      <div class="agc-body">
+        <div class="agc-desc">通用数据分析助手，支持自然语言查询、图表生成与技能对话创建，适合数据探索场景。</div>
+      </div>
+      <div class="agc-footer">
+        <span class="agc-status pub">● 已发布</span>
+        <button class="agc-more-btn" onclick="event.stopPropagation()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="3" r="1"/><circle cx="7" cy="7" r="1"/><circle cx="7" cy="11" r="1"/></svg>
+        </button>
+      </div>
     </div>
     <!-- 数据分析师 -->
-    <div class="agent-mgmt-card">
-      <div class="agent-mgmt-avatar" style="background:#E8F8F5;">📊</div>
-      <div class="agent-mgmt-info">
-        <div class="agent-mgmt-name">数据分析师</div>
-        <div class="agent-mgmt-meta">销售与运营数据深度分析 · 上次发布 2026-01-03</div>
+    <div class="agc" onclick="openAgentConfig('analyst')">
+      <div class="agc-top pub">
+        <div class="agc-avatar">📊</div>
+        <div class="agc-info">
+          <div class="agc-name">数据分析师</div>
+          <div class="agc-sub">最近编辑 2026-01-03</div>
+          <span class="agc-badge">封装型</span>
+        </div>
       </div>
-      <span class="agent-mgmt-status published">已发布</span>
+      <div class="agc-body">
+        <div class="agc-desc">专注于销售与运营数据的深度分析，自动识别趋势、异常与优化机会，给出可执行建议。</div>
+      </div>
+      <div class="agc-footer">
+        <span class="agc-status pub">● 已发布</span>
+        <button class="agc-more-btn" onclick="event.stopPropagation()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="3" r="1"/><circle cx="7" cy="7" r="1"/><circle cx="7" cy="11" r="1"/></svg>
+        </button>
+      </div>
     </div>
     <!-- 财务小助手 -->
-    <div class="agent-mgmt-card">
-      <div class="agent-mgmt-avatar" style="background:#FFF8EC;">💰</div>
-      <div class="agent-mgmt-info">
-        <div class="agent-mgmt-name">财务小助手</div>
-        <div class="agent-mgmt-meta">财务报表与预算查询 · 上次发布 2026-02-18</div>
+    <div class="agc" onclick="openAgentConfig('finance')">
+      <div class="agc-top pub">
+        <div class="agc-avatar">💰</div>
+        <div class="agc-info">
+          <div class="agc-name">财务小助手</div>
+          <div class="agc-sub">最近编辑 2026-02-18</div>
+          <span class="agc-badge">封装型</span>
+        </div>
       </div>
-      <span class="agent-mgmt-status published">已发布</span>
+      <div class="agc-body">
+        <div class="agc-desc">快速解答预算、成本、利润等财务问题，支持多维度报表查询和月度财务汇总。</div>
+      </div>
+      <div class="agc-footer">
+        <span class="agc-status pub">● 已发布</span>
+        <button class="agc-more-btn" onclick="event.stopPropagation()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="3" r="1"/><circle cx="7" cy="7" r="1"/><circle cx="7" cy="11" r="1"/></svg>
+        </button>
+      </div>
     </div>
   </div>
 </main>
@@ -1452,13 +1944,21 @@
     <button class="fe-back-btn" id="fe-acp-back" onclick="closeAgentConfig()">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="10,3 5,8 10,13"/></svg>
     </button>
-    <span class="fe-acp-name" id="fe-acp-name">dora</span>
-    <span class="fe-status-badge">已发布</span>
-    <span class="fe-acp-link">工作台</span>
+    <div class="fe-acp-divider"></div>
+    <div class="fe-acp-agent-info">
+      <div class="fe-acp-agent-avatar" id="fe-acp-avatar-icon" style="background:#EEF3FF;">🤖</div>
+      <div>
+        <div class="fe-acp-name" id="fe-acp-name">dora</div>
+        <div style="font-size:11px;color:var(--neutral-9);margin-top:1px;">封装型</div>
+      </div>
+      <button class="fe-acp-edit-btn" title="重命名">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2l2 2L4 11H2v-2L9 2z"/></svg>
+      </button>
+    </div>
+    <span class="fe-status-badge" id="fe-acp-status-badge">已发布</span>
     <span class="fe-acp-spacer"></span>
-    <span class="fe-acp-save-info">最近保存 2026/04/17 16:43:57</span>
-    <button class="fe-btn-sm ghost">保存</button>
-    <button class="fe-btn-sm ghost">取消发布</button>
+    <span class="fe-acp-save-info" id="fe-acp-save-info">最近保存 2026/04/17 16:43:57</span>
+    <button class="fe-btn-sm ghost" id="fe-acp-save-btn" onclick="saveAgentConfig()">保存</button>
     <button class="fe-btn-sm primary-btn">发布</button>
   </div>
   <div class="fe-acp-body">
@@ -1517,13 +2017,23 @@
       <div class="fe-config-section">
         <div class="fe-config-section-hd">
           <span class="fe-config-section-title">技能</span>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg>
+          <button class="fe-section-add-btn" onclick="openAddSkillModal(); event.stopPropagation();" title="添加技能">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
+          </button>
         </div>
         <div class="fe-config-section-bd" id="fe-acp-skills">
           <!-- 已有技能 -->
           <div class="fe-config-skill-item">
             <div class="fe-config-skill-icon" style="background:#F3EEFF;">📋</div>
             <span class="fe-config-skill-name">报表生成技能</span>
+            <div class="fe-skill-item-actions">
+              <button class="fe-skill-action-btn" title="配置">
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="5.5" cy="5.5" r="1.8"/><path d="M5.5 1v1M5.5 9v1M1 5.5h1M9 5.5h1M2.3 2.3l.7.7M8 8l.7.7M2.3 8.7l.7-.7M8 3l.7-.7"/></svg>
+              </button>
+              <button class="fe-skill-action-btn del" title="删除">
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="2" y1="2" x2="9" y2="9"/><line x1="9" y1="2" x2="2" y2="9"/></svg>
+              </button>
+            </div>
           </div>
           <!-- 新添加技能由 JS 动态插入 -->
         </div>
@@ -1570,6 +2080,25 @@
         </div>
         <div class="fe-preview-disclaimer">内容由 AI 生成，仅供参考</div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 添加技能弹窗 ══ -->
+<div id="add-skill-modal" onclick="handleAddSkillModalBackdrop(event)">
+  <div class="add-skill-dialog">
+    <div class="add-skill-dialog-hd">
+      <div class="add-skill-dialog-title">添加技能</div>
+      <div class="add-skill-search-wrap">
+        <svg class="add-skill-search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="6" r="4"/><line x1="9.5" y1="9.5" x2="13" y2="13"/></svg>
+        <input class="add-skill-search" id="add-skill-search-input" type="text" placeholder="搜索技能名称…" oninput="filterAddSkillList(this.value)" />
+      </div>
+    </div>
+    <div class="add-skill-list" id="add-skill-list">
+      <!-- 由 JS 动态渲染 -->
+    </div>
+    <div class="add-skill-dialog-ft">
+      <button class="fe-btn-cancel" onclick="closeAddSkillModal()">完成</button>
     </div>
   </div>
 </div>
@@ -1797,6 +2326,248 @@
   </div><!-- end fe-view-chat -->
 
 </div><!-- end frontend-overlay -->
+
+<!-- ══ 技能详情抽屉 ══ -->
+<div class="skill-drawer-overlay" id="skill-drawer-overlay" onclick="closeSkillDrawer()"></div>
+<div class="skill-drawer" id="skill-drawer">
+  <div class="sd-handle"></div>
+  <div class="sd-header" id="sd-header"></div>
+  <div class="sd-desc" id="sd-desc"></div>
+  <div class="sd-meta" id="sd-meta"></div>
+  <div class="sd-divider"></div>
+  <div class="sd-body">
+    <div class="sd-filetree" id="sd-filetree"></div>
+    <div class="sd-preview" id="sd-preview"></div>
+  </div>
+</div>
+
+<!-- ══ 导入社区技能弹窗 ══ -->
+<div class="skill-upload-overlay" id="skill-import-overlay">
+  <div class="skill-upload-modal">
+    <div class="skill-upload-header">
+      <span class="skill-upload-title">导入社区技能</span>
+      <button class="skill-upload-close" onclick="closeSkillImport()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg>
+      </button>
+    </div>
+
+    <!-- Step 1：URL 输入 -->
+    <div class="upload-step active" id="import-step-1">
+      <div class="import-url-area">
+        <div class="import-label">技能包 URL</div>
+        <input class="import-url-input" id="import-url-input" type="text"
+          value="https://github.com/finereport/store-traffic-skill"
+          placeholder="输入 GitHub 仓库地址或直链 zip URL"
+          oninput="detectUrlType(this.value)">
+        <div class="import-url-type" id="import-url-type">
+          <span class="import-url-badge">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M6 0C2.686 0 0 2.686 0 6c0 2.652 1.718 4.9 4.102 5.694.3.055.41-.13.41-.29v-1.018c-1.668.362-2.018-.805-2.018-.805-.272-.692-.664-.876-.664-.876-.544-.371.04-.364.04-.364.6.042.916.617.916.617.534.914 1.4.65 1.74.497.054-.386.208-.65.38-.8-1.33-.152-2.73-.665-2.73-2.96 0-.653.234-1.187.617-1.606-.062-.152-.268-.76.058-1.584 0 0 .502-.16 1.644.613A5.73 5.73 0 0 1 6 2.85c.508.003 1.02.069 1.498.2 1.14-.772 1.642-.613 1.642-.613.326.823.12 1.432.06 1.584.383.42.616.953.616 1.606 0 2.302-1.402 2.806-2.737 2.954.216.186.408.55.408 1.11v1.643c0 .16.108.347.413.289C10.285 10.899 12 8.65 12 6c0-3.314-2.686-6-6-6z"/></svg>
+            GitHub 仓库
+          </span>
+          <span class="import-url-desc" id="import-url-desc">将读取默认分支的技能包</span>
+        </div>
+      </div>
+      <div class="import-hint">仅支持公开可访问的 URL，服务端代理请求以避免 CORS 限制</div>
+      <div class="import-step1-footer">
+        <div class="import-step1-sim demo-control">原型演示：<a onclick="startImportFlow(); event.stopPropagation();">模拟解析成功</a> &nbsp;·&nbsp; <a onclick="startImportError(); event.stopPropagation();">模拟网络错误</a></div>
+        <button class="upload-btn-cancel" onclick="closeSkillImport()">取消</button>
+        <button class="btn-primary" onclick="startImportFlow()">解析</button>
+      </div>
+    </div>
+
+    <!-- Step 2：拉取解析中 -->
+    <div class="upload-step" id="import-step-2">
+      <div class="upload-parsing-wrap">
+        <div class="upload-spinner"></div>
+        <div class="upload-parsing-title">正在拉取技能包…</div>
+        <div class="upload-parse-steps">
+          <div class="upload-parse-step" id="ip-connect"><em class="parse-step-icon">○</em>建立服务端请求</div>
+          <div class="upload-parse-step" id="ip-fetch"><em class="parse-step-icon">○</em>拉取远程内容</div>
+          <div class="upload-parse-step" id="ip-meta"><em class="parse-step-icon">○</em>解析技能元数据</div>
+          <div class="upload-parse-step" id="ip-validate"><em class="parse-step-icon">○</em>执行元数据验证</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3：预览确认 -->
+    <div class="upload-step" id="import-step-3">
+      <div class="upload-preview-wrap">
+        <div class="upload-skill-header">
+          <div class="upload-skill-emoji" style="background:#E8F5FF;">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><polyline points="3,16 8,10 12,13 18,6" stroke="#019EDF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="18" cy="6" r="2" fill="#019EDF"/></svg>
+          </div>
+          <div class="upload-skill-meta">
+            <div class="upload-skill-name">门店客流分析</div>
+            <div class="upload-skill-desc-text">统计各门店日均客流量及高峰时段，支持区域汇总和环比对比。</div>
+          </div>
+          <div class="upload-validation">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#1A8C52" stroke-width="1.8"><circle cx="7" cy="7" r="5.5"/><path d="M4.5 7l2 2 3-3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            验证通过
+          </div>
+        </div>
+
+        <!-- 可编辑技能名称 -->
+        <div class="import-name-row">
+          <div class="import-label" style="font-size:12px;">技能名称 <span style="font-weight:400;color:var(--neutral-8);">（可修改，避免与已有技能冲突）</span></div>
+          <input class="import-name-input" id="import-skill-name" type="text" value="门店客流分析">
+        </div>
+
+        <!-- 文件结构 -->
+        <div>
+          <div class="upload-section-title">文件结构</div>
+          <div class="upload-file-tree">
+            <div class="file-tree-item ok">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="2" y="1.5" width="9" height="10" rx="1.5" stroke="var(--neutral-8)" stroke-width="1.2"/><path d="M4 5h5M4 7.5h3" stroke="var(--neutral-8)" stroke-width="1.2" stroke-linecap="round"/></svg>
+              SKILL.md
+            </div>
+            <div class="file-tree-item ok">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1.5 3.5a1 1 0 0 1 1-1h3l1.5 1.5h4a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1z" stroke="var(--neutral-8)" stroke-width="1.2"/></svg>
+              scripts/
+            </div>
+            <div class="file-tree-item indent">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="2" y="1.5" width="9" height="10" rx="1.5" stroke="var(--neutral-7)" stroke-width="1.2"/></svg>
+              traffic_query.py
+            </div>
+            <div class="file-tree-item ok">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1.5 3.5a1 1 0 0 1 1-1h3l1.5 1.5h4a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1z" stroke="var(--neutral-8)" stroke-width="1.2"/></svg>
+              references/
+            </div>
+            <div class="file-tree-item indent">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="2" y="1.5" width="9" height="10" rx="1.5" stroke="var(--neutral-7)" stroke-width="1.2"/></svg>
+              store_schema.json
+            </div>
+          </div>
+        </div>
+
+        <!-- 来源 URL -->
+        <div class="import-source-row">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="6" cy="6" r="4.5"/><path d="M4 6c0-1.1.4-2 1-2.6M8 6c0 1.1-.4 2-1 2.6M2.5 4.5h7M2.5 7.5h7" stroke-linecap="round"/></svg>
+          来源：https://github.com/finereport/store-traffic-skill
+        </div>
+      </div>
+      <div class="upload-footer">
+        <button class="upload-btn-cancel" onclick="closeSkillImport()">取消</button>
+        <button class="btn-primary" onclick="confirmImportSkill()">确认导入</button>
+      </div>
+    </div>
+
+    <!-- Error：拉取失败 -->
+    <div class="upload-step" id="import-step-error">
+      <div class="upload-error-wrap">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="17" stroke="#E03535" stroke-width="1.8"/><path d="M20 12v10" stroke="#E03535" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="27" r="1.5" fill="#E03535"/></svg>
+        <div class="upload-error-title">拉取失败</div>
+        <div class="upload-error-desc">无法访问该 URL，请确认地址可公开访问。<br>若为私有仓库，请先导出 zip 文件后再上传。</div>
+        <div class="upload-error-footer">
+          <button class="upload-btn-cancel" onclick="resetImportModal()">重新输入</button>
+          <button class="btn-primary" onclick="closeSkillImport()">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 上传技能包弹窗 ══ -->
+<div class="skill-upload-overlay" id="skill-upload-overlay">
+  <div class="skill-upload-modal">
+    <div class="skill-upload-header">
+      <span class="skill-upload-title">上传技能包</span>
+      <button class="skill-upload-close" onclick="closeSkillUpload()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg>
+      </button>
+    </div>
+
+    <!-- Step 1：选择文件 -->
+    <div class="upload-step active" id="upload-step-1">
+      <div class="upload-dropzone" onclick="startUploadFlow()">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="var(--neutral-6)" stroke-width="1.5">
+          <rect x="5" y="8" width="26" height="22" rx="3"/>
+          <path d="M13 8V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v3"/>
+          <path d="M18 14v8M14.5 18.5L18 22l3.5-3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="upload-dz-title">拖拽 .zip 文件至此，或点击选择</div>
+        <div class="upload-dz-hint">最大 50MB · 根目录须包含 SKILL.md</div>
+      </div>
+      <div class="upload-dz-sim demo-control">
+        原型演示：<a onclick="startUploadFlow(); event.stopPropagation();">模拟上传成功</a> &nbsp;·&nbsp; <a onclick="startUploadError(); event.stopPropagation();">模拟格式错误</a>
+      </div>
+    </div>
+
+    <!-- Step 2：解析中 -->
+    <div class="upload-step" id="upload-step-2">
+      <div class="upload-parsing-wrap">
+        <div class="upload-spinner"></div>
+        <div class="upload-parsing-title">正在解析技能包…</div>
+        <div class="upload-parse-steps">
+          <div class="upload-parse-step" id="ps-unzip"><em class="parse-step-icon">○</em>解压 zip 文件</div>
+          <div class="upload-parse-step" id="ps-skill-md"><em class="parse-step-icon">○</em>检测 SKILL.md</div>
+          <div class="upload-parse-step" id="ps-meta"><em class="parse-step-icon">○</em>提取元数据</div>
+          <div class="upload-parse-step" id="ps-validate"><em class="parse-step-icon">○</em>执行元数据验证</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3：预览确认 -->
+    <div class="upload-step" id="upload-step-3">
+      <div class="upload-preview-wrap">
+        <div class="upload-skill-header">
+          <div class="upload-skill-emoji" style="background:#EEF3FF;">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="3" y="2" width="14" height="18" rx="2" stroke="#0047FD" stroke-width="1.5"/><path d="M7 7h8M7 11h8M7 15h5" stroke="#0047FD" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <div class="upload-skill-meta">
+            <div class="upload-skill-name">合同数据查询</div>
+            <div class="upload-skill-desc-text">根据合同编号或甲方名称查询合同详情及当前履约状态，支持模糊匹配。</div>
+          </div>
+          <div class="upload-validation">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#1A8C52" stroke-width="1.8"><circle cx="7" cy="7" r="5.5"/><path d="M4.5 7l2 2 3-3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            验证通过
+          </div>
+        </div>
+        <div>
+          <div class="upload-section-title">文件结构</div>
+          <div class="upload-file-tree">
+            <div class="file-tree-item ok">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="2" y="1.5" width="9" height="10" rx="1.5" stroke="var(--neutral-8)" stroke-width="1.2"/><path d="M4 5h5M4 7.5h3" stroke="var(--neutral-8)" stroke-width="1.2" stroke-linecap="round"/></svg>
+              SKILL.md
+            </div>
+            <div class="file-tree-item ok">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1.5 3.5a1 1 0 0 1 1-1h3l1.5 1.5h4a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1z" stroke="var(--neutral-8)" stroke-width="1.2"/></svg>
+              scripts/
+            </div>
+            <div class="file-tree-item indent">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="2" y="1.5" width="9" height="10" rx="1.5" stroke="var(--neutral-7)" stroke-width="1.2"/></svg>
+              query.py
+            </div>
+            <div class="file-tree-item ok">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1.5 3.5a1 1 0 0 1 1-1h3l1.5 1.5h4a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1z" stroke="var(--neutral-8)" stroke-width="1.2"/></svg>
+              references/
+            </div>
+            <div class="file-tree-item indent">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="2" y="1.5" width="9" height="10" rx="1.5" stroke="var(--neutral-7)" stroke-width="1.2"/></svg>
+              contract_schema.json
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="upload-footer">
+        <button class="upload-btn-cancel" onclick="closeSkillUpload()">取消</button>
+        <button class="btn-primary" onclick="confirmSkillUpload()">确认导入</button>
+      </div>
+    </div>
+
+    <!-- Error：解析失败 -->
+    <div class="upload-step" id="upload-step-error">
+      <div class="upload-error-wrap">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="17" stroke="#E03535" stroke-width="1.8"/><path d="M20 12v10" stroke="#E03535" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="27" r="1.5" fill="#E03535"/></svg>
+        <div class="upload-error-title">解析失败</div>
+        <div class="upload-error-desc">未在 zip 包根目录中找到 SKILL.md。<br>请确认包结构符合 Agent Skills 标准后重新打包上传。</div>
+        <div class="upload-error-footer">
+          <button class="upload-btn-cancel" onclick="resetUploadModal()">重新上传</button>
+          <button class="btn-primary" onclick="closeSkillUpload()">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ══ 方案 B 模拟浏览器 Tab 栏（全局，仅在方案 B + 前台打开时显示） ══ -->
 
@@ -2304,6 +3075,12 @@
     el.style.height = Math.min(el.scrollHeight, 160) + 'px';
   }
 
+  /* ── 交互说明开关 ── */
+  function toggleDemoMode(el) {
+    document.body.classList.toggle('demo-mode');
+    el.classList.toggle('active');
+  }
+
   /* ── 方案切换 ── */
   let currentVariant = 'a';
 
@@ -2355,6 +3132,131 @@
   /* ── 下拉菜单 ── */
   const btn = document.getElementById('custom-skill-btn');
   const dropdown = document.getElementById('custom-skill-dropdown');
+
+  /* ══ 添加技能弹窗 ══ */
+  let addedSkillIdsInConfig = new Set();
+
+  function openAddSkillModal() {
+    // 读取当前配置页中已有的技能 id
+    addedSkillIdsInConfig = new Set();
+    document.querySelectorAll('#fe-acp-skills [data-skill-config-id]').forEach(el => {
+      addedSkillIdsInConfig.add(el.dataset.skillConfigId);
+    });
+    document.getElementById('add-skill-search-input').value = '';
+    renderAddSkillList('');
+    document.getElementById('add-skill-modal').classList.add('open');
+  }
+
+  function closeAddSkillModal() {
+    document.getElementById('add-skill-modal').classList.remove('open');
+  }
+
+  function handleAddSkillModalBackdrop(e) {
+    if (e.target === document.getElementById('add-skill-modal')) closeAddSkillModal();
+  }
+
+  function filterAddSkillList(q) {
+    renderAddSkillList(q.trim());
+  }
+
+  function isSkillDisabled(skillId) {
+    const card = document.querySelector(`.skill-card[data-skill-id="${skillId}"]`);
+    return card ? card.dataset.status === 'disabled' : false;
+  }
+
+  function renderAddSkillList(query) {
+    const list = document.getElementById('add-skill-list');
+    const lower = query.toLowerCase();
+
+    const allEntries = Object.entries(skillRegistry).filter(([id, s]) => {
+      if (lower && !s.name.toLowerCase().includes(lower) && !s.desc.toLowerCase().includes(lower)) return false;
+      return true;
+    });
+
+    const official = allEntries.filter(([, s]) => s.type === 'official');
+    const custom   = allEntries.filter(([, s]) => s.type !== 'official');
+
+    if (allEntries.length === 0) {
+      list.innerHTML = '<div style="padding:32px;text-align:center;color:var(--neutral-9);font-size:13px;">未找到匹配技能</div>';
+      return;
+    }
+
+    const renderGroup = (groupLabel, entries) => {
+      if (entries.length === 0) return '';
+      const header = `<div style="padding:8px 20px 4px;font-size:11px;font-weight:600;color:var(--neutral-9);letter-spacing:.04em;text-transform:uppercase;">${groupLabel}</div>`;
+      const items = entries.map(([id, s]) => {
+        const isAdded    = addedSkillIdsInConfig.has(id);
+        const isDisabled = isSkillDisabled(id);
+        return `<div class="add-skill-item" style="${isDisabled ? 'opacity:0.45;' : ''}">
+          <div class="add-skill-item-icon" style="background:${s.iconBg}">${s.iconSvg}</div>
+          <div class="add-skill-item-info">
+            <div class="add-skill-item-name">${escapeHtml(s.name)}${isDisabled ? ' <span style="font-size:10px;color:var(--neutral-9);background:var(--neutral-2);border-radius:3px;padding:1px 5px;">已禁用</span>' : ''}</div>
+            <div class="add-skill-item-desc">${escapeHtml(s.desc)}</div>
+          </div>
+          ${isDisabled
+            ? `<button class="add-skill-item-btn" disabled style="opacity:0.4;cursor:not-allowed;">添加</button>`
+            : `<button class="add-skill-item-btn ${isAdded ? 'added' : ''}" data-skill-id="${id}"
+                onclick="toggleAddSkillInConfig('${id}', this)">${isAdded ? '移除' : '添加'}</button>`
+          }
+        </div>`;
+      }).join('');
+      return header + items;
+    };
+
+    list.innerHTML = renderGroup('官方', official) + renderGroup('自定义', custom);
+  }
+
+  function toggleAddSkillInConfig(skillId, btn) {
+    if (addedSkillIdsInConfig.has(skillId)) {
+      addedSkillIdsInConfig.delete(skillId);
+      btn.textContent = '添加';
+      btn.classList.remove('added');
+      removeSkillFromConfigPanel(skillId);
+    } else {
+      addedSkillIdsInConfig.add(skillId);
+      btn.textContent = '移除';
+      btn.classList.add('added');
+      addSkillToConfigPanel(skillId);
+    }
+  }
+
+  function addSkillToConfigPanel(skillId) {
+    const s = skillRegistry[skillId];
+    if (!s) return;
+    const skillsEl = document.getElementById('fe-acp-skills');
+    if (skillsEl.querySelector(`[data-skill-config-id="${skillId}"]`)) return;
+    const item = document.createElement('div');
+    item.className = 'fe-config-skill-item';
+    item.dataset.skillConfigId = skillId;
+    item.innerHTML = `
+      <div class="fe-config-skill-icon" style="background:${s.iconBg}">${s.iconSvg}</div>
+      <span class="fe-config-skill-name">${escapeHtml(s.name)}</span>
+      <span class="fe-config-skill-new">新加入</span>
+      <div class="fe-skill-item-actions">
+        <button class="fe-skill-action-btn" title="配置">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="5.5" cy="5.5" r="1.8"/><path d="M5.5 1v1M5.5 9v1M1 5.5h1M9 5.5h1M2.3 2.3l.7.7M8 8l.7.7M2.3 8.7l.7-.7M8 3l.7-.7"/></svg>
+        </button>
+        <button class="fe-skill-action-btn del" title="删除" onclick="removeSkillFromConfigPanel('${skillId}'); syncAddSkillBtn('${skillId}', false);">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="2" y1="2" x2="9" y2="9"/><line x1="9" y1="2" x2="2" y2="9"/></svg>
+        </button>
+      </div>`;
+    skillsEl.appendChild(item);
+  }
+
+  function removeSkillFromConfigPanel(skillId) {
+    const skillsEl = document.getElementById('fe-acp-skills');
+    const item = skillsEl.querySelector(`[data-skill-config-id="${skillId}"]`);
+    if (item) item.remove();
+  }
+
+  function syncAddSkillBtn(skillId, added) {
+    addedSkillIdsInConfig.delete(skillId);
+    const btn = document.querySelector(`#add-skill-list [data-skill-id="${skillId}"]`);
+    if (btn) {
+      btn.textContent = '添加';
+      btn.classList.remove('added');
+    }
+  }
 
   function toggleDropdown() {
     const isOpen = dropdown.classList.contains('open');
@@ -2465,31 +3367,77 @@
 
   /* ══ Agent 配置页 ══ */
   let configBackTarget = null;
+  let currentConfigAgentId = null;
+  // 每个 agent 已保存的技能 id 列表，key = agentId, value = string[]
+  const savedAgentSkillIds = {};
+
+  function buildDefaultSkillsHTML() {
+    return `<div class="fe-config-skill-item">
+      <div class="fe-config-skill-icon" style="background:#F3EEFF;">📋</div>
+      <span class="fe-config-skill-name">报表生成技能</span>
+      <div class="fe-skill-item-actions">
+        <button class="fe-skill-action-btn" title="配置">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="5.5" cy="5.5" r="1.8"/><path d="M5.5 1v1M5.5 9v1M1 5.5h1M9 5.5h1M2.3 2.3l.7.7M8 8l.7.7M2.3 8.7l.7-.7M8 3l.7-.7"/></svg>
+        </button>
+        <button class="fe-skill-action-btn del" title="删除">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="2" y1="2" x2="9" y2="9"/><line x1="9" y1="2" x2="2" y2="9"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }
 
   function openAgentConfig(agentId, skill) {
     const agent = AGENTS[agentId];
+    currentConfigAgentId = agentId;
 
     // 更新 header
     document.getElementById('fe-acp-name').textContent = agent ? agent.name : agentId;
+    const avatarEl = document.getElementById('fe-acp-avatar-icon');
+    if (avatarEl) {
+      avatarEl.textContent = agent ? agent.emoji : '🤖';
+      avatarEl.style.background = agent ? agent.avatarBg : '#EEF3FF';
+    }
     document.getElementById('fe-acp-preview-icon').textContent = agent ? agent.emoji : '🤖';
     document.getElementById('fe-acp-preview-name').textContent = agent ? agent.name : agentId;
 
-    // 重置技能列表（保留默认"报表生成技能"，追加新技能）
     const skillsEl = document.getElementById('fe-acp-skills');
-    skillsEl.innerHTML = `
-      <div class="fe-config-skill-item">
-        <div class="fe-config-skill-icon" style="background:#F3EEFF;">📋</div>
-        <span class="fe-config-skill-name">报表生成技能</span>
-      </div>`;
-    if (skill) {
-      const newItem = document.createElement('div');
-      newItem.className = 'fe-config-skill-item';
-      newItem.innerHTML = `
-        <div class="fe-config-skill-icon" style="background:${skill.iconBg}">${skill.emoji}</div>
-        <span class="fe-config-skill-name">${escapeHtml(skill.name)}</span>
-        <span class="fe-config-skill-new">新加入</span>`;
-      skillsEl.appendChild(newItem);
+    skillsEl.innerHTML = buildDefaultSkillsHTML();
+
+    // 恢复已保存的技能
+    const saved = savedAgentSkillIds[agentId] || [];
+    saved.forEach(id => addSkillToConfigPanel(id));
+
+    // 追加本次新传入的技能（如不在已保存列表中）
+    if (skill && skill.id) {
+      const registrySkill = skillRegistry[skill.id];
+      if (!saved.includes(skill.id)) {
+        const newItem = document.createElement('div');
+        newItem.className = 'fe-config-skill-item';
+        newItem.dataset.skillConfigId = skill.id;
+        if (registrySkill) {
+          newItem.innerHTML = `
+            <div class="fe-config-skill-icon" style="background:${registrySkill.iconBg}">${registrySkill.iconSvg}</div>
+            <span class="fe-config-skill-name">${escapeHtml(registrySkill.name)}</span>
+            <span class="fe-config-skill-new">新加入</span>
+            <div class="fe-skill-item-actions">
+              <button class="fe-skill-action-btn" title="配置"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="5.5" cy="5.5" r="1.8"/><path d="M5.5 1v1M5.5 9v1M1 5.5h1M9 5.5h1M2.3 2.3l.7.7M8 8l.7.7M2.3 8.7l.7-.7M8 3l.7-.7"/></svg></button>
+              <button class="fe-skill-action-btn del" title="删除" onclick="removeSkillFromConfigPanel('${skill.id}'); syncAddSkillBtn('${skill.id}', false);"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="2" y1="2" x2="9" y2="9"/><line x1="9" y1="2" x2="2" y2="9"/></svg></button>
+            </div>`;
+        } else {
+          newItem.innerHTML = `
+            <div class="fe-config-skill-icon" style="background:${skill.iconBg}">${skill.emoji || ''}</div>
+            <span class="fe-config-skill-name">${escapeHtml(skill.name)}</span>
+            <span class="fe-config-skill-new">新加入</span>`;
+        }
+        skillsEl.appendChild(newItem);
+      }
     }
+
+    // 重新检查各技能的禁用状态
+    skillsEl.querySelectorAll('[data-skill-config-id]').forEach(item => {
+      const id = item.dataset.skillConfigId;
+      if (isSkillDisabled(id)) syncConfigPanelSkillDisabled(id, true);
+    });
 
     document.getElementById('fe-agent-config').classList.add('open');
   }
@@ -2519,6 +3467,34 @@
     document.getElementById('fe-agent-config').classList.add('open');
   }
 
+  function saveAgentConfig() {
+    // 持久化当前配置页的技能列表
+    if (currentConfigAgentId) {
+      const ids = [];
+      document.querySelectorAll('#fe-acp-skills [data-skill-config-id]').forEach(el => {
+        ids.push(el.dataset.skillConfigId);
+      });
+      savedAgentSkillIds[currentConfigAgentId] = ids;
+      // 同时移除「新加入」标签——保存后不再是新加入状态
+      document.querySelectorAll('#fe-acp-skills .fe-config-skill-new').forEach(el => el.remove());
+    }
+
+    const btn = document.getElementById('fe-acp-save-btn');
+    const info = document.getElementById('fe-acp-save-info');
+    btn.textContent = '已保存';
+    btn.disabled = true;
+    btn.style.color = '#009880';
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const ts = `${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    info.textContent = `最近保存 ${ts}`;
+    setTimeout(() => {
+      btn.textContent = '保存';
+      btn.disabled = false;
+      btn.style.color = '';
+    }, 1500);
+  }
+
   function closeAgentConfig() {
     document.getElementById('fe-agent-config').classList.remove('open');
     // 关闭前台覆盖层（如果来自前台）
@@ -2537,12 +3513,505 @@
     });
   }
 
-  // 点击外部收起
+  // 点击外部收起下拉菜单
   document.addEventListener('click', (e) => {
     const root = document.getElementById('dropdown-root');
     if (!root.contains(e.target)) {
       closeDropdown();
     }
+    if (!e.target.closest('.csc-ctrl')) {
+      closeAllSkillMenus();
+    }
+  });
+
+  // 自定义技能 context menu
+  function toggleSkillMenu(btn, event) {
+    event.stopPropagation();
+    const menu = btn.nextElementSibling;
+    const isOpen = menu.classList.contains('open');
+    closeAllSkillMenus();
+    if (!isOpen) {
+      const rect = btn.getBoundingClientRect();
+      const menuHeight = 230;
+      let top = rect.bottom + 4;
+      if (top + menuHeight > window.innerHeight) top = rect.top - menuHeight - 4;
+      menu.style.top = top + 'px';
+      menu.style.left = Math.max(8, rect.right - 164) + 'px';
+      menu.classList.add('open');
+      btn.classList.add('open');
+    }
+  }
+
+  function closeAllSkillMenus() {
+    document.querySelectorAll('.skill-ctx-menu.open').forEach(m => m.classList.remove('open'));
+    document.querySelectorAll('.skill-more-btn.open').forEach(b => b.classList.remove('open'));
+  }
+
+  function setSkillDisabled(card, disabled) {
+    const badge = card.querySelector('.csc-badge');
+    if (disabled) {
+      card.classList.add('is-disabled');
+      card.dataset.status = 'disabled';
+      badge.textContent = '已禁用';
+      badge.className = 'csc-badge disabled-badge';
+      card.querySelectorAll('.csc-if-active').forEach(el => el.style.display = 'none');
+      card.querySelectorAll('.csc-if-disabled').forEach(el => el.style.display = 'flex');
+    } else {
+      card.classList.remove('is-disabled');
+      card.dataset.status = 'active';
+      badge.textContent = '可用';
+      badge.className = 'csc-badge active';
+      card.querySelectorAll('.csc-if-active').forEach(el => el.style.display = 'flex');
+      card.querySelectorAll('.csc-if-disabled').forEach(el => el.style.display = 'none');
+    }
+    closeAllSkillMenus();
+    // 同步 Agent 配置页中对应技能项的禁用标记
+    const skillId = card.dataset.skillId;
+    if (skillId) syncConfigPanelSkillDisabled(skillId, disabled);
+  }
+
+  function syncConfigPanelSkillDisabled(skillId, disabled) {
+    const item = document.querySelector(`#fe-acp-skills [data-skill-config-id="${skillId}"]`);
+    if (!item) return;
+    let disabledTag = item.querySelector('.fe-config-skill-disabled');
+    if (disabled) {
+      if (!disabledTag) {
+        disabledTag = document.createElement('span');
+        disabledTag.className = 'fe-config-skill-disabled';
+        disabledTag.textContent = '已禁用';
+        // 插到名称之后
+        const nameEl = item.querySelector('.fe-config-skill-name');
+        nameEl.insertAdjacentElement('afterend', disabledTag);
+      }
+    } else {
+      if (disabledTag) disabledTag.remove();
+    }
+  }
+
+  function trialSkillFromLibrary(skill) {
+    closeAllSkillMenus();
+    openAddToAgent(skill);
+  }
+
+  // ── 导入社区技能弹窗 ──
+  function openSkillImport() {
+    closeDropdown();
+    resetImportModal();
+    document.getElementById('skill-import-overlay').classList.add('open');
+  }
+
+  function closeSkillImport() {
+    document.getElementById('skill-import-overlay').classList.remove('open');
+  }
+
+  function resetImportModal() {
+    ['import-step-1','import-step-2','import-step-3','import-step-error'].forEach(id => {
+      document.getElementById(id).classList.remove('active');
+    });
+    ['ip-connect','ip-fetch','ip-meta','ip-validate'].forEach(id => {
+      const el = document.getElementById(id);
+      el.className = 'upload-parse-step';
+      el.querySelector('.parse-step-icon').textContent = '○';
+    });
+    document.getElementById('import-step-1').classList.add('active');
+  }
+
+  function showImportStep(stepId) {
+    ['import-step-1','import-step-2','import-step-3','import-step-error'].forEach(id => {
+      document.getElementById(id).classList.remove('active');
+    });
+    document.getElementById(stepId).classList.add('active');
+  }
+
+  function detectUrlType(url) {
+    const typeEl = document.getElementById('import-url-type');
+    const descEl = document.getElementById('import-url-desc');
+    const badgeEl = typeEl.querySelector('.import-url-badge');
+    if (!url.trim()) { typeEl.style.opacity = '0'; return; }
+    typeEl.style.opacity = '1';
+    if (url.includes('github.com')) {
+      badgeEl.innerHTML = `<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M6 0C2.686 0 0 2.686 0 6c0 2.652 1.718 4.9 4.102 5.694.3.055.41-.13.41-.29v-1.018c-1.668.362-2.018-.805-2.018-.805-.272-.692-.664-.876-.664-.876-.544-.371.04-.364.04-.364.6.042.916.617.916.617.534.914 1.4.65 1.74.497.054-.386.208-.65.38-.8-1.33-.152-2.73-.665-2.73-2.96 0-.653.234-1.187.617-1.606-.062-.152-.268-.76.058-1.584 0 0 .502-.16 1.644.613A5.73 5.73 0 0 1 6 2.85c.508.003 1.02.069 1.498.2 1.14-.772 1.642-.613 1.642-.613.326.823.12 1.432.06 1.584.383.42.616.953.616 1.606 0 2.302-1.402 2.806-2.737 2.954.216.186.408.55.408 1.11v1.643c0 .16.108.347.413.289C10.285 10.899 12 8.65 12 6c0-3.314-2.686-6-6-6z"/></svg> GitHub 仓库`;
+      descEl.textContent = '将读取默认分支的技能包';
+    } else if (url.match(/\.zip(\?|$)/)) {
+      badgeEl.innerHTML = '直链 zip 文件';
+      descEl.textContent = '将直接下载并解析 zip';
+    } else if (url.startsWith('http')) {
+      badgeEl.innerHTML = 'HTTP 地址';
+      descEl.textContent = '将尝试拉取并解析内容';
+    } else {
+      typeEl.style.opacity = '0';
+    }
+  }
+
+  function startImportFlow() {
+    showImportStep('import-step-2');
+    const steps = ['ip-connect','ip-fetch','ip-meta','ip-validate'];
+    steps.forEach(id => {
+      const el = document.getElementById(id);
+      el.className = 'upload-parse-step';
+      el.querySelector('.parse-step-icon').textContent = '○';
+    });
+    steps.forEach((id, i) => {
+      setTimeout(() => {
+        if (i > 0) {
+          const prev = document.getElementById(steps[i - 1]);
+          prev.className = 'upload-parse-step step-done';
+          prev.querySelector('.parse-step-icon').textContent = '✓';
+        }
+        const el = document.getElementById(id);
+        el.className = 'upload-parse-step step-active';
+        el.querySelector('.parse-step-icon').textContent = '›';
+        if (i === steps.length - 1) {
+          setTimeout(() => {
+            el.className = 'upload-parse-step step-done';
+            el.querySelector('.parse-step-icon').textContent = '✓';
+            setTimeout(() => showImportStep('import-step-3'), 200);
+          }, 500);
+        }
+      }, i * 520);
+    });
+  }
+
+  function startImportError() {
+    showImportStep('import-step-2');
+    ['ip-connect','ip-fetch','ip-meta','ip-validate'].forEach(id => {
+      const el = document.getElementById(id);
+      el.className = 'upload-parse-step';
+      el.querySelector('.parse-step-icon').textContent = '○';
+    });
+    setTimeout(() => {
+      const c = document.getElementById('ip-connect');
+      c.className = 'upload-parse-step step-active';
+      c.querySelector('.parse-step-icon').textContent = '›';
+    }, 300);
+    setTimeout(() => {
+      const c = document.getElementById('ip-connect');
+      c.className = 'upload-parse-step step-done';
+      c.querySelector('.parse-step-icon').textContent = '✓';
+      const f = document.getElementById('ip-fetch');
+      f.className = 'upload-parse-step step-active';
+      f.querySelector('.parse-step-icon').textContent = '›';
+    }, 900);
+    setTimeout(() => {
+      const f = document.getElementById('ip-fetch');
+      f.className = 'upload-parse-step step-error';
+      f.querySelector('.parse-step-icon').textContent = '✗';
+      setTimeout(() => showImportStep('import-step-error'), 400);
+    }, 1600);
+  }
+
+  function confirmImportSkill() {
+    const skillName = document.getElementById('import-skill-name').value.trim() || '门店客流分析';
+    closeSkillImport();
+    if (!document.getElementById('csc-card-imported')) {
+      skillRegistry['csc_imported'] = { name: skillName, type: 'import', iconBg: '#E8F5FF', iconSvg: '<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><polyline points="3,13 7,8 10,11 14,5" stroke="#019EDF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="14" cy="5" r="1.5" fill="#019EDF"/></svg>', desc: '统计各门店日均客流量及高峰时段，支持区域汇总和环比对比。', createdAt: new Date().toISOString().slice(0,10), sourcePath: 'https://github.com/finereport/store-traffic-skill' };
+      const grid = document.querySelector('#skill-tab-custom .card-grid');
+      const card = document.createElement('div');
+      card.className = 'skill-card';
+      card.dataset.status = 'active';
+      card.dataset.skillId = 'csc_imported';
+      card.id = 'csc-card-imported';
+      card.style.animation = 'fadeInCard 0.3s ease';
+      const skillObj = `{id:'csc_imported',name:'${skillName}',emoji:'📈',iconBg:'#E8F5FF'}`;
+      card.innerHTML = `
+        <div class="skill-card-inner">
+          <div class="skill-card-title">
+            <div class="skill-icon" style="background:#E8F5FF;">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><polyline points="3,13 7,8 10,11 14,5" stroke="#019EDF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="14" cy="5" r="1.5" fill="#019EDF"/></svg>
+            </div>
+            <span class="skill-name" style="flex:1;min-width:0;">${skillName}</span>
+            <div class="csc-ctrl">
+              <span class="csc-badge active">可用</span>
+              <button class="skill-more-btn" onclick="toggleSkillMenu(this, event)" title="更多操作">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="2.5" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="7" cy="11.5" r="1.2"/></svg>
+              </button>
+              <div class="skill-ctx-menu">
+                <div class="skill-ctx-item csc-if-active" style="display:flex;" onclick="trialSkillFromLibrary(${skillObj}); closeAllSkillMenus();">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><polygon points="5.5,4.5 10,7 5.5,9.5" fill="currentColor" stroke="none"/></svg>试用技能
+                </div>
+                <div class="skill-ctx-item csc-if-active" style="display:flex;" onclick="setSkillDisabled(document.getElementById('csc-card-imported'), true)">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><line x1="3.5" y1="7" x2="10.5" y2="7"/></svg>禁用
+                </div>
+                <div class="skill-ctx-item csc-if-disabled" style="display:none;" onclick="setSkillDisabled(document.getElementById('csc-card-imported'), false)">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><path d="M4.5 7l2 2 3-3"/></svg>取消禁用
+                </div>
+                <div class="skill-ctx-item" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="10" height="10" rx="1.5"/><path d="M5 7h4M7 5v4"/></svg>复制
+                </div>
+                <div class="skill-ctx-item" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10v1.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V10"/><path d="M7 2v7M4.5 6.5L7 9l2.5-2.5"/></svg>导出 zip
+                </div>
+                <div class="skill-ctx-item danger" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1.5,3.5 12.5,3.5"/><path d="M5.5,3.5v-1.5a.5.5,0,0,1,.5-.5h2a.5.5,0,0,1,.5.5v1.5"/><path d="M3,3.5l.7,8a.5.5,0,0,0,.5.5h5.6a.5.5,0,0,0,.5-.5l.7-8"/></svg>删除
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="skill-desc">统计各门店日均客流量及高峰时段，支持区域汇总和环比对比。</div>
+        </div>
+        <button class="skill-card-add-btn" onclick="trialSkillFromLibrary(${skillObj})">添加到 Agent 中试用</button>`;
+      grid.appendChild(card);
+    }
+  }
+
+  // ── 上传技能包弹窗 ──
+  function openSkillUpload() {
+    closeDropdown();
+    resetUploadModal();
+    document.getElementById('skill-upload-overlay').classList.add('open');
+  }
+
+  function closeSkillUpload() {
+    document.getElementById('skill-upload-overlay').classList.remove('open');
+  }
+
+  function resetUploadModal() {
+    ['upload-step-1','upload-step-2','upload-step-3','upload-step-error'].forEach(id => {
+      document.getElementById(id).classList.remove('active');
+    });
+    // reset parse step styles
+    ['ps-unzip','ps-skill-md','ps-meta','ps-validate'].forEach(id => {
+      const el = document.getElementById(id);
+      el.className = 'upload-parse-step';
+      el.style.color = '';
+      el.querySelector('.parse-step-icon').textContent = '○';
+    });
+    document.getElementById('upload-step-1').classList.add('active');
+  }
+
+  function showUploadStep(stepId) {
+    ['upload-step-1','upload-step-2','upload-step-3','upload-step-error'].forEach(id => {
+      document.getElementById(id).classList.remove('active');
+    });
+    document.getElementById(stepId).classList.add('active');
+  }
+
+  function startUploadFlow() {
+    showUploadStep('upload-step-2');
+    const steps = ['ps-unzip','ps-skill-md','ps-meta','ps-validate'];
+    steps.forEach(id => {
+      const el = document.getElementById(id);
+      el.className = 'upload-parse-step';
+      el.querySelector('.parse-step-icon').textContent = '○';
+    });
+    steps.forEach((id, i) => {
+      setTimeout(() => {
+        if (i > 0) {
+          const prev = document.getElementById(steps[i - 1]);
+          prev.className = 'upload-parse-step step-done';
+          prev.querySelector('.parse-step-icon').textContent = '✓';
+        }
+        const el = document.getElementById(id);
+        el.className = 'upload-parse-step step-active';
+        el.querySelector('.parse-step-icon').textContent = '›';
+        if (i === steps.length - 1) {
+          setTimeout(() => {
+            el.className = 'upload-parse-step step-done';
+            el.querySelector('.parse-step-icon').textContent = '✓';
+            setTimeout(() => showUploadStep('upload-step-3'), 200);
+          }, 500);
+        }
+      }, i * 520);
+    });
+  }
+
+  function startUploadError() {
+    showUploadStep('upload-step-2');
+    ['ps-unzip','ps-skill-md','ps-meta','ps-validate'].forEach(id => {
+      const el = document.getElementById(id);
+      el.className = 'upload-parse-step';
+      el.querySelector('.parse-step-icon').textContent = '○';
+    });
+    setTimeout(() => {
+      const unzip = document.getElementById('ps-unzip');
+      unzip.className = 'upload-parse-step step-active';
+      unzip.querySelector('.parse-step-icon').textContent = '›';
+    }, 300);
+    setTimeout(() => {
+      const unzip = document.getElementById('ps-unzip');
+      unzip.className = 'upload-parse-step step-done';
+      unzip.querySelector('.parse-step-icon').textContent = '✓';
+      const md = document.getElementById('ps-skill-md');
+      md.className = 'upload-parse-step step-active';
+      md.querySelector('.parse-step-icon').textContent = '›';
+    }, 900);
+    setTimeout(() => {
+      const md = document.getElementById('ps-skill-md');
+      md.className = 'upload-parse-step step-error';
+      md.querySelector('.parse-step-icon').textContent = '✗';
+      setTimeout(() => showUploadStep('upload-step-error'), 400);
+    }, 1600);
+  }
+
+  function confirmSkillUpload() {
+    closeSkillUpload();
+    if (!document.getElementById('csc-card-uploaded')) {
+      skillRegistry['csc_uploaded'] = { name: '合同数据查询', type: 'upload', iconBg: '#EEF3FF', iconSvg: '<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><rect x="3" y="2" width="12" height="14" rx="2" stroke="#0047FD" stroke-width="1.5"/><path d="M6 6h6M6 9h6M6 12h4" stroke="#0047FD" stroke-width="1.5" stroke-linecap="round"/></svg>', desc: '根据合同编号或甲方名称查询合同详情及当前履约状态，支持模糊匹配。', createdAt: new Date().toISOString().slice(0,10), sourcePath: 'contract-query-skill-v1.0.zip' };
+      const grid = document.querySelector('#skill-tab-custom .card-grid');
+      const card = document.createElement('div');
+      card.className = 'skill-card';
+      card.dataset.status = 'active';
+      card.dataset.skillId = 'csc_uploaded';
+      card.id = 'csc-card-uploaded';
+      card.style.animation = 'fadeInCard 0.3s ease';
+      card.innerHTML = `
+        <div class="skill-card-inner">
+          <div class="skill-card-title">
+            <div class="skill-icon" style="background:#EEF3FF;">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="3" y="2" width="12" height="14" rx="2" stroke="#0047FD" stroke-width="1.5"/><path d="M6 6h6M6 9h6M6 12h4" stroke="#0047FD" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <span class="skill-name" style="flex:1;min-width:0;">合同数据查询</span>
+            <div class="csc-ctrl">
+              <span class="csc-badge active">可用</span>
+              <button class="skill-more-btn" onclick="toggleSkillMenu(this, event)" title="更多操作">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="2.5" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="7" cy="11.5" r="1.2"/></svg>
+              </button>
+              <div class="skill-ctx-menu">
+                <div class="skill-ctx-item csc-if-active" style="display:flex;" onclick="trialSkillFromLibrary({id:'csc_uploaded',name:'合同数据查询',emoji:'📋',iconBg:'#EEF3FF'}); closeAllSkillMenus();">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><polygon points="5.5,4.5 10,7 5.5,9.5" fill="currentColor" stroke="none"/></svg>试用技能
+                </div>
+                <div class="skill-ctx-item csc-if-active" style="display:flex;" onclick="setSkillDisabled(document.getElementById('csc-card-uploaded'), true)">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><line x1="3.5" y1="7" x2="10.5" y2="7"/></svg>禁用
+                </div>
+                <div class="skill-ctx-item csc-if-disabled" style="display:none;" onclick="setSkillDisabled(document.getElementById('csc-card-uploaded'), false)">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><path d="M4.5 7l2 2 3-3"/></svg>取消禁用
+                </div>
+                <div class="skill-ctx-item" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="10" height="10" rx="1.5"/><path d="M5 7h4M7 5v4"/></svg>复制
+                </div>
+                <div class="skill-ctx-item" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10v1.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V10"/><path d="M7 2v7M4.5 6.5L7 9l2.5-2.5"/></svg>导出 zip
+                </div>
+                <div class="skill-ctx-item danger" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1.5,3.5 12.5,3.5"/><path d="M5.5,3.5v-1.5a.5.5,0,0,1,.5-.5h2a.5.5,0,0,1,.5.5v1.5"/><path d="M3,3.5l.7,8a.5.5,0,0,0,.5.5h5.6a.5.5,0,0,0,.5-.5l.7-8"/></svg>删除
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="skill-desc">根据合同编号或甲方名称查询合同详情及当前履约状态，支持模糊匹配。</div>
+        </div>
+        <button class="skill-card-add-btn" onclick="trialSkillFromLibrary({id:'csc_uploaded',name:'合同数据查询',emoji:'📋',iconBg:'#EEF3FF'})">添加到 Agent 中试用</button>`;
+      grid.appendChild(card);
+    }
+  }
+
+  /* ══════════════════════════════════════════
+     技能详情抽屉
+  ══════════════════════════════════════════ */
+  const skillRegistry = {
+    skill_data_query: { name:'数据查询', type:'official', iconBg:'#EEF3FF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="#0047FD" stroke-width="1.5"/><path d="M6 9h6M9 6v6" stroke="#0047FD" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'通过自然语言查询数据库，自动生成 SQL 并返回结构化结果，支持多数据源联查。', createdAt:'系统内置', sourcePath:null },
+    skill_code_gen:   { name:'代码生成', type:'official', iconBg:'#E8F8F5', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="12" height="12" rx="2" stroke="#009880" stroke-width="1.5"/><path d="M6 9l2 2 4-4" stroke="#009880" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>', desc:'根据描述生成 Python/SQL 代码片段，可直接运行，支持数据分析场景。', createdAt:'系统内置', sourcePath:null },
+    skill_report:     { name:'报表生成', type:'official', iconBg:'#F3EEFF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><path d="M3 14h12M3 10h12M3 6h8" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'基于数据源自动生成带格式的分析报告，支持图文混排和自定义模板。', createdAt:'系统内置', sourcePath:null },
+    skill_chart:      { name:'图表生成', type:'official', iconBg:'#E8F5FF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><polyline points="3,13 7,8 10,11 14,5" stroke="#019EDF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>', desc:'将数据转化为 ECharts 可视化图表，支持折线、柱状、饼图等多种类型。', createdAt:'系统内置', sourcePath:null },
+    skill_dashboard:  { name:'看板检索', type:'official', iconBg:'#F3EEFF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="6" stroke="#7B50D8" stroke-width="1.5"/><path d="M6 9l2 2 4-4" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'在 FineBI 看板中快速检索目标图表或分析结论，结果直接嵌入对话。', createdAt:'系统内置', sourcePath:null },
+    skill_frontend:   { name:'前端设计', type:'official', iconBg:'#F3EEFF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="12" height="12" rx="2" stroke="#7B50D8" stroke-width="1.5"/><path d="M6 6h6M6 9h4" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'根据数据描述生成前端组件代码，支持响应式布局和主题适配。', createdAt:'系统内置', sourcePath:null },
+    csc_1: { name:'销售数据查询', type:'dora', iconBg:'#EEF3FF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="#0047FD" stroke-width="1.5"/><path d="M6 9h6M9 6v6" stroke="#0047FD" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'通过自然语言查询销售数据库，支持按地区、产品线、时间段进行多维度筛选与汇总。', createdAt:'2025-03-12', sourcePath:null },
+    csc_2: { name:'用户行为分析', type:'dora', iconBg:'#F3EEFF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="6" r="3" stroke="#7B50D8" stroke-width="1.5"/><path d="M3 15c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'分析用户在产品中的点击路径与留存漏斗，输出热力图摘要和关键节点流失原因。', createdAt:'2025-03-18', sourcePath:null },
+    csc_3: { name:'竞品价格监控', type:'dora', iconBg:'#FFF8EC', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="6" stroke="#D18700" stroke-width="1.5"/><path d="M9 6v3l2 2" stroke="#D18700" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'定时抓取指定竞品页面价格，当变动幅度超过阈值时触发报警，并附带历史价格趋势图。', createdAt:'2025-02-27', sourcePath:null },
+    csc_4: { name:'财务预警提醒', type:'dora', iconBg:'#FFF8EC', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><path d="M9 3L2 15h14L9 3z" stroke="#D18700" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 9v3" stroke="#D18700" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="13.5" r="0.75" fill="#D18700"/></svg>', desc:'监控关键财务指标（利润率、应收账款等），超出预设阈值时向指定人员发送钉钉通知。', createdAt:'2025-04-01', sourcePath:null },
+  };
+
+  function openSkillDrawer(skillId) {
+    const skill = skillRegistry[skillId];
+    if (!skill) return;
+    const cardEl = document.querySelector(`.skill-card[data-skill-id="${skillId}"]`);
+    const isDisabled = cardEl && cardEl.dataset.status === 'disabled';
+    const isCustom = skill.type !== 'official';
+    const srcClass = { official:'sd-src-official', dora:'sd-src-dora', upload:'sd-src-upload', import:'sd-src-import' }[skill.type];
+    const srcLabel = { official:'官方', dora:'dora 创建', upload:'上传', import:'导入' }[skill.type];
+
+    document.getElementById('sd-header').innerHTML = `
+      <div class="sd-icon" style="background:${skill.iconBg}">${skill.iconSvg}</div>
+      <div class="sd-title-group">
+        <div class="sd-name-row">
+          <span class="sd-name">${skill.name}</span>
+          <button class="sd-edit-btn${isCustom ? ' visible' : ''}" title="编辑名称">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5l2 2-7 7H2.5v-2L9.5 2.5z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="sd-actions">
+        ${isCustom ? `<span class="sd-status-badge ${isDisabled ? 'disabled' : 'active'}">${isDisabled ? '已禁用' : '可用'}</span>
+          <button class="sd-disable-btn visible" onclick="drawerToggleDisable('${skillId}')">${isDisabled ? '取消禁用' : '禁用'}</button>` : ''}
+        <button class="sd-trial-btn" onclick="drawerTrialSkill('${skillId}')">试用技能</button>
+      </div>`;
+
+    document.getElementById('sd-desc').textContent = skill.desc;
+
+    let metaHtml = `<span class="sd-src-badge ${srcClass}">${srcLabel}</span>`;
+    if (skill.sourcePath) metaHtml += `<span class="sd-meta-sep">·</span><span class="sd-meta-path">${skill.sourcePath}</span>`;
+    metaHtml += `<span class="sd-meta-sep">·</span><span class="sd-meta-time">创建于 ${skill.createdAt}</span>`;
+    document.getElementById('sd-meta').innerHTML = metaHtml;
+
+    document.getElementById('sd-filetree').innerHTML = `
+      <div class="sd-ft-item selected"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2" y="1" width="10" height="12" rx="1.5"/><path d="M4 5h6M4 7h4"/></svg>SKILL.md</div>
+      <div class="sd-ft-item folder"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1 4h12v8H1z"/><path d="M1 4l2-2h3l1 2"/></svg>assets/</div>
+      <div class="sd-ft-item sd-ft-indent"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2" y="1" width="10" height="12" rx="1.5"/></svg>icon.svg</div>
+      <div class="sd-ft-item folder"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1 4h12v8H1z"/><path d="M1 4l2-2h3l1 2"/></svg>references/</div>
+      <div class="sd-ft-item sd-ft-indent"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2" y="1" width="10" height="12" rx="1.5"/></svg>schema.json</div>
+      <div class="sd-ft-item folder"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1 4h12v8H1z"/><path d="M1 4l2-2h3l1 2"/></svg>scripts/</div>
+      <div class="sd-ft-item sd-ft-indent"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2" y="1" width="10" height="12" rx="1.5"/></svg>main.py</div>`;
+
+    const yaml = [
+      '<span class="sd-yaml-comment">---</span>',
+      `<span class="sd-yaml-key">name</span>: <span class="sd-yaml-str">"${skill.name}"</span>`,
+      `<span class="sd-yaml-key">description</span>: <span class="sd-yaml-str">"${skill.desc.substring(0,45)}..."</span>`,
+      `<span class="sd-yaml-key">version</span>: <span class="sd-yaml-str">"1.0.0"</span>`,
+      `<span class="sd-yaml-key">author</span>: <span class="sd-yaml-str">"FineReport"</span>`,
+      `<span class="sd-yaml-key">category</span>: <span class="sd-yaml-str">"data-analysis"</span>`,
+      `<span class="sd-yaml-key">inputs</span>:`,
+      `  - <span class="sd-yaml-key">name</span>: <span class="sd-yaml-str">"query"</span>`,
+      `    <span class="sd-yaml-key">type</span>: <span class="sd-yaml-str">"string"</span>`,
+      `    <span class="sd-yaml-key">required</span>: <span class="sd-yaml-val">true</span>`,
+      `<span class="sd-yaml-key">outputs</span>:`,
+      `  - <span class="sd-yaml-key">name</span>: <span class="sd-yaml-str">"result"</span>`,
+      `    <span class="sd-yaml-key">type</span>: <span class="sd-yaml-str">"object"</span>`,
+      `<span class="sd-yaml-comment">---</span>`,
+      ``,
+      `<span class="sd-yaml-heading"># ${skill.name}</span>`,
+      ``,
+      skill.desc,
+      ``,
+      `<span class="sd-yaml-heading">## 使用示例</span>`,
+      ``,
+      `\`\`\``,
+      `查询上季度华东区域的${skill.name}数据`,
+      `\`\`\``,
+    ].join('\n');
+    document.getElementById('sd-preview').innerHTML = `<pre>${yaml}</pre>`;
+
+    document.getElementById('skill-drawer').dataset.currentSkill = skillId;
+    document.getElementById('skill-drawer-overlay').classList.add('open');
+    requestAnimationFrame(() => document.getElementById('skill-drawer').classList.add('open'));
+  }
+
+  function closeSkillDrawer() {
+    document.getElementById('skill-drawer').classList.remove('open');
+    document.getElementById('skill-drawer-overlay').classList.remove('open');
+  }
+
+  function drawerTrialSkill(skillId) {
+    const skill = skillRegistry[skillId];
+    closeSkillDrawer();
+    if (skill) trialSkillFromLibrary({ id: skillId, name: skill.name, emoji: '⚡', iconBg: skill.iconBg });
+  }
+
+  function drawerToggleDisable(skillId) {
+    const cardEl = document.querySelector(`.skill-card[data-skill-id="${skillId}"]`);
+    if (!cardEl) return;
+    const isDisabled = cardEl.dataset.status === 'disabled';
+    setSkillDisabled(cardEl, !isDisabled);
+    closeSkillDrawer();
+    setTimeout(() => openSkillDrawer(skillId), 60);
+  }
+
+  // Open drawer on card click, skip action controls
+  document.addEventListener('click', function(e) {
+    const card = e.target.closest('.skill-card');
+    if (!card) return;
+    if (e.target.closest('.skill-card-add-btn') || e.target.closest('.csc-ctrl') || e.target.closest('.skill-ctx-menu')) return;
+    const skillId = card.dataset.skillId;
+    if (skillId) openSkillDrawer(skillId);
   });
 
   // 默认进入前台首页

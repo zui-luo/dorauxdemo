@@ -64,6 +64,11 @@ uxdemo/
 
 > **原则**：交互评审和视觉评审是分开的。本文档**只记录操作流程、操作反馈和交互逻辑**，不涉及颜色、间距、圆角、阴影等视觉细节。
 
+文档分**两个层次**，评审时先看 L1，需要细节时再翻 L2：
+
+- **L1 — 评审摘要（`## 零`）**：按变更页面分节，每节只写「本次变更要点」+「核心流程图（精简版）」。对应 Figma 评审画板的信息密度。
+- **L2 — 完整规格（`## 一` 以后）**：详细的流程图（含异常分支）和操作反馈表，供深入核查。
+
 结构固定如下：
 
 ```markdown
@@ -74,13 +79,35 @@ uxdemo/
 
 ---
 
+## 零、评审摘要
+
+> 供评审使用——每个变更页面一节，只含本次改了什么 + 核心流程。细节见下方。
+
+### {变更页面 A — 页面名称}
+
+**本次变更**
+- 变更点 1
+- 变更点 2
+
+**关键流程**
+```mermaid
+flowchart LR
+    A["入口"] -->|核心操作| B["结果"]
+    ...（只含主路径，去掉异常分支）
+```
+
+### {变更页面 B — 页面名称}
+...
+
+---
+
 ## 一、设计背景
 
 <!-- 现有交互的问题是什么，为什么要改 -->
 
-## 二、操作流程
+## 二、完整操作流程
 
-<!-- Mermaid 流程图，节点只描述用户操作和系统跳转，不涉及视觉 -->
+<!-- Mermaid 流程图，包含所有分支和异常路径 -->
 
 ```mermaid
 flowchart TD
@@ -96,8 +123,6 @@ flowchart TD
 | 用户操作 | 系统反馈 |
 |----------|----------|
 | ...      | ...      |
-
-<!-- 有需要时补充状态机 -->
 
 ## 四、待讨论问题
 
@@ -130,6 +155,8 @@ flowchart TD
   <span style="color:#888; font-size:12px; margin-right:8px;">方案对比：</span>
   <button class="v-tab active" onclick="switchVariant('a', this)">方案 A</button>
   <button class="v-tab" onclick="switchVariant('b', this)">方案 B</button>
+  <div style="flex:1;"></div>
+  <button class="v-demo-toggle" onclick="toggleDemoMode(this)">交互说明</button>
 </div>
 <style>
   body { padding-top: 40px; } /* 为切换栏留出空间 */
@@ -139,6 +166,16 @@ flowchart TD
   }
   .v-tab.active { background: #0047FD; color: #fff; }
   .v-tab:hover:not(.active) { background: rgba(255,255,255,0.1); color: #fff; }
+  .v-demo-toggle {
+    padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 11px;
+    background: transparent; color: #666; border: 1px solid rgba(255,255,255,0.15);
+    transition: background 120ms, color 120ms, border-color 120ms;
+  }
+  .v-demo-toggle.active { background: rgba(255,200,0,0.12); color: #FFC107; border-color: rgba(255,193,7,0.35); }
+  .v-demo-toggle:hover:not(.active) { background: rgba(255,255,255,0.08); color: #bbb; }
+  /* 演示控件：默认隐藏，开启「交互说明」后显示 */
+  .demo-control { display: none !important; }
+  body.demo-mode .demo-control { display: block !important; }
   .variant { display: none; }
   .variant.active { display: contents; }
 </style>
@@ -148,6 +185,10 @@ flowchart TD
     document.querySelectorAll('.v-tab').forEach(t => t.classList.remove('active'));
     document.getElementById('variant-' + id).classList.add('active');
     el.classList.add('active');
+  }
+  function toggleDemoMode(el) {
+    document.body.classList.toggle('demo-mode');
+    el.classList.toggle('active');
   }
 </script>
 
@@ -212,3 +253,4 @@ flowchart TD
 4. **不污染主项目**：uxdemo 里的所有文件不得被主项目的任何 `import` 引用
 5. **一个文件夹一个设计点**：不在同一个 prototype.html 里堆砌多个不相关的设计尝试
 6. **新增原型必须同步更新主页**：每次新建一个原型文件夹，必须在同一次回复中在 `index.html` 的 `#protoList` 中追加对应的 `.card` 条目，包含原型名称、描述和方案标签（`badge`），无需用户提醒。
+7. **演示控件必须标记 `.demo-control`**：所有不属于最终用户界面的原型辅助元素（状态切换触发器、模拟报错按钮、场景跳转入口等）一律加 `class="demo-control"`。这些元素默认隐藏，用户点击切换栏的「交互说明」开关后才显示。
