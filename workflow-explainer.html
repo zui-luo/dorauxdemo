@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UX Demo 工作流说明</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand-1: #eef4ff;
+      --brand-2: #dbe8ff;
+      --brand-3: #a9c4ff;
+      --brand-6: #2562ff;
+      --brand-7: #0047fd;
+      --mint-1: #eafaf5;
+      --mint-6: #10a66a;
+      --orange-1: #fff3e6;
+      --orange-6: #f08a24;
+      --purple-1: #f3efff;
+      --purple-6: #7657d6;
+      --red-1: #fff0f0;
+      --red-6: #df4545;
+      --neutral-0: #ffffff;
+      --neutral-1: #f7f8fa;
+      --neutral-2: #f0f1f5;
+      --neutral-3: #e6e8ed;
+      --neutral-4: #d6d9e0;
+      --neutral-8: #747b95;
+      --neutral-9: #5d6581;
+      --neutral-10: #222d53;
+      --neutral-11: #091640;
+      --shadow-card: 0 10px 30px rgba(9, 30, 64, 0.08);
+      --shadow-float: 0 24px 70px rgba(9, 30, 64, 0.16);
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 20px;
+      --radius-xxl: 28px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+      color: var(--neutral-10);
+      background:
+        radial-gradient(circle at 10% -10%, rgba(37, 98, 255, 0.18), transparent 32%),
+        radial-gradient(circle at 90% 0%, rgba(118, 87, 214, 0.16), transparent 30%),
+        linear-gradient(180deg, #fbfcff 0%, var(--neutral-1) 42%, #ffffff 100%);
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .variant-bar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      height: 54px;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: rgba(255, 255, 255, 0.88);
+      border-bottom: 1px solid rgba(214, 217, 224, 0.88);
+      backdrop-filter: blur(16px);
+    }
+
+    .bar-left,
+    .bar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .bar-title {
+      font-size: 14px;
+      font-weight: 650;
+      color: var(--neutral-11);
+      white-space: nowrap;
+    }
+
+    .bar-tag {
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--brand-1);
+      border: 1px solid var(--brand-2);
+      color: var(--brand-7);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .bar-link {
+      display: inline-flex;
+      align-items: center;
+      height: 30px;
+      padding: 0 12px;
+      border-radius: 999px;
+      color: var(--neutral-9);
+      font-size: 12px;
+      transition: color 0.15s ease, background 0.15s ease;
+    }
+
+    .bar-link:hover {
+      color: var(--brand-7);
+      background: var(--brand-1);
+    }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 54px 24px 72px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 460px;
+      gap: 36px;
+      align-items: center;
+      min-height: 520px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border: 1px solid var(--brand-2);
+      border-radius: 999px;
+      background: rgba(238, 244, 255, 0.8);
+      color: var(--brand-7);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .eyebrow-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--mint-6);
+      box-shadow: 0 0 0 4px rgba(16, 166, 106, 0.14);
+    }
+
+    .hero-title {
+      margin-top: 22px;
+      max-width: 680px;
+      color: var(--neutral-11);
+      font-size: 54px;
+      line-height: 1.08;
+      letter-spacing: -1.8px;
+      font-weight: 760;
+    }
+
+    .hero-title span { color: var(--brand-7); }
+
+    .hero-subtitle {
+      margin-top: 22px;
+      max-width: 650px;
+      color: var(--neutral-9);
+      font-size: 18px;
+      line-height: 1.8;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: 42px;
+      padding: 0 18px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-size: 14px;
+      font-weight: 650;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(9, 30, 64, 0.12);
+    }
+
+    .button-primary {
+      color: #fff;
+      background: linear-gradient(135deg, var(--brand-6), var(--brand-7));
+    }
+
+    .button-secondary {
+      color: var(--neutral-10);
+      background: rgba(255, 255, 255, 0.82);
+      border-color: var(--neutral-3);
+    }
+
+    .hero-visual {
+      position: relative;
+      min-height: 430px;
+      border-radius: var(--radius-xxl);
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(238, 244, 255, 0.75)),
+        radial-gradient(circle at 80% 20%, rgba(37, 98, 255, 0.2), transparent 30%);
+      border: 1px solid rgba(214, 217, 224, 0.9);
+      box-shadow: var(--shadow-float);
+      overflow: hidden;
+    }
+
+    .hero-visual::before {
+      content: "";
+      position: absolute;
+      inset: 18px;
+      border-radius: 22px;
+      border: 1px dashed rgba(37, 98, 255, 0.22);
+    }
+
+    .node {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 168px;
+      padding: 13px 14px;
+      border: 1px solid var(--neutral-3);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 12px 30px rgba(9, 30, 64, 0.10);
+    }
+
+    .node-icon {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      flex: none;
+    }
+
+    .node-icon svg {
+      width: 19px;
+      height: 19px;
+      color: currentColor;
+    }
+
+    .node-title {
+      color: var(--neutral-11);
+      font-size: 14px;
+      font-weight: 680;
+    }
+
+    .node-desc {
+      margin-top: 2px;
+      color: var(--neutral-9);
+      font-size: 12px;
+    }
+
+    .node-repo { top: 42px; left: 32px; }
+    .node-agent { top: 52px; right: 34px; }
+    .node-skill { top: 176px; left: 54px; }
+    .node-html { top: 190px; right: 44px; }
+    .node-git { left: 128px; bottom: 44px; min-width: 210px; }
+
+    .node-repo .node-icon { color: var(--brand-7); background: var(--brand-1); }
+    .node-agent .node-icon { color: var(--purple-6); background: var(--purple-1); }
+    .node-skill .node-icon { color: var(--orange-6); background: var(--orange-1); }
+    .node-html .node-icon { color: var(--mint-6); background: var(--mint-1); }
+    .node-git .node-icon { color: var(--neutral-10); background: var(--neutral-2); }
+
+    .hero-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .section {
+      margin-top: 72px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 22px;
+    }
+
+    .section-kicker {
+      color: var(--brand-7);
+      font-size: 13px;
+      font-weight: 720;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      margin-top: 8px;
+      color: var(--neutral-11);
+      font-size: 32px;
+      line-height: 1.2;
+      letter-spacing: -0.7px;
+      font-weight: 760;
+    }
+
+    .section-desc {
+      max-width: 520px;
+      color: var(--neutral-9);
+      font-size: 15px;
+      line-height: 1.8;
+    }
+
+    .effect-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .effect-card,
+    .principle-card,
+    .asset-card,
+    .cta-card {
+      border: 1px solid var(--neutral-3);
+      border-radius: var(--radius-xl);
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: var(--shadow-card);
+    }
+
+    .effect-card {
+      padding: 22px;
+      min-height: 230px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .effect-card::after {
+      content: "";
+      position: absolute;
+      right: -38px;
+      bottom: -46px;
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: var(--brand-1);
+    }
+
+    .card-illus {
+      position: relative;
+      z-index: 1;
+      height: 82px;
+      margin-bottom: 16px;
+    }
+
+    .card-illus svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .effect-card h3,
+    .principle-card h3,
+    .asset-card h3,
+    .cta-card h3 {
+      position: relative;
+      z-index: 1;
+      color: var(--neutral-11);
+      font-size: 18px;
+      font-weight: 720;
+    }
+
+    .effect-card p,
+    .principle-card p,
+    .asset-card p,
+    .cta-card p {
+      position: relative;
+      z-index: 1;
+      margin-top: 9px;
+      color: var(--neutral-9);
+      font-size: 14px;
+      line-height: 1.75;
+    }
+
+    .workflow {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .step {
+      position: relative;
+      min-height: 168px;
+      padding: 18px 14px;
+      border: 1px solid var(--neutral-3);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: var(--shadow-card);
+    }
+
+    .step::after {
+      content: "→";
+      position: absolute;
+      top: 50%;
+      right: -13px;
+      z-index: 2;
+      transform: translateY(-50%);
+      color: var(--brand-6);
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .step:last-child::after { display: none; }
+
+    .step-index {
+      display: inline-grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 10px;
+      color: #fff;
+      background: var(--brand-6);
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .step h3 {
+      margin-top: 14px;
+      color: var(--neutral-11);
+      font-size: 15px;
+      line-height: 1.35;
+      font-weight: 720;
+    }
+
+    .step p {
+      margin-top: 8px;
+      color: var(--neutral-9);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .principles {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .principle-card {
+      padding: 24px;
+      overflow: hidden;
+    }
+
+    .principle-card.highlight {
+      background:
+        linear-gradient(135deg, rgba(37, 98, 255, 0.09), rgba(255, 255, 255, 0.9)),
+        #fff;
+      border-color: rgba(37, 98, 255, 0.22);
+    }
+
+    .mini-flow {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 16px;
+      background: var(--neutral-1);
+      border: 1px solid var(--neutral-3);
+    }
+
+    .mini-flow-row {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--neutral-3);
+    }
+
+    .mini-flow-row:last-child { border-bottom: 0; }
+
+    .mini-label {
+      color: var(--neutral-11);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .mini-text {
+      color: var(--neutral-9);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .compare {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 70px minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .compare-box {
+      min-height: 170px;
+      padding: 18px;
+      border-radius: 18px;
+      border: 1px solid var(--neutral-3);
+      background: var(--neutral-1);
+    }
+
+    .compare-box.good {
+      background: var(--mint-1);
+      border-color: rgba(16, 166, 106, 0.22);
+    }
+
+    .compare-box.bad {
+      background: var(--red-1);
+      border-color: rgba(223, 69, 69, 0.18);
+    }
+
+    .compare-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--neutral-11);
+      font-size: 15px;
+      font-weight: 720;
+    }
+
+    .compare-list {
+      margin-top: 14px;
+      display: grid;
+      gap: 8px;
+      color: var(--neutral-9);
+      font-size: 13px;
+      line-height: 1.55;
+      list-style: none;
+    }
+
+    .compare-arrow {
+      display: grid;
+      place-items: center;
+      width: 54px;
+      height: 54px;
+      margin: 0 auto;
+      border-radius: 50%;
+      color: #fff;
+      background: linear-gradient(135deg, var(--brand-6), var(--brand-7));
+      box-shadow: 0 14px 30px rgba(37, 98, 255, 0.22);
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .asset-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .asset-card {
+      padding: 20px;
+      min-height: 210px;
+    }
+
+    .asset-icon {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      margin-bottom: 16px;
+      border-radius: 14px;
+      background: var(--brand-1);
+      color: var(--brand-7);
+    }
+
+    .asset-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .loop-panel {
+      border: 1px solid var(--neutral-3);
+      border-radius: var(--radius-xxl);
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: var(--shadow-card);
+      padding: 28px;
+      overflow: hidden;
+    }
+
+    .loop-svg {
+      width: 100%;
+      height: auto;
+      min-height: 360px;
+    }
+
+    .quote {
+      margin-top: 18px;
+      padding: 18px 20px;
+      border-left: 4px solid var(--brand-6);
+      border-radius: 0 16px 16px 0;
+      background: var(--brand-1);
+      color: var(--neutral-10);
+      font-size: 15px;
+      line-height: 1.75;
+    }
+
+    .cta-grid {
+      display: grid;
+      grid-template-columns: 1.08fr 0.92fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .cta-card {
+      padding: 26px;
+    }
+
+    .check-list {
+      margin-top: 18px;
+      display: grid;
+      gap: 11px;
+      list-style: none;
+    }
+
+    .check-list li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      color: var(--neutral-9);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .check {
+      display: grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      margin-top: 1px;
+      flex: none;
+      border-radius: 50%;
+      background: var(--mint-1);
+      color: var(--mint-6);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .file-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px 14px;
+      border: 1px solid var(--neutral-3);
+      border-radius: 14px;
+      background: var(--neutral-1);
+      color: var(--neutral-10);
+      font-size: 13px;
+    }
+
+    .file-item code {
+      color: var(--brand-7);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+    }
+
+    .footer {
+      margin-top: 72px;
+      padding-top: 28px;
+      border-top: 1px solid var(--neutral-3);
+      color: var(--neutral-9);
+      font-size: 13px;
+      line-height: 1.7;
+      text-align: center;
+    }
+
+    @media (max-width: 1040px) {
+      .hero {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+
+      .hero-visual {
+        min-height: 380px;
+      }
+
+      .workflow {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .step::after { display: none; }
+
+      .asset-grid,
+      .effect-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .variant-bar {
+        height: auto;
+        min-height: 54px;
+        padding: 12px 16px;
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .bar-right {
+        flex-wrap: wrap;
+      }
+
+      .page {
+        padding: 34px 16px 56px;
+      }
+
+      .hero-title {
+        font-size: 38px;
+      }
+
+      .hero-subtitle {
+        font-size: 16px;
+      }
+
+      .section-head,
+      .principles,
+      .cta-grid,
+      .compare {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+
+      .compare-arrow {
+        transform: rotate(90deg);
+      }
+
+      .asset-grid,
+      .effect-grid,
+      .workflow {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-visual {
+        min-height: 520px;
+      }
+
+      .node {
+        left: 24px !important;
+        right: 24px !important;
+        min-width: 0;
+      }
+
+      .node-agent { top: 128px; }
+      .node-skill { top: 214px; }
+      .node-html { top: 300px; }
+      .node-git { top: 386px; bottom: auto; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="variant-bar">
+    <div class="bar-left">
+      <span class="bar-title">UX Demo 工作流说明</span>
+      <span class="bar-tag">给团队共创用</span>
+    </div>
+    <div class="bar-right">
+      <a class="bar-link" href="#effect">效果</a>
+      <a class="bar-link" href="#workflow">流程</a>
+      <a class="bar-link" href="#principle">原理</a>
+      <a class="bar-link" href="#cocreate">共创</a>
+      <a class="bar-link" href="index.html">返回原型索引</a>
+    </div>
+  </nav>
+
+  <main class="page">
+    <section class="hero">
+      <div>
+        <div class="eyebrow"><span class="eyebrow-dot"></span> 从团队代码库长出来的 UX 协作方法</div>
+        <h1 class="hero-title">把交互想法变成<span>可评审、可提交、可复用</span>的原型资产</h1>
+        <p class="hero-subtitle">
+          这套工作流把团队代码库、Agent 约束、交互设计原则和 Git 提交流程串起来：
+          我们不再只靠口头描述方案，而是用自包含 HTML 演示状态，用 interaction-spec 写清逻辑，
+          再通过代码评审一起沉淀方法。
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#workflow">看工作流怎么跑</a>
+          <a class="button button-secondary" href="#cocreate">看看怎么一起共创</a>
+        </div>
+      </div>
+
+      <div class="hero-visual" aria-label="工作流总览插图">
+        <svg class="hero-svg" viewBox="0 0 460 430" fill="none" aria-hidden="true">
+          <path d="M146 89 C 204 78, 252 78, 314 96" stroke="#A9C4FF" stroke-width="2" stroke-dasharray="6 7"/>
+          <path d="M138 133 C 112 158, 112 173, 134 195" stroke="#A9C4FF" stroke-width="2" stroke-dasharray="6 7"/>
+          <path d="M272 132 C 319 150, 328 173, 310 202" stroke="#A9C4FF" stroke-width="2" stroke-dasharray="6 7"/>
+          <path d="M170 260 C 202 312, 235 326, 296 313" stroke="#A9C4FF" stroke-width="2" stroke-dasharray="6 7"/>
+          <path d="M317 259 C 320 290, 304 308, 284 321" stroke="#A9C4FF" stroke-width="2" stroke-dasharray="6 7"/>
+          <circle cx="230" cy="214" r="48" fill="#EEF4FF" stroke="#DBE8FF"/>
+          <path d="M212 210h36M212 222h24M221 198h18" stroke="#2562FF" stroke-width="5" stroke-linecap="round"/>
+        </svg>
+
+        <div class="node node-repo">
+          <div class="node-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 1 4 16.5z"/>
+              <path d="M4 16.5A2.5 2.5 0 0 1 6.5 14H20"/>
+            </svg>
+          </div>
+          <div>
+            <div class="node-title">团队代码库</div>
+            <div class="node-desc">真实组件与业务上下文</div>
+          </div>
+        </div>
+
+        <div class="node node-agent">
+          <div class="node-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="6" width="14" height="12" rx="3"/>
+              <path d="M9 10h.01M15 10h.01M10 15h4M12 3v3"/>
+            </svg>
+          </div>
+          <div>
+            <div class="node-title">AGENTS.md</div>
+            <div class="node-desc">项目边界与协作规则</div>
+          </div>
+        </div>
+
+        <div class="node node-skill">
+          <div class="node-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.6 7.1 18.2l.9-5.5-4-3.9 5.5-.8z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="node-title">SKILL.md</div>
+            <div class="node-desc">交互判断原则</div>
+          </div>
+        </div>
+
+        <div class="node node-html">
+          <div class="node-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 8l-4 4 4 4M16 8l4 4-4 4M14 4l-4 16"/>
+            </svg>
+          </div>
+          <div>
+            <div class="node-title">HTML + Spec</div>
+            <div class="node-desc">可打开、可评审、可复现</div>
+          </div>
+        </div>
+
+        <div class="node node-git">
+          <div class="node-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="6" cy="6" r="2.4"/>
+              <circle cx="18" cy="18" r="2.4"/>
+              <circle cx="18" cy="6" r="2.4"/>
+              <path d="M8.3 6H12a6 6 0 0 1 6 6v3.6M6 8.4V21"/>
+            </svg>
+          </div>
+          <div>
+            <div class="node-title">Git 提交与评审</div>
+            <div class="node-desc">每次讨论都能留下可追溯资产</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="effect">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">Effect</div>
+          <h2 class="section-title">这套方法带来的直接效果</h2>
+        </div>
+        <p class="section-desc">
+          它不是为了“让 AI 画一个页面”，而是把设计讨论从截图和口头描述，推进到可运行、可对比、可提交的协作物。
+        </p>
+      </div>
+
+      <div class="effect-grid">
+        <article class="effect-card">
+          <div class="card-illus">
+            <svg viewBox="0 0 260 82" fill="none" aria-hidden="true">
+              <rect x="8" y="10" width="96" height="58" rx="14" fill="#EEF4FF" stroke="#DBE8FF"/>
+              <rect x="32" y="24" width="48" height="8" rx="4" fill="#2562FF"/>
+              <rect x="24" y="40" width="64" height="6" rx="3" fill="#A9C4FF"/>
+              <path d="M116 41h38" stroke="#2562FF" stroke-width="3" stroke-linecap="round"/>
+              <path d="M146 31l10 10-10 10" stroke="#2562FF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <rect x="168" y="8" width="84" height="62" rx="14" fill="#EAF8F1" stroke="#BCEBD7"/>
+              <path d="M190 38l12 12 28-30" stroke="#10A66A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h3>从“讲不清”到“点得动”</h3>
+          <p>每个原型都是单文件 HTML，双击即可打开；关键状态用 JS 演示，评审时可以直接验证流程、分支和反馈。</p>
+        </article>
+
+        <article class="effect-card">
+          <div class="card-illus">
+            <svg viewBox="0 0 260 82" fill="none" aria-hidden="true">
+              <rect x="18" y="12" width="78" height="58" rx="13" fill="#F3EFFF" stroke="#DFD4FF"/>
+              <path d="M36 29h42M36 42h32M36 55h24" stroke="#7657D6" stroke-width="4" stroke-linecap="round"/>
+              <rect x="110" y="12" width="78" height="58" rx="13" fill="#EEF4FF" stroke="#DBE8FF"/>
+              <path d="M126 31h46M126 44h36M126 57h26" stroke="#2562FF" stroke-width="4" stroke-linecap="round"/>
+              <circle cx="214" cy="41" r="23" fill="#FFF3E6" stroke="#FFD7A8"/>
+              <path d="M204 41h20M214 31v20" stroke="#F08A24" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3>从“临时产物”到“团队资产”</h3>
+          <p>HTML 表达界面，interaction-spec 表达行为契约；二者一起进 Git，讨论结论可以被复用、回溯和继续迭代。</p>
+        </article>
+
+        <article class="effect-card">
+          <div class="card-illus">
+            <svg viewBox="0 0 260 82" fill="none" aria-hidden="true">
+              <circle cx="54" cy="41" r="27" fill="#EEF4FF" stroke="#DBE8FF"/>
+              <circle cx="132" cy="41" r="27" fill="#EAF8F1" stroke="#BCEBD7"/>
+              <circle cx="210" cy="41" r="27" fill="#F3EFFF" stroke="#DFD4FF"/>
+              <path d="M45 41h18M123 41h18M201 41h18" stroke="#091640" stroke-width="4" stroke-linecap="round"/>
+              <path d="M54 32v18M132 32v18M210 32v18" stroke="#091640" stroke-width="4" stroke-linecap="round"/>
+              <path d="M81 41h24M159 41h24" stroke="#A9C4FF" stroke-width="3" stroke-dasharray="5 6"/>
+            </svg>
+          </div>
+          <h3>从“个人经验”到“共同方法”</h3>
+          <p>被反复纠正的设计判断，会沉淀进 skill；只属于项目的信息，沉淀进 AGENTS 或当前规格，团队越用越顺。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="workflow">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">Workflow</div>
+          <h2 class="section-title">一次需求从想法到提交的路径</h2>
+        </div>
+        <p class="section-desc">
+          核心顺序是：先拿够上下文，再做交互判断，先写规格再改原型，最后通过代码提交进入团队协作。
+        </p>
+      </div>
+
+      <div class="workflow">
+        <article class="step">
+          <span class="step-index">1</span>
+          <h3>拉取团队代码库</h3>
+          <p>原型工作区跟真实项目放在一起，方便复用业务术语、页面结构和已有设计上下文。</p>
+        </article>
+        <article class="step">
+          <span class="step-index">2</span>
+          <h3>够用就停地取上下文</h3>
+          <p>有截图就先用截图；需要源码时只读相关文件，避免为原型展开整仓分析。</p>
+        </article>
+        <article class="step">
+          <span class="step-index">3</span>
+          <h3>用 skill 做交互判断</h3>
+          <p>先判断对象归属、入口层级、主路径和 UI 轻重，避免只做到功能可达。</p>
+        </article>
+        <article class="step">
+          <span class="step-index">4</span>
+          <h3>先写 interaction-spec</h3>
+          <p>规格文档写清操作流程、状态变化和异常分支，成为评审时的行为契约。</p>
+        </article>
+        <article class="step">
+          <span class="step-index">5</span>
+          <h3>再做自包含 HTML</h3>
+          <p>所有 CSS 和 JS 内联，保留方案切换栏，关键状态可通过页面直接演示。</p>
+        </article>
+        <article class="step">
+          <span class="step-index">6</span>
+          <h3>同步入口与说明</h3>
+          <p>新增原型时同步更新索引和 README，让同事能从统一入口找到它。</p>
+        </article>
+        <article class="step">
+          <span class="step-index">7</span>
+          <h3>走 Git 提交流程</h3>
+          <p>方案、规格和讨论结论都进入 commit / review，后续迭代有迹可循。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="principle">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">Principle</div>
+          <h2 class="section-title">这套工作流背后的原理</h2>
+        </div>
+        <p class="section-desc">
+          AGENTS.md 负责“这个项目怎么做”，SKILL.md 负责“交互为什么这么判断”。二者分层，才能既贴近项目，又沉淀通用方法。
+        </p>
+      </div>
+
+      <div class="principles">
+        <article class="principle-card highlight">
+          <h3>项目层：AGENTS.md 约束协作边界</h3>
+          <p>
+            它告诉 AI：uxdemo 是设计评审原型工作区，不是生产代码；原型必须自包含；
+            改 HTML 要同步规格；新增原型要同步入口；演示控件不能混入正式 UI。
+          </p>
+          <div class="mini-flow">
+            <div class="mini-flow-row">
+              <div class="mini-label">管什么</div>
+              <div class="mini-text">目录结构、交付物格式、文档同步、Git 可维护性、与主项目隔离。</div>
+            </div>
+            <div class="mini-flow-row">
+              <div class="mini-label">解决什么</div>
+              <div class="mini-text">避免原型散落、行为和文档不一致、临时页面污染主项目。</div>
+            </div>
+          </div>
+        </article>
+
+        <article class="principle-card">
+          <h3>原则层：SKILL.md 约束交互判断</h3>
+          <p>
+            它让每次设计先回答：对象属于哪一层，入口应该放在哪，当前页面主路径是什么，
+            以及这个任务应该用轻量提示、弹窗、抽屉还是独立页面承接。
+          </p>
+          <div class="mini-flow">
+            <div class="mini-flow-row">
+              <div class="mini-label">核心判断</div>
+              <div class="mini-text">归属先于可达，位置暗示范围，主路径保持主路径，轻重匹配决策成本。</div>
+            </div>
+            <div class="mini-flow-row">
+              <div class="mini-label">解决什么</div>
+              <div class="mini-text">避免入口放错层级、资产和运行态混淆、低频管理压过高频任务。</div>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="compare">
+        <div class="compare-box bad">
+          <div class="compare-title">只做“功能可达”</div>
+          <ul class="compare-list">
+            <li>入口哪里方便就放哪里</li>
+            <li>口头说清楚，页面不一定能演示</li>
+            <li>讨论结论散在聊天记录里</li>
+            <li>下次需求又从零开始争论</li>
+          </ul>
+        </div>
+        <div class="compare-arrow">→</div>
+        <div class="compare-box good">
+          <div class="compare-title">做到“心智正确 + 可评审”</div>
+          <ul class="compare-list">
+            <li>入口层级先匹配对象归属</li>
+            <li>HTML 能演示关键状态与异常分支</li>
+            <li>规格文档记录当前设计结果</li>
+            <li>经验沉淀进 skill，项目规则沉淀进 AGENTS</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">Assets</div>
+          <h2 class="section-title">每次协作都会产出四类资产</h2>
+        </div>
+        <p class="section-desc">
+          这些资产都能被版本管理，所以设计讨论可以像代码一样被 review、diff、回滚和继续演进。
+        </p>
+      </div>
+
+      <div class="asset-grid">
+        <article class="asset-card">
+          <div class="asset-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 1 4 16.5z"/>
+              <path d="M8 7h8M8 11h6"/>
+            </svg>
+          </div>
+          <h3>AGENTS.md</h3>
+          <p>记录当前工作区的项目级规则：目录、交付物、约束和自检项。</p>
+        </article>
+        <article class="asset-card">
+          <div class="asset-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3l2.6 5.3 5.9.8-4.2 4.1 1 5.8-5.3-2.8L6.7 19l1-5.8L3.5 9.1l5.9-.8z"/>
+            </svg>
+          </div>
+          <h3>SKILL.md</h3>
+          <p>沉淀跨项目复用的交互原则，让 AI 和团队逐渐形成共同判断语言。</p>
+        </article>
+        <article class="asset-card">
+          <div class="asset-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 8l-4 4 4 4M16 8l4 4-4 4M14 4l-4 16"/>
+            </svg>
+          </div>
+          <h3>prototype.html</h3>
+          <p>承载可打开的交互演示，重点表达流程、状态切换、异常分支与方案差异。</p>
+        </article>
+        <article class="asset-card">
+          <div class="asset-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 3h7l5 5v13H7z"/>
+              <path d="M14 3v5h5M10 13h6M10 17h6"/>
+            </svg>
+          </div>
+          <h3>interaction-spec.md</h3>
+          <p>作为交互行为权威描述，只写当前设计结果、操作反馈和异常分支。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">Loop</div>
+          <h2 class="section-title">团队越参与，方法越可靠</h2>
+        </div>
+        <p class="section-desc">
+          这不是一次性模板，而是一个会随着真实评审不断进化的闭环。
+        </p>
+      </div>
+
+      <div class="loop-panel">
+        <svg class="loop-svg" viewBox="0 0 1040 390" fill="none" aria-label="团队共创闭环图">
+          <defs>
+            <linearGradient id="loopGradient" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#2562FF"/>
+              <stop offset="1" stop-color="#7657D6"/>
+            </linearGradient>
+          </defs>
+          <path d="M230 115 C 340 28, 515 26, 648 88 C 763 142, 805 253, 723 315 C 618 392, 407 372, 278 298 C 166 234, 145 181, 230 115Z" stroke="url(#loopGradient)" stroke-width="5" stroke-linecap="round" stroke-dasharray="10 14"/>
+          <g>
+            <rect x="74" y="90" width="200" height="102" rx="24" fill="#EEF4FF" stroke="#DBE8FF"/>
+            <text x="174" y="129" text-anchor="middle" fill="#091640" font-size="18" font-weight="700">真实需求</text>
+            <text x="174" y="158" text-anchor="middle" fill="#5D6581" font-size="13">来自业务、评审或设计纠偏</text>
+          </g>
+          <g>
+            <rect x="344" y="36" width="216" height="110" rx="24" fill="#F3EFFF" stroke="#DFD4FF"/>
+            <text x="452" y="78" text-anchor="middle" fill="#091640" font-size="18" font-weight="700">交互判断</text>
+            <text x="452" y="107" text-anchor="middle" fill="#5D6581" font-size="13">归属、入口、主路径、轻重</text>
+          </g>
+          <g>
+            <rect x="647" y="95" width="218" height="104" rx="24" fill="#EAF8F1" stroke="#BCEBD7"/>
+            <text x="756" y="135" text-anchor="middle" fill="#091640" font-size="18" font-weight="700">HTML + Spec</text>
+            <text x="756" y="164" text-anchor="middle" fill="#5D6581" font-size="13">演示状态，写清行为契约</text>
+          </g>
+          <g>
+            <rect x="590" y="266" width="220" height="104" rx="24" fill="#FFF3E6" stroke="#FFD7A8"/>
+            <text x="700" y="306" text-anchor="middle" fill="#091640" font-size="18" font-weight="700">Git Review</text>
+            <text x="700" y="335" text-anchor="middle" fill="#5D6581" font-size="13">像代码一样提交、讨论、追踪</text>
+          </g>
+          <g>
+            <rect x="260" y="240" width="244" height="112" rx="24" fill="#FFFFFF" stroke="#E6E8ED"/>
+            <text x="382" y="282" text-anchor="middle" fill="#091640" font-size="18" font-weight="700">沉淀规则</text>
+            <text x="382" y="311" text-anchor="middle" fill="#5D6581" font-size="13">通用原则进 skill，项目规则进 AGENTS</text>
+          </g>
+          <path d="M281 138h48" stroke="#2562FF" stroke-width="3" stroke-linecap="round"/>
+          <path d="M321 128l12 10-12 10" stroke="#2562FF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M566 96h58" stroke="#2562FF" stroke-width="3" stroke-linecap="round"/>
+          <path d="M616 86l12 10-12 10" stroke="#2562FF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M750 207v36" stroke="#2562FF" stroke-width="3" stroke-linecap="round"/>
+          <path d="M740 236l10 12 10-12" stroke="#2562FF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M574 318h-50" stroke="#2562FF" stroke-width="3" stroke-linecap="round"/>
+          <path d="M531 308l-12 10 12 10" stroke="#2562FF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M248 286C145 254 111 209 131 185" stroke="#2562FF" stroke-width="3" stroke-linecap="round"/>
+          <path d="M121 193l8-13 14 6" stroke="#2562FF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="quote">
+          <strong>最关键的变化：</strong>同事指出“这个入口层级不对”时，我们不只是修一个按钮位置，
+          而是把背后的判断抽象成原则，让下一次类似设计自动避坑。
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="cocreate">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">Co-create</div>
+          <h2 class="section-title">同事可以怎么一起共创</h2>
+        </div>
+        <p class="section-desc">
+          参与方式不必很重：可以评审原型、补充规则、提交模板，也可以直接在 PR 里对具体交互提出修改建议。
+        </p>
+      </div>
+
+      <div class="cta-grid">
+        <article class="cta-card">
+          <h3>三种最轻量的参与方式</h3>
+          <ul class="check-list">
+            <li><span class="check">✓</span><span><strong>看原型：</strong>打开 HTML，直接验证主流程、空态、错误态、禁用态和方案差异。</span></li>
+            <li><span class="check">✓</span><span><strong>评规格：</strong>看 interaction-spec 是否能独立复现交互，不清楚的地方直接提 review。</span></li>
+            <li><span class="check">✓</span><span><strong>沉淀判断：</strong>如果某类问题反复出现，把通用原则补进 skill，把项目规则补进 AGENTS。</span></li>
+          </ul>
+        </article>
+
+        <article class="cta-card">
+          <h3>这几个文件最值得一起维护</h3>
+          <div class="file-list">
+            <div class="file-item"><span>项目协作规则</span><code>uxdemo/AGENTS.md</code></div>
+            <div class="file-item"><span>交互判断原则</span><code>uxdemo/skills/interaction-design/SKILL.md</code></div>
+            <div class="file-item"><span>规格模板</span><code>uxdemo/templates/interaction-spec-template.md</code></div>
+            <div class="file-item"><span>原型导航</span><code>uxdemo/index.html</code></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <footer class="footer">
+      这页也是同一套方法的示例：自包含 HTML、内联图形、从 AGENTS.md 与 SKILL.md 提炼规则，并可随团队反馈继续提交迭代。
+    </footer>
+  </main>
+</body>
+</html>

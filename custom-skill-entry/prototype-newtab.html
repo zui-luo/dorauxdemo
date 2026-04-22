@@ -19,7 +19,19 @@
   }
   .v-tab.active { background: #0047FD; color: #fff; }
   .v-tab:hover:not(.active) { background: rgba(255,255,255,0.1); color: #fff; }
+  /* 交互说明开关 */
+  .v-demo-toggle {
+    padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 11px;
+    background: transparent; color: #666; border: 1px solid rgba(255,255,255,0.15);
+    transition: background 120ms, color 120ms, border-color 120ms;
+  }
+  .v-demo-toggle.active { background: rgba(255,200,0,0.12); color: #FFC107; border-color: rgba(255,193,7,0.35); }
+  .v-demo-toggle:hover:not(.active) { background: rgba(255,255,255,0.08); color: #bbb; }
+  /* 演示控件：默认隐藏，开启「交互说明」后显示 */
+  .demo-control { display: none !important; }
+  body.demo-mode .demo-control { display: block !important; }
   .v-tab.disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+  /* .variant rules removed — variants share the same content, only JS behavior differs */
 </style>
 <style>
   /* ── 设计 Token（来自 palette.constant.ts & tailwind.theme.constant.ts） ── */
@@ -259,6 +271,49 @@
     flex-direction: column;
   }
   #frontend-overlay.open { display: flex; }
+  .fe-shell-top-actions {
+    position: absolute;
+    top: 16px;
+    right: 24px;
+    z-index: 12;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .fe-shell-skill-entry {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 12px;
+    border: 1px solid rgba(255,255,255,0.88);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.78);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(9,30,64,.08);
+    color: var(--neutral-10);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 120ms, box-shadow 120ms, transform 120ms;
+  }
+  .fe-shell-skill-entry:hover {
+    background: rgba(255,255,255,0.94);
+    box-shadow: 0 4px 14px rgba(9,30,64,.12);
+    transform: translateY(-1px);
+  }
+    .fe-shell-skill-count {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #EEF4FF;
+    color: var(--brand-7);
+    font-size: 11px;
+    line-height: 18px;
+    text-align: center;
+    flex-shrink: 0;
+  }
 
   /* ── AgentHome ── */
   .fe-home {
@@ -754,6 +809,7 @@
     flex-shrink: 0;
   }
   .fe-chat-header.with-border { border-bottom: 1px solid var(--neutral-3); }
+  #fe-msg-view .fe-chat-header.with-border { padding-right: 160px; }
   .fe-chat-session-name {
     flex: 1;
     font-size: 14px;
@@ -762,6 +818,22 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .fe-chat-header-action {
+    height: 30px;
+    padding: 0 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--neutral-3);
+    background: var(--neutral-0);
+    color: var(--neutral-10);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 100ms, border-color 100ms, color 100ms;
+  }
+  .fe-chat-header-action:hover {
+    background: #EEF4FF;
+    border-color: var(--brand-6);
+    color: var(--brand-7);
   }
 
   /* welcome screen */
@@ -897,6 +969,60 @@
     flex-direction: column;
     overflow: hidden;
   }
+  .fe-active-skill-inline {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 0 2px;
+  }
+  .fe-active-skill-inline.open { display: flex; }
+  .fe-active-skill-text {
+    font-size: 12px;
+    color: var(--neutral-9);
+    white-space: nowrap;
+  }
+  .fe-active-skill-mini-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    max-width: 320px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: #F5F8FF;
+    border: 1px solid #D9E3FF;
+  }
+  .fe-active-skill-mini-name {
+    font-size: 12px;
+    color: var(--neutral-10);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .fe-active-skill-mini-status {
+    font-size: 10px;
+    line-height: 16px;
+    padding: 0 6px;
+    border-radius: 999px;
+    color: var(--brand-7);
+    background: var(--neutral-0);
+    flex-shrink: 0;
+  }
+  .fe-active-skill-mini-status.published {
+    color: #009880;
+  }
+  .fe-active-skill-link {
+    border: none;
+    background: transparent;
+    color: var(--brand-7);
+    font-size: 12px;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+  }
   .fe-msg-list {
     flex: 1;
     overflow-y: auto;
@@ -1000,11 +1126,23 @@
   .fe-skill-card-tag { display: inline-block; margin-top: 3px; font-size: 11px; color: var(--brand-7); background: #EEF4FF; border-radius: 4px; padding: 1px 6px; }
   .fe-skill-card-badge { font-size: 11px; color: #009880; background: #E8F8F5; border-radius: 4px; padding: 2px 7px; flex-shrink: 0; }
   .fe-skill-card-desc { padding: 0 16px 12px; font-size: 12px; line-height: 18px; color: var(--neutral-9); }
+  .fe-skill-card-notice {
+    margin: 0 16px 12px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    background: #F7F9FC;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--neutral-9);
+  }
   .fe-skill-card-actions { border-top: 1px solid var(--neutral-3); display: flex; }
   .fe-skill-card-btn { flex: 1; padding: 10px; border: none; background: transparent; font-size: 13px; cursor: pointer; color: var(--neutral-10); transition: background 80ms; display: flex; align-items: center; justify-content: center; gap: 6px; }
   .fe-skill-card-btn:hover { background: var(--neutral-1); }
   .fe-skill-card-btn + .fe-skill-card-btn { border-left: 1px solid var(--neutral-3); }
   .fe-skill-card-btn.primary { color: var(--brand-7); font-weight: 500; }
+  .fe-skill-card-btn.success { color: #009880; font-weight: 500; }
 
   /* ══ 技能预览抽屉 ══ */
   .fe-drawer-backdrop { position: fixed; inset: 40px 0 0 0; z-index: 2000; background: rgba(0,0,0,.2); display: none; }
@@ -1018,6 +1156,159 @@
   .fe-drawer-section-title { font-size: 11px; font-weight: 600; color: var(--neutral-9); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
   .fe-code-block { background: #F7F8FA; border-radius: 8px; padding: 16px; font-family: 'SF Mono','Fira Code','Consolas',monospace; font-size: 12px; line-height: 20px; color: #3D4155; overflow-x: auto; white-space: pre; }
   .fe-code-key { color: #7B50D8; } .fe-code-val { color: #009880; } .fe-code-str { color: #E05C6A; } .fe-code-comment { color: #999; }
+
+  /* ══ 我的技能轻量弹窗 ══ */
+  .fe-skill-library-backdrop {
+    position: fixed;
+    inset: 40px 0 0 0;
+    z-index: 3200;
+    background: rgba(0,0,0,.24);
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 72px;
+  }
+  .fe-skill-library-backdrop.open { display: flex; }
+  .fe-skill-library-dialog {
+    width: 620px;
+    max-height: min(72vh, 760px);
+    background: var(--neutral-0);
+    border-radius: var(--radius-xxl);
+    box-shadow: var(--shadow-large);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: fadeInUp .18s ease-out;
+  }
+  .fe-skill-library-header {
+    padding: 18px 20px 12px;
+    border-bottom: 1px solid var(--neutral-3);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .fe-skill-library-title-wrap { flex: 1; min-width: 0; }
+  .fe-skill-library-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--neutral-10);
+  }
+  .fe-skill-library-subtitle {
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 18px;
+    color: var(--neutral-9);
+  }
+  .fe-skill-library-body {
+    padding: 16px 20px 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .fe-my-skills-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .fe-my-skills-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--neutral-10);
+  }
+  .fe-my-skills-grid { display: flex; flex-direction: column; gap: 10px; }
+  .fe-my-skill-card {
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--neutral-3);
+    background: var(--neutral-0);
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .fe-my-skill-card-main {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .fe-my-skill-card-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .fe-my-skill-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .fe-my-skill-meta {
+    flex: 1;
+    min-width: 0;
+  }
+  .fe-my-skill-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--neutral-10);
+  }
+  .fe-my-skill-submeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .fe-my-skill-badge {
+    font-size: 11px;
+    line-height: 18px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: #EEF4FF;
+    color: var(--brand-7);
+  }
+  .fe-my-skill-badge.published {
+    background: #E8F8F5;
+    color: #009880;
+  }
+  .fe-my-skill-desc {
+    font-size: 12px;
+    line-height: 18px;
+    color: var(--neutral-9);
+  }
+  .fe-my-skill-foot {
+    font-size: 12px;
+    color: var(--neutral-9);
+  }
+  .fe-my-skill-actions {
+    border-top: 1px solid var(--neutral-3);
+    display: flex;
+  }
+  .fe-my-skill-actions button {
+    min-width: 0;
+    height: 38px;
+    padding: 0 14px;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    color: var(--neutral-10);
+    cursor: pointer;
+  }
+  .fe-my-skill-actions button + button {
+    border-left: 1px solid var(--neutral-3);
+  }
+  .fe-my-skill-actions button:hover {
+    background: var(--neutral-1);
+  }
+  .fe-my-skill-actions .primary {
+    color: var(--brand-7);
+    font-weight: 500;
+  }
+  .fe-my-skill-actions .success {
+    color: #009880;
+    font-weight: 500;
+  }
 
   /* ══ 添加到 Agent 弹窗 ══ */
   .fe-modal-backdrop { position: fixed; inset: 40px 0 0 0; z-index: 3000; background: rgba(0,0,0,.3); display: none; align-items: center; justify-content: center; }
@@ -1406,6 +1697,8 @@
   <span class="label">方案对比：</span>
   <button class="v-tab disabled" title="此原型仅展示「新 Tab」方案">跳转</button>
   <button class="v-tab active">新 Tab</button>
+  <div style="flex:1;"></div>
+  <button class="v-demo-toggle" onclick="toggleDemoMode(this)">交互说明</button>
 </div>
 
 <!-- 左侧导航 -->
@@ -1475,7 +1768,7 @@
       </button>
 
       <div class="dropdown" id="custom-skill-dropdown">
-        <!-- 通过 Dora 创建 -->
+        <!-- 通过前台对话创建 -->
         <a class="dropdown-item" id="dora-dropdown-link" onclick="handleDoraPick(event)">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
             <rect x="1.5" y="1.5" width="5" height="5" rx="1"/>
@@ -1483,7 +1776,7 @@
             <rect x="1.5" y="9.5" width="5" height="5" rx="1"/>
             <rect x="9.5" y="9.5" width="5" height="5" rx="1"/>
           </svg>
-          通过 Dora 创建
+          通过前台对话创建
         </a>
         <!-- 导入社区技能 -->
         <div class="dropdown-item" onclick="openSkillImport()">
@@ -1524,7 +1817,7 @@
           </div>
           <div class="skill-desc">通过自然语言查询数据库，自动生成 SQL 并返回结构化结果，支持多数据源联查。</div>
         </div>
-        <button class="skill-card-add-btn" onclick="openAddToAgent({id:'skill_data_query',name:'数据查询',emoji:'⚡',iconBg:'#EEF3FF'}, true)">添加到 Agent 中试用</button>
+        <button class="skill-card-add-btn" onclick="openAddToAgent({id:'skill_data_query',name:'数据查询',emoji:'⚡',iconBg:'#EEF3FF'})">添加到 Agent 中试用</button>
       </div>
 
       <div class="skill-card" data-skill-id="skill_code_gen">
@@ -1537,7 +1830,7 @@
           </div>
           <div class="skill-desc">根据描述生成 Python/SQL 代码片段，可直接运行，支持数据分析场景。</div>
         </div>
-        <button class="skill-card-add-btn" onclick="openAddToAgent({id:'skill_code_gen',name:'代码生成',emoji:'💻',iconBg:'#E8F8F5'}, true)">添加到 Agent 中试用</button>
+        <button class="skill-card-add-btn" onclick="openAddToAgent({id:'skill_code_gen',name:'代码生成',emoji:'💻',iconBg:'#E8F8F5'})">添加到 Agent 中试用</button>
       </div>
 
       <div class="skill-card" data-skill-id="skill_report">
@@ -1550,7 +1843,7 @@
           </div>
           <div class="skill-desc">基于数据源自动生成带格式的分析报告，支持图文混排和自定义模板。</div>
         </div>
-        <button class="skill-card-add-btn" onclick="openAddToAgent({id:'skill_report',name:'报表生成',emoji:'📊',iconBg:'#F3EEFF'}, true)">添加到 Agent 中试用</button>
+        <button class="skill-card-add-btn" onclick="openAddToAgent({id:'skill_report',name:'报表生成',emoji:'📊',iconBg:'#F3EEFF'})">添加到 Agent 中试用</button>
       </div>
 
       <div class="skill-card" data-skill-id="skill_chart">
@@ -1563,7 +1856,7 @@
           </div>
           <div class="skill-desc">将数据转化为 ECharts 可视化图表，支持折线、柱状、饼图等多种类型。</div>
         </div>
-        <button class="skill-card-add-btn" onclick="openAddToAgent({id:'skill_chart',name:'图表生成',emoji:'📈',iconBg:'#E8F5FF'}, true)">添加到 Agent 中试用</button>
+        <button class="skill-card-add-btn" onclick="openAddToAgent({id:'skill_chart',name:'图表生成',emoji:'📈',iconBg:'#E8F5FF'})">添加到 Agent 中试用</button>
       </div>
 
       <div class="skill-card" data-skill-id="skill_dashboard">
@@ -1576,7 +1869,7 @@
           </div>
           <div class="skill-desc">在 FineBI 看板中快速检索目标图表或分析结论，结果直接嵌入对话。</div>
         </div>
-        <button class="skill-card-add-btn" onclick="openAddToAgent({id:'skill_dashboard',name:'看板检索',emoji:'🔍',iconBg:'#F3EEFF'}, true)">添加到 Agent 中试用</button>
+        <button class="skill-card-add-btn" onclick="openAddToAgent({id:'skill_dashboard',name:'看板检索',emoji:'🔍',iconBg:'#F3EEFF'})">添加到 Agent 中试用</button>
       </div>
 
       <div class="skill-card" data-skill-id="skill_frontend">
@@ -1589,7 +1882,7 @@
           </div>
           <div class="skill-desc">根据数据描述生成前端组件代码，支持响应式布局和主题适配。</div>
         </div>
-        <button class="skill-card-add-btn" onclick="openAddToAgent({id:'skill_frontend',name:'前端设计',emoji:'🎨',iconBg:'#F3EEFF'}, true)">添加到 Agent 中试用</button>
+        <button class="skill-card-add-btn" onclick="openAddToAgent({id:'skill_frontend',name:'前端设计',emoji:'🎨',iconBg:'#F3EEFF'})">添加到 Agent 中试用</button>
       </div>
     </div>
   </div>
@@ -1880,8 +2173,8 @@
       <!-- 动态填充 -->
     </div>
     <div class="fe-drawer-footer">
-      <button class="fe-skill-card-btn primary" style="width:100%;border:1.5px solid #2562FF;border-radius:8px;padding:10px;" id="fe-drawer-add-btn" onclick="openAddToAgentFromDrawer()">
-        添加到 Agent 中试用
+      <button class="fe-skill-card-btn primary" style="width:100%;border:1.5px solid #2562FF;border-radius:8px;padding:10px;" id="fe-drawer-add-btn" onclick="handleSkillPreviewPrimaryAction()">
+        发布到后台技能库
       </button>
     </div>
   </div>
@@ -1925,21 +2218,25 @@
   </div>
 </div>
 
-<!-- ══ 添加技能弹窗 ══ -->
-<div id="add-skill-modal" onclick="handleAddSkillModalBackdrop(event)">
-  <div class="add-skill-dialog">
-    <div class="add-skill-dialog-hd">
-      <div class="add-skill-dialog-title">添加技能</div>
-      <div class="add-skill-search-wrap">
-        <svg class="add-skill-search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="6" r="4"/><line x1="9.5" y1="9.5" x2="13" y2="13"/></svg>
-        <input class="add-skill-search" id="add-skill-search-input" type="text" placeholder="搜索技能名称…" oninput="filterAddSkillList(this.value)" />
+<!-- ══ 前台发布技能弹窗 ══ -->
+<div class="fe-modal-backdrop" id="skill-publish-modal" onclick="handlePublishBackdropClick(event)">
+  <div class="fe-modal">
+    <div class="fe-modal-header">
+      <div class="fe-modal-title">发布技能</div>
+      <div class="fe-modal-subtitle" id="skill-publish-subtitle">发布后会进入后台技能库，管理员可分配给专家 Agent；Dora 可检索公共技能库。</div>
+    </div>
+    <div class="fe-modal-body" style="padding:0 20px 16px;">
+      <div style="font-size:12px;color:var(--neutral-9);margin-bottom:6px;">技能名称</div>
+      <input id="skill-publish-name" style="width:100%;height:34px;border:1px solid var(--neutral-3);border-radius:8px;padding:0 10px;font-size:13px;outline:none;" />
+      <div style="font-size:12px;color:var(--neutral-9);margin:12px 0 6px;">适用说明</div>
+      <textarea id="skill-publish-note" rows="4" style="width:100%;border:1px solid var(--neutral-3);border-radius:8px;padding:8px 10px;font-size:13px;line-height:20px;resize:none;outline:none;font-family:inherit;" placeholder="说明适用场景、依赖数据或推荐投放的专家 Agent"></textarea>
+      <div style="margin-top:10px;padding:10px 12px;border-radius:8px;background:#F7F9FC;font-size:12px;line-height:18px;color:var(--neutral-9);">
+        发布不会影响当前对话调试；当前对话仍优先使用你的草稿版本。
       </div>
     </div>
-    <div class="add-skill-list" id="add-skill-list">
-      <!-- 由 JS 动态渲染 -->
-    </div>
-    <div class="add-skill-dialog-ft">
-      <button class="fe-btn-cancel" onclick="closeAddSkillModal()">完成</button>
+    <div class="fe-modal-footer" style="gap:8px;">
+      <button class="fe-btn-cancel" onclick="closePublishModal()">取消</button>
+      <button class="fe-btn-sm primary-btn" onclick="submitPublishSkill()">确认发布</button>
     </div>
   </div>
 </div>
@@ -2090,11 +2387,40 @@
   </div>
 </div>
 
+<!-- ══ 添加技能弹窗 ══ -->
+<div id="add-skill-modal" onclick="handleAddSkillModalBackdrop(event)">
+  <div class="add-skill-dialog">
+    <div class="add-skill-dialog-hd">
+      <div class="add-skill-dialog-title">添加技能</div>
+      <div class="add-skill-search-wrap">
+        <svg class="add-skill-search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="6" r="4"/><line x1="9.5" y1="9.5" x2="13" y2="13"/></svg>
+        <input class="add-skill-search" id="add-skill-search-input" type="text" placeholder="搜索技能名称…" oninput="filterAddSkillList(this.value)" />
+      </div>
+    </div>
+    <div class="add-skill-list" id="add-skill-list">
+      <!-- 由 JS 动态渲染 -->
+    </div>
+    <div class="add-skill-dialog-ft">
+      <button class="fe-btn-cancel" onclick="closeAddSkillModal()">完成</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══════════════════════════════════════════
      前台对话页面 覆盖层
      结构：AgentHome → 点击 Agent → AgentChat（Sidebar + 主区域）
 ══════════════════════════════════════════ -->
 <div id="frontend-overlay">
+  <div class="fe-shell-top-actions">
+    <button class="fe-shell-skill-entry" onclick="openMySkills('global')">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 4.5a1.5 1.5 0 0 1 1.5-1.5h7A1.5 1.5 0 0 1 13 4.5v7a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 3 11.5v-7z"/>
+        <path d="M6 6.2h4M6 8h4M6 9.8h2.8"/>
+      </svg>
+      <span>我的技能</span>
+      <span class="fe-shell-skill-count" id="fe-shell-skill-count">0</span>
+    </button>
+  </div>
 
   <!-- ① AgentHome 视图 -->
   <div id="fe-view-home" class="fe-home" style="display:flex;">
@@ -2103,7 +2429,6 @@
       <!-- Hero 标题 -->
       <div class="fe-home-hero-title">Data <span>Agent</span></div>
       <div class="fe-home-hero-sub">与数据对话，让洞察触手可及</div>
-
       <!-- dora 首屏区域 -->
       <div class="fe-dora-hero">
         <div class="fe-dora-hero-agent">
@@ -2170,6 +2495,7 @@
       </div>
     </div>
 
+
     <!-- 管理后台入口（右下角） -->
     <button class="fe-admin-entry" onclick="closeFrontend()">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -2197,6 +2523,7 @@
             </button>
             <span class="fe-sidebar-title">Data Agent</span>
           </div>
+          </div>
 
           <!-- Sidebar Body -->
           <div class="fe-sidebar-body">
@@ -2220,6 +2547,7 @@
             <!-- 历史会话列表 -->
             <div id="fe-session-list" class="fe-session-list"></div>
           </div>
+
 
           <!-- Sidebar Footer -->
           <div class="fe-sidebar-footer">
@@ -2290,6 +2618,11 @@
           <!-- 底部输入框 -->
           <div class="fe-msg-input-wrap">
             <div class="fe-input-wrap" style="margin-right:16px;">
+              <div class="fe-active-skill-inline" id="fe-active-skill-inline">
+                <span class="fe-active-skill-text">当前试用</span>
+                <div class="fe-active-skill-mini-chip" id="fe-active-skill-inline-chip"></div>
+                <button class="fe-active-skill-link" onclick="openMySkills('session')">切换</button>
+              </div>
               <div class="fe-chat-input-box">
                 <textarea class="fe-chat-textarea" id="fe-msg-textarea" placeholder="继续提问…" rows="1"
                   oninput="autoResize(this)"
@@ -2311,8 +2644,25 @@
       </div>
     </div>
   </div><!-- end fe-view-chat -->
-
+  </div>
 </div><!-- end frontend-overlay -->
+
+<div class="fe-skill-library-backdrop" id="fe-skill-library-backdrop" onclick="handleMySkillsBackdrop(event)">
+  <div class="fe-skill-library-dialog">
+    <div class="fe-skill-library-header">
+      <div class="fe-skill-library-title-wrap">
+        <div class="fe-skill-library-title">我的技能</div>
+        <div class="fe-skill-library-subtitle" id="fe-skill-library-subtitle">查看你在前台创建的技能，也可以随时带回任一对话试用。</div>
+      </div>
+      <button class="fe-icon-btn" onclick="closeMySkills()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg>
+      </button>
+    </div>
+    <div class="fe-skill-library-body">
+      <div id="fe-my-skills-list"></div>
+    </div>
+  </div>
+</div>
 
 <!-- ══ 技能详情抽屉 ══ -->
 <div class="skill-drawer-overlay" id="skill-drawer-overlay" onclick="closeSkillDrawer()"></div>
@@ -2356,7 +2706,7 @@
       </div>
       <div class="import-hint">仅支持公开可访问的 URL，服务端代理请求以避免 CORS 限制</div>
       <div class="import-step1-footer">
-        <div class="import-step1-sim">原型演示：<a onclick="startImportFlow(); event.stopPropagation();">模拟解析成功</a> &nbsp;·&nbsp; <a onclick="startImportError(); event.stopPropagation();">模拟网络错误</a></div>
+        <div class="import-step1-sim demo-control">原型演示：<a onclick="startImportFlow(); event.stopPropagation();">模拟解析成功</a> &nbsp;·&nbsp; <a onclick="startImportError(); event.stopPropagation();">模拟网络错误</a></div>
         <button class="upload-btn-cancel" onclick="closeSkillImport()">取消</button>
         <button class="btn-primary" onclick="startImportFlow()">解析</button>
       </div>
@@ -2474,7 +2824,7 @@
         <div class="upload-dz-title">拖拽 .zip 文件至此，或点击选择</div>
         <div class="upload-dz-hint">最大 50MB · 根目录须包含 SKILL.md</div>
       </div>
-      <div class="upload-dz-sim">
+      <div class="upload-dz-sim demo-control">
         原型演示：<a onclick="startUploadFlow(); event.stopPropagation();">模拟上传成功</a> &nbsp;·&nbsp; <a onclick="startUploadError(); event.stopPropagation();">模拟格式错误</a>
       </div>
     </div>
@@ -2664,17 +3014,213 @@
   let currentAgentId = null;
   let currentSessionId = null;
   let sidebarCollapsed = false;
+  let currentPublishSkillId = null;
+  let currentMySkillsMode = 'global';
+  const sessionEnabledSkillIds = {
+    skill_demo: ['skill_sales_query'],
+    s4: ['my_draft_1'],
+  };
+  const MY_SKILL_IDS = ['my_draft_1', 'csc_1', 'csc_2'];
 
   // 是否为「新 Tab」方案下被新开的前台 tab
   const isFrontendTab = location.hash === '#fe' || location.hash === '#fe-dora';
 
+  function formatDateLabel(date = new Date()) {
+    const pad = n => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  }
+
+  function ensureSkillInMyList(skillId) {
+    if (!MY_SKILL_IDS.includes(skillId)) MY_SKILL_IDS.unshift(skillId);
+    renderFrontendSkillEntry();
+  }
+
+  function renderFrontendSkillEntry() {
+    const countEl = document.getElementById('fe-shell-skill-count');
+    if (countEl) countEl.textContent = String(MY_SKILL_IDS.length);
+    updateShellNavigation();
+  }
+
+  function updateShellNavigation() {
+    const homeBtn = null;
+    const skillsBtn = document.getElementById('fe-shell-skill-count');
+    const mySkillsOpen = document.getElementById('fe-skill-library-backdrop').classList.contains('open');
+    const isHomeView = document.getElementById('fe-view-home').style.display !== 'none';
+    if (homeBtn) homeBtn.classList.toggle('active', isHomeView && !mySkillsOpen);
+    if (skillsBtn) skillsBtn.textContent = String(MY_SKILL_IDS.length);
+  }
+
+  function registerGeneratedSkill(skillCard, agentId) {
+    const agent = AGENTS[agentId] || AGENTS.dora;
+    const existing = skillRegistry[skillCard.id] || {};
+    skillRegistry[skillCard.id] = {
+      ...existing,
+      ...skillCard,
+      type: existing.type || 'conversation',
+      status: existing.status || 'draft',
+      sourceAgentId: agent.id,
+      sourceAgentName: agent.name,
+      createdAt: existing.createdAt || formatDateLabel(),
+    };
+    ensureSkillInMyList(skillCard.id);
+    return skillRegistry[skillCard.id];
+  }
+
+  function activateSkillForSession(sessionId, skillId) {
+    if (!sessionId) return;
+    if (!sessionEnabledSkillIds[sessionId]) sessionEnabledSkillIds[sessionId] = [];
+    if (!sessionEnabledSkillIds[sessionId].includes(skillId)) sessionEnabledSkillIds[sessionId].push(skillId);
+    if (sessionId === currentSessionId) renderActiveSkillHint(sessionId);
+  }
+
+  function renderActiveSkillHint(sessionId = currentSessionId) {
+    const bar = document.getElementById('fe-active-skill-inline');
+    const chip = document.getElementById('fe-active-skill-inline-chip');
+    const ids = sessionId ? (sessionEnabledSkillIds[sessionId] || []) : [];
+    if (!ids.length) {
+      bar.classList.remove('open');
+      chip.innerHTML = '';
+      return;
+    }
+    const activeSkill = skillRegistry[ids[ids.length - 1]];
+    if (!activeSkill) return;
+    const moreCount = ids.length > 1 ? `<span style="font-size:12px;color:var(--neutral-9);">+${ids.length - 1}</span>` : '';
+    chip.innerHTML = `
+      <span class="fe-active-skill-mini-name">${escapeHtml(activeSkill.name)}</span>
+      <span class="fe-active-skill-mini-status ${activeSkill.status === 'published' ? 'published' : ''}">${activeSkill.status === 'published' ? '已发布' : '草稿'}</span>
+      ${moreCount}
+    `;
+    bar.classList.add('open');
+  }
+
+  function buildSkillCardData(content, agentId) {
+    const skillName = extractSkillName(content);
+    const agent = AGENTS[agentId] || AGENTS.dora;
+    const skillCard = {
+      id: 'skill_' + Date.now(),
+      name: skillName,
+      tag: agentId === 'dora' ? '通用技能草稿' : `${agent.name} 草稿`,
+      emoji: agentId === 'finance' ? '💰' : agentId === 'analyst' ? '📊' : '⚡',
+      iconBg: agentId === 'finance' ? '#FFF8EC' : agentId === 'analyst' ? '#E8F8F5' : '#EEF3FF',
+      desc: agentId === 'dora'
+        ? `面向通用数据分析场景的技能草稿，支持自然语言查询、结构化结果输出与多轮调试。`
+        : `结合 ${agent.name} 当前业务数据与知识生成的技能草稿，可在当前对话内立即试用与调试。`,
+    };
+    registerGeneratedSkill(skillCard, agentId);
+    return skillCard;
+  }
+
+  function buildSkillCreationReply(skillCard, agentId) {
+    const agent = AGENTS[agentId] || AGENTS.dora;
+    return `好的，我已经为「${skillCard.name}」生成了一版草稿。\n\n它已经自动保存到「我的技能」，并在当前 ${agent.name} 对话里开始试用。\n\n你可以直接继续输入测试需求；如果要改技能，也直接在这段对话里描述就可以。`;
+  }
+
+  function getSkillEnabledResponse(sessionId) {
+    const ids = sessionEnabledSkillIds[sessionId] || [];
+    const activeSkill = ids.length ? skillRegistry[ids[ids.length - 1]] : null;
+    if (!activeSkill) return '好的，我已收到你的问题，正在分析数据中…（此为原型演示）';
+    return `已在当前对话中优先调用「${activeSkill.name}」草稿进行处理。\n\n这里会继续返回试用结果，你也可以下一轮直接告诉我需要补充哪些输入参数、输出格式或约束条件。（此为原型演示）`;
+  }
+
+  function ensureSessionForSkill(skillId, preferredAgentId) {
+    const skill = skillRegistry[skillId];
+    const targetAgentId = currentAgentId || preferredAgentId || (skill && skill.sourceAgentId) || 'dora';
+    if (currentAgentId !== targetAgentId) enterAgent(targetAgentId);
+    if (!currentSessionId) {
+      const sessionId = 'skill_use_' + Date.now();
+      const sessionName = `调试${(skill && skill.name) || '技能'}`;
+      AGENTS[targetAgentId].sessions.unshift({ id: sessionId, name: sessionName });
+      currentSessionId = sessionId;
+      renderSidebar(targetAgentId);
+      renderSessionList(targetAgentId, sessionId);
+      document.getElementById('fe-chat-session-name').textContent = sessionName;
+      document.getElementById('fe-msg-list').innerHTML = '';
+      document.getElementById('fe-welcome-view').style.display = 'none';
+      document.getElementById('fe-msg-view').style.display = 'flex';
+      document.getElementById('fe-new-chat-btn').classList.remove('active');
+      SESSION_MESSAGES[sessionId] = [];
+    }
+    showView('chat');
+    return currentSessionId;
+  }
+
+  function openMySkills(mode = 'global') {
+    currentMySkillsMode = mode;
+    renderMySkillsView();
+    document.getElementById('fe-skill-library-backdrop').classList.add('open');
+    updateShellNavigation();
+  }
+
+  function closeMySkills() {
+    document.getElementById('fe-skill-library-backdrop').classList.remove('open');
+    updateShellNavigation();
+  }
+
+  function handleMySkillsBackdrop(event) {
+    if (event.target === document.getElementById('fe-skill-library-backdrop')) closeMySkills();
+  }
+
+  function renderMySkillsView() {
+    const subtitleEl = document.getElementById('fe-skill-library-subtitle');
+    if (subtitleEl) {
+      subtitleEl.textContent = currentMySkillsMode === 'session'
+        ? '选择一个技能用于当前对话；这里只切换当前会话试用，不改变它在你的技能库中的归属。'
+        : '查看你在前台创建的技能，也可以随时带回任一对话试用。';
+    }
+    const draftIds = MY_SKILL_IDS.filter(id => (skillRegistry[id] || {}).status !== 'published');
+    const publishedIds = MY_SKILL_IDS.filter(id => (skillRegistry[id] || {}).status === 'published');
+    const buildSection = (title, ids) => {
+      if (!ids.length) return '';
+      return `<div class="fe-my-skills-section">
+        <div class="fe-my-skills-section-title">${title}</div>
+        <div class="fe-my-skills-grid">${ids.map(buildMySkillCard).join('')}</div>
+      </div>`;
+    };
+    document.getElementById('fe-my-skills-list').innerHTML =
+      buildSection('草稿中', draftIds) + buildSection('已发布', publishedIds);
+  }
+
+  function buildMySkillCard(skillId) {
+    const skill = skillRegistry[skillId];
+    if (!skill) return '';
+    const statusText = skill.status === 'published' ? '已发布' : '草稿';
+    const useLabel = currentSessionId ? '用于当前对话' : '打开对话试用';
+    return `<div class="fe-my-skill-card" onclick="openSkillPreviewById('${skillId}')">
+      <div class="fe-my-skill-card-main">
+        <div class="fe-my-skill-card-head">
+          <div class="fe-my-skill-icon" style="background:${skill.iconBg}">${skill.emoji || '⚡'}</div>
+          <div class="fe-my-skill-meta">
+            <div class="fe-my-skill-name">${escapeHtml(skill.name)}</div>
+            <div class="fe-my-skill-submeta">
+              <span class="fe-my-skill-badge ${skill.status === 'published' ? 'published' : ''}">${statusText}</span>
+            </div>
+          </div>
+        </div>
+        <div class="fe-my-skill-desc">${escapeHtml(skill.desc)}</div>
+        <div class="fe-my-skill-foot">创建于 ${escapeHtml(skill.createdAt || formatDateLabel())} · 创建助手 ${escapeHtml(skill.sourceAgentName || 'dora')}</div>
+      </div>
+      <div class="fe-my-skill-actions">
+        <button class="primary" onclick="event.stopPropagation(); enableSkillFromMySkills('${skillId}')">${useLabel}</button>
+        <button class="${skill.status === 'published' ? 'success' : ''}" onclick="event.stopPropagation(); openPublishModal('${skillId}')">${skill.status === 'published' ? '已发布' : '发布'}</button>
+      </div>
+    </div>`;
+  }
+
+  function enableSkillFromMySkills(skillId) {
+    const sessionId = ensureSessionForSkill(skillId);
+    activateSkillForSession(sessionId, skillId);
+    closeMySkills();
+    renderMessages(sessionId);
+  }
+
   // 打开前台
   function openFrontend() {
     document.getElementById('frontend-overlay').classList.add('open');
+    renderFrontendSkillEntry();
     showView('home');
   }
 
-  // 关闭前台 → 前台跳后台，新开 Tab
+  // 关闭前台（前台「管理后台」按钮 / Agent 配置页返回）
   function closeFrontend() {
     window.open(location.href.split('#')[0] + '#admin', '_blank');
   }
@@ -2683,6 +3229,7 @@
   function showView(view) {
     document.getElementById('fe-view-home').style.display = view === 'home' ? 'flex' : 'none';
     document.getElementById('fe-view-chat').style.display = view === 'chat' ? 'flex' : 'none';
+    updateShellNavigation();
   }
 
   // 进入 Agent 对话页
@@ -2694,15 +3241,13 @@
     renderSidebar(agentId);
     renderWelcome(agent);
     showView('chat');
+    renderActiveSkillHint(null);
 
-    // 欢迎屏显示、msg 视图隐藏
     document.getElementById('fe-welcome-view').style.display = 'flex';
     document.getElementById('fe-msg-view').style.display = 'none';
-    // 新对话高亮
     document.getElementById('fe-new-chat-btn').classList.add('active');
   }
 
-  // 渲染 sidebar
   function renderSidebar(agentId) {
     const agentListEl = document.getElementById('fe-agent-list');
     agentListEl.innerHTML = Object.values(AGENTS).map(a => `
@@ -2713,10 +3258,9 @@
       </div>
     `).join('');
 
-    renderSessionList(agentId, null);
+    renderSessionList(agentId, currentSessionId);
   }
 
-  // 渲染会话列表
   function renderSessionList(agentId, selectedId) {
     const agent = AGENTS[agentId];
     const sessionListEl = document.getElementById('fe-session-list');
@@ -2724,10 +3268,10 @@
       <div class="fe-session-item${s.id === selectedId ? ' selected' : ''}" onclick="selectSession('${s.id}')">
         <span class="fe-session-name">${s.name}</span>
         <div class="fe-session-actions">
-          <button class="fe-session-action-btn" onclick="event.stopPropagation();/* rename */" title="重命名">
+          <button class="fe-session-action-btn" onclick="event.stopPropagation();" title="重命名">
             <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M9 2l3 3-7 7H2v-3L9 2z"/></svg>
           </button>
-          <button class="fe-session-action-btn del" onclick="event.stopPropagation();/* delete */" title="删除">
+          <button class="fe-session-action-btn del" onclick="event.stopPropagation();" title="删除">
             <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 3.5h10M5 3.5V2.5h4v1M3 3.5l.8 8.5h6.4L11 3.5"/></svg>
           </button>
         </div>
@@ -2735,49 +3279,36 @@
     `).join('');
   }
 
-  // 渲染欢迎屏 agent 信息
   function renderWelcome(agent) {
     document.getElementById('fe-welcome-avatar').style.background = agent.avatarBg;
     document.getElementById('fe-welcome-avatar').textContent = agent.emoji;
     document.getElementById('fe-welcome-name').textContent = agent.name;
-    const wordsEl = document.getElementById('fe-welcome-words');
-    wordsEl.textContent = agent.welcomeWords;
+    document.getElementById('fe-welcome-words').textContent = agent.welcomeWords;
   }
 
-  // 切换 Agent
   function switchAgent(agentId) {
     enterAgent(agentId);
   }
 
-  // 选中已有会话
   function selectSession(sessionId) {
     currentSessionId = sessionId;
-
-    // 更新会话列表高亮
     renderSessionList(currentAgentId, sessionId);
-    // 新对话按钮取消高亮
     document.getElementById('fe-new-chat-btn').classList.remove('active');
-
-    // 获取会话名称
     const agent = AGENTS[currentAgentId];
     const session = agent.sessions.find(s => s.id === sessionId);
     document.getElementById('fe-chat-session-name').textContent = session ? session.name : '';
-
-    // 渲染历史消息
     renderMessages(sessionId);
-
-    // 切换到 msg 视图
     document.getElementById('fe-welcome-view').style.display = 'none';
     document.getElementById('fe-msg-view').style.display = 'flex';
+    renderActiveSkillHint(sessionId);
   }
 
-  // 渲染历史消息（支持 skillCard）
   function renderMessages(sessionId) {
     const messages = SESSION_MESSAGES[sessionId] || [];
     const listEl = document.getElementById('fe-msg-list');
     const agent = AGENTS[currentAgentId];
 
-    listEl.innerHTML = messages.map((msg, idx) => `
+    listEl.innerHTML = messages.map(msg => `
       <div class="fe-msg-pair">
         <div style="display:flex;justify-content:flex-end;">
           <div class="fe-msg-user">${escapeHtml(msg.user)}</div>
@@ -2792,31 +3323,36 @@
       </div>
     `).join('');
 
+    renderActiveSkillHint(sessionId);
     setTimeout(() => { listEl.scrollTop = listEl.scrollHeight; }, 50);
   }
 
-  // 渲染技能卡片 HTML
   function renderSkillCard(sc) {
-    const scJson = JSON.stringify(sc).replace(/"/g, '&quot;');
+    const skill = skillRegistry[sc.id] || sc;
+    const statusText = skill.status === 'published' ? '已发布' : '草稿';
     return `
       <div class="fe-skill-card">
         <div class="fe-skill-card-header">
-          <div class="fe-skill-card-icon" style="background:${sc.iconBg}">${sc.emoji}</div>
+          <div class="fe-skill-card-icon" style="background:${skill.iconBg}">${skill.emoji}</div>
           <div class="fe-skill-card-meta">
-            <div class="fe-skill-card-name">${escapeHtml(sc.name)}</div>
-            <span class="fe-skill-card-tag">${sc.tag}</span>
+            <div class="fe-skill-card-name">${escapeHtml(skill.name)}</div>
+            <span class="fe-skill-card-tag">${escapeHtml(skill.tag || '技能草稿')}</span>
           </div>
-          <span class="fe-skill-card-badge">新生成</span>
+          <span class="fe-skill-card-badge">${statusText}</span>
         </div>
-        <div class="fe-skill-card-desc">${escapeHtml(sc.desc)}</div>
+        <div class="fe-skill-card-desc">${escapeHtml(skill.desc)}</div>
+        <div class="fe-skill-card-notice">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#1A8C52" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><path d="M4.5 7l1.7 1.7L9.7 5.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          已保存到我的技能，当前对话已开始试用
+        </div>
         <div class="fe-skill-card-actions">
-          <button class="fe-skill-card-btn" onclick='openSkillPreview(${scJson})'>
+          <button class="fe-skill-card-btn" onclick="openSkillPreviewById('${skill.id}')">
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="2" width="10" height="10" rx="1.5"/><line x1="5" y1="5" x2="9" y2="5"/><line x1="5" y1="7.5" x2="8" y2="7.5"/></svg>
-            预览文件
+            查看技能
           </button>
-          <button class="fe-skill-card-btn primary" onclick='openAddToAgent(${scJson})'>
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="5" cy="5" r="3"/><path d="M1 13c0-2.2 1.8-4 4-4"/><line x1="10" y1="8" x2="10" y2="13"/><line x1="7.5" y1="10.5" x2="12.5" y2="10.5"/></svg>
-            添加到 Agent 中试用
+          <button class="fe-skill-card-btn ${skill.status === 'published' ? 'success' : 'primary'}" onclick="openPublishModal('${skill.id}')">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M7 2v7"/><path d="M4.5 4.5L7 2l2.5 2.5"/><path d="M2.5 9.5v1.5h9V9.5"/></svg>
+            ${skill.status === 'published' ? '已发布' : '发布'}
           </button>
         </div>
       </div>`;
@@ -2889,9 +3425,9 @@
             bubble.parentElement.appendChild(cardEl.firstElementChild);
             listEl.scrollTop = listEl.scrollHeight;
           }
-          // 存入 session_messages
           if (!SESSION_MESSAGES[sessionId]) SESSION_MESSAGES[sessionId] = [];
           SESSION_MESSAGES[sessionId].push({ user: userMsg, ai: aiText, skillCard });
+          renderActiveSkillHint(sessionId);
         }
       }, 18);
     }, 1500);
@@ -2902,7 +3438,6 @@
     return /创建|生成|新建|制作|技能|skill/i.test(text);
   }
 
-  // 发起新对话（从欢迎屏发送）
   function sendFromWelcome() {
     const ta = document.getElementById('fe-welcome-textarea');
     const content = ta.value.trim();
@@ -2924,22 +3459,12 @@
     document.getElementById('fe-welcome-view').style.display = 'none';
     document.getElementById('fe-msg-view').style.display = 'flex';
 
-    // 判断是否技能创建意图（仅 dora）
-    if (currentAgentId === 'dora' && isSkillCreationIntent(content)) {
-      const skillName = extractSkillName(content);
-      const aiText = `好的，我来帮你创建「${skillName}」。\n\n正在分析需求，生成技能配置…\n\n技能已生成！该技能支持：\n• 自然语言转 SQL 查询\n• 多维度数据筛选与聚合\n• 结果以结构化表格返回`;
-      const skillCard = {
-        id: 'skill_' + Date.now(),
-        name: skillName,
-        tag: '数据工具',
-        emoji: '⚡',
-        iconBg: '#EEF3FF',
-        desc: `通过自然语言查询${skillName.replace('技能','').replace('创建','').replace('帮我','').trim()}相关数据，自动生成 SQL 并返回结构化结果。`,
-      };
-      startStreaming(newSessionId, content, aiText, skillCard);
+    if (isSkillCreationIntent(content)) {
+      const skillCard = buildSkillCardData(content, currentAgentId);
+      activateSkillForSession(newSessionId, skillCard.id);
+      startStreaming(newSessionId, content, buildSkillCreationReply(skillCard, currentAgentId), skillCard);
     } else {
-      const aiText = '好的，我已收到你的问题，正在分析数据中…（此为原型演示）';
-      startStreaming(newSessionId, content, aiText, null);
+      startStreaming(newSessionId, content, getSkillEnabledResponse(newSessionId), null);
     }
   }
 
@@ -2950,7 +3475,6 @@
     return (cleaned || '数据查询') + '技能';
   }
 
-  // 在 msg 视图中继续发送消息
   function sendFromMsg() {
     const ta = document.getElementById('fe-msg-textarea');
     const content = ta.value.trim();
@@ -2959,8 +3483,13 @@
     ta.value = '';
     autoResize(ta);
 
-    const aiText = '好的，我已收到。（此为原型演示）';
-    startStreaming(currentSessionId, content, aiText, null);
+    if (isSkillCreationIntent(content)) {
+      const skillCard = buildSkillCardData(content, currentAgentId);
+      activateSkillForSession(currentSessionId, skillCard.id);
+      startStreaming(currentSessionId, content, buildSkillCreationReply(skillCard, currentAgentId), skillCard);
+    } else {
+      startStreaming(currentSessionId, content, getSkillEnabledResponse(currentSessionId), null);
+    }
   }
 
   // 键盘事件：Enter 发送，Shift+Enter 换行
@@ -2972,7 +3501,6 @@
     }
   }
 
-  // 新对话按钮
   function startNewChat() {
     currentSessionId = null;
     renderSessionList(currentAgentId, null);
@@ -2982,9 +3510,9 @@
     document.getElementById('fe-msg-view').style.display = 'none';
     document.getElementById('fe-welcome-textarea').value = '';
     autoResize(document.getElementById('fe-welcome-textarea'));
+    renderActiveSkillHint(null);
   }
 
-  // 首页 dora 输入框 — 发送
   function sendFromHomeDora() {
     const input = document.getElementById('fe-home-dora-input');
     const content = input.value.trim();
@@ -3008,17 +3536,12 @@
     document.getElementById('fe-msg-view').style.display = 'flex';
     showView('chat');
 
-    // 技能创建意图判断
     if (isSkillCreationIntent(content)) {
-      const skillName = extractSkillName(content);
-      const aiText = `好的，我来帮你创建「${skillName}」。\n\n正在分析需求，生成技能配置…\n\n技能已生成！该技能支持：\n• 自然语言转 SQL 查询\n• 多维度数据筛选与聚合\n• 结果以结构化表格返回`;
-      startStreaming(newSessionId, content, aiText, {
-        id: 'skill_' + Date.now(), name: skillName, tag: '数据工具',
-        emoji: '⚡', iconBg: '#EEF3FF',
-        desc: `通过自然语言查询${skillName.replace(/技能|创建|帮我/g,'').trim()}相关数据，自动生成 SQL 并返回结构化结果。`,
-      });
+      const skillCard = buildSkillCardData(content, 'dora');
+      activateSkillForSession(newSessionId, skillCard.id);
+      startStreaming(newSessionId, content, buildSkillCreationReply(skillCard, 'dora'), skillCard);
     } else {
-      startStreaming(newSessionId, content, '好的，我已收到你的问题，正在分析数据中…（此为原型演示）', null);
+      startStreaming(newSessionId, content, getSkillEnabledResponse(newSessionId), null);
     }
   }
 
@@ -3033,10 +3556,10 @@
     input.focus();
   }
 
-  // 返回首页
   function goHome() {
     currentAgentId = null;
     currentSessionId = null;
+    closeMySkills();
     showView('home');
   }
 
@@ -3051,19 +3574,63 @@
     }
   }
 
-  // textarea 自适应高度
   function autoResize(el) {
     el.style.height = 'auto';
     el.style.height = Math.min(el.scrollHeight, 160) + 'px';
   }
 
-  // 下拉菜单「通过 Dora 创建」— 仅关闭下拉，链接由 href+target 处理
-  function handleDoraPick(event) {
-    closeDropdown();
+  /* ── 交互说明开关 ── */
+  function toggleDemoMode(el) {
+    document.body.classList.toggle('demo-mode');
+    el.classList.toggle('active');
   }
 
-  // 侧边栏「前台对话」按钮 — href+target 已在初始化时设置，此处为空占位
-  function handleSidebarFe(event) {}
+  /* ── 方案切换 ── */
+  let currentVariant = 'b';
+
+  function switchVariant(id, el) {
+    document.querySelectorAll('.v-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    currentVariant = id;
+
+    const baseUrl = location.href.split('#')[0];
+    const sidebarLink = document.getElementById('sidebar-fe-link');
+    const doraLink = document.getElementById('dora-dropdown-link');
+
+    if (id === 'a') {
+      // 方案 A：覆盖层模式，恢复为 onclick 行为
+      sidebarLink.removeAttribute('href');
+      sidebarLink.removeAttribute('target');
+      doraLink.removeAttribute('href');
+      doraLink.removeAttribute('target');
+      openFrontend();
+    } else {
+      // 方案 B：把两个跳转入口变成真实 <a> 链接，浏览器原生开新 tab，不触发 popup 拦截
+      sidebarLink.href = baseUrl + '#fe';
+      sidebarLink.target = '_blank';
+      doraLink.href = baseUrl + '#fe';
+      doraLink.target = '_blank';
+    }
+  }
+
+  // 方案 A：侧边栏「前台对话」按钮
+  function handleSidebarFe(event) {
+    if (currentVariant !== 'b') {
+      event.preventDefault();
+      openFrontend();
+    }
+    // 方案 B：<a> 的 href+target 由 switchVariant 设好，浏览器直接处理
+  }
+
+  // 方案 A：下拉菜单「通过前台对话创建」
+  function handleDoraPick(event) {
+    closeDropdown();
+    if (currentVariant !== 'b') {
+      event.preventDefault();
+      openFrontend();
+    }
+    // 方案 B：closeDropdown() 已执行，href+target 让浏览器开新 tab
+  }
 
   /* ── 下拉菜单 ── */
   const btn = document.getElementById('custom-skill-btn');
@@ -3073,6 +3640,7 @@
   let addedSkillIdsInConfig = new Set();
 
   function openAddSkillModal() {
+    // 读取当前配置页中已有的技能 id
     addedSkillIdsInConfig = new Set();
     document.querySelectorAll('#fe-acp-skills [data-skill-config-id]').forEach(el => {
       addedSkillIdsInConfig.add(el.dataset.skillConfigId);
@@ -3166,7 +3734,6 @@
     item.innerHTML = `
       <div class="fe-config-skill-icon" style="background:${s.iconBg}">${s.iconSvg}</div>
       <span class="fe-config-skill-name">${escapeHtml(s.name)}</span>
-      <span class="fe-config-skill-new">新加入</span>
       <div class="fe-skill-item-actions">
         <button class="fe-skill-action-btn" title="配置">
           <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="5.5" cy="5.5" r="1.8"/><path d="M5.5 1v1M5.5 9v1M1 5.5h1M9 5.5h1M2.3 2.3l.7.7M8 8l.7.7M2.3 8.7l.7-.7M8 3l.7-.7"/></svg>
@@ -3212,15 +3779,23 @@
     closeDropdown();
     if (type === 'dora') {
       openFrontend();
-      enterAgent('dora');
     }
   }
 
   /* ══ 技能预览抽屉 ══ */
+  function openSkillPreviewById(skillId) {
+    const skill = skillRegistry[skillId];
+    if (skill) openSkillPreview(skill);
+  }
+
   function openSkillPreview(skill) {
     currentPreviewSkill = skill;
     document.getElementById('fe-drawer-title').textContent = skill.name + ' · 技能配置';
     document.getElementById('fe-drawer-body').innerHTML = buildSkillDrawerContent(skill);
+    const drawerBtn = document.getElementById('fe-drawer-add-btn');
+    const isPublished = (skillRegistry[skill.id] || skill).status === 'published';
+    drawerBtn.textContent = isPublished ? '已发布到后台技能库' : '发布到后台技能库';
+    drawerBtn.classList.toggle('success', isPublished);
     document.getElementById('fe-drawer-backdrop').classList.add('open');
   }
 
@@ -3271,20 +3846,51 @@
     if (e.target === document.getElementById('fe-drawer-backdrop')) closeSkillPreview();
   }
 
-  function openAddToAgentFromDrawer() {
-    if (currentPreviewSkill) {
-      closeSkillPreview();
-      openAddToAgent(currentPreviewSkill);
-    }
+  function handleSkillPreviewPrimaryAction() {
+    if (!currentPreviewSkill) return;
+    closeSkillPreview();
+    openPublishModal(currentPreviewSkill.id);
+  }
+
+  function openPublishModal(skillId) {
+    const skill = skillRegistry[skillId];
+    if (!skill) return;
+    currentPublishSkillId = skillId;
+    document.getElementById('skill-publish-name').value = skill.name;
+    document.getElementById('skill-publish-note').value = skill.status === 'published'
+      ? '该技能已进入后台技能库，可由管理员继续分配给专家 Agent。'
+      : `推荐投放：${skill.sourceAgentName || 'dora'}；当前草稿已在创建它的对话中启用。`;
+    document.getElementById('skill-publish-modal').classList.add('open');
+  }
+
+  function closePublishModal() {
+    document.getElementById('skill-publish-modal').classList.remove('open');
+  }
+
+  function handlePublishBackdropClick(e) {
+    if (e.target === document.getElementById('skill-publish-modal')) closePublishModal();
+  }
+
+  function submitPublishSkill() {
+    const skill = skillRegistry[currentPublishSkillId];
+    if (!skill) return;
+    skill.name = document.getElementById('skill-publish-name').value.trim() || skill.name;
+    skill.status = 'published';
+    skill.publishedAt = formatDateLabel();
+    ensureSkillInMyList(currentPublishSkillId);
+    appendPublishedSkillToLibrary(currentPublishSkillId);
+    closePublishModal();
+    if (currentPreviewSkill && currentPreviewSkill.id === currentPublishSkillId) currentPreviewSkill = skillRegistry[currentPublishSkillId];
+    renderMySkillsView();
+    if (currentSessionId) renderMessages(currentSessionId);
+    renderActiveSkillHint(currentSessionId);
   }
 
   /* ══ 添加到 Agent 弹窗 ══ */
   let pendingSkill = null;
-  let pendingSkillFromBackend = false; // 区分调用来源：后台=true，前台=false
 
-  function openAddToAgent(skill, fromBackend = false) {
+  function openAddToAgent(skill) {
     pendingSkill = skill;
-    pendingSkillFromBackend = fromBackend;
     document.getElementById('fe-modal-skill-name').textContent = `将「${skill.name}」添加到以下 Agent 中试用`;
     document.getElementById('fe-modal-backdrop').classList.add('open');
   }
@@ -3299,19 +3905,13 @@
 
   function selectAgentForSkill(agentId) {
     closeAddToAgent();
-    if (pendingSkillFromBackend) {
-      // 后台内跳转（技能库 → Agent配置页），同 Tab
-      openAgentConfig(agentId, pendingSkill);
-    } else {
-      // 前台 → 后台，新开 Tab
-      localStorage.setItem('pendingAgentConfig', JSON.stringify({ agentId, skill: pendingSkill }));
-      window.open(location.href.split('#')[0] + '#agent-config', '_blank');
-    }
+    openAgentConfig(agentId, pendingSkill);
   }
 
   /* ══ Agent 配置页 ══ */
   let configBackTarget = null;
   let currentConfigAgentId = null;
+  // 每个 agent 已保存的技能 id 列表，key = agentId, value = string[]
   const savedAgentSkillIds = {};
 
   function buildDefaultSkillsHTML() {
@@ -3346,9 +3946,11 @@
     const skillsEl = document.getElementById('fe-acp-skills');
     skillsEl.innerHTML = buildDefaultSkillsHTML();
 
+    // 恢复已保存的技能
     const saved = savedAgentSkillIds[agentId] || [];
     saved.forEach(id => addSkillToConfigPanel(id));
 
+    // 追加本次新传入的技能（如不在已保存列表中）
     if (skill && skill.id) {
       const registrySkill = skillRegistry[skill.id];
       if (!saved.includes(skill.id)) {
@@ -3374,6 +3976,7 @@
       }
     }
 
+    // 重新检查各技能的禁用状态
     skillsEl.querySelectorAll('[data-skill-config-id]').forEach(item => {
       const id = item.dataset.skillConfigId;
       if (isSkillDisabled(id)) syncConfigPanelSkillDisabled(id, true);
@@ -3382,12 +3985,16 @@
     document.getElementById('fe-agent-config').classList.add('open');
   }
 
+  // 新建 Agent 并挂载技能
   function createNewAgentWithSkill() {
     closeAddToAgent();
 
+    // header：空白 Agent 状态
     document.getElementById('fe-acp-name').textContent = '未命名 Agent';
     document.getElementById('fe-acp-preview-icon').textContent = '🤖';
     document.getElementById('fe-acp-preview-name').textContent = '未命名 Agent';
+
+    // 技能列表：只有目标技能，无默认技能
     const skillsEl = document.getElementById('fe-acp-skills');
     skillsEl.innerHTML = '';
     if (pendingSkill) {
@@ -3400,23 +4007,18 @@
       skillsEl.appendChild(newItem);
     }
 
-    if (pendingSkillFromBackend) {
-      // 后台内：同 Tab 直接打开配置页
-      document.getElementById('fe-agent-config').classList.add('open');
-    } else {
-      // 前台 → 后台：新开 Tab
-      localStorage.setItem('pendingAgentConfig', JSON.stringify({ agentId: null, skill: pendingSkill }));
-      window.open(location.href.split('#')[0] + '#agent-config', '_blank');
-    }
+    document.getElementById('fe-agent-config').classList.add('open');
   }
 
   function saveAgentConfig() {
+    // 持久化当前配置页的技能列表
     if (currentConfigAgentId) {
       const ids = [];
       document.querySelectorAll('#fe-acp-skills [data-skill-config-id]').forEach(el => {
         ids.push(el.dataset.skillConfigId);
       });
       savedAgentSkillIds[currentConfigAgentId] = ids;
+      // 同时移除「新加入」标签——保存后不再是新加入状态
       document.querySelectorAll('#fe-acp-skills .fe-config-skill-new').forEach(el => el.remove());
     }
 
@@ -3437,8 +4039,10 @@
   }
 
   function closeAgentConfig() {
-    // 已在后台 Tab 内，直接跳回 Agent 管理页，无需新开 Tab
     document.getElementById('fe-agent-config').classList.remove('open');
+    // 关闭前台覆盖层（如果来自前台）
+    document.getElementById('frontend-overlay').classList.remove('open');
+    // 返回后台 Agent 管理页
     showAdminPage('agent-mgmt');
   }
 
@@ -3504,6 +4108,7 @@
       card.querySelectorAll('.csc-if-disabled').forEach(el => el.style.display = 'none');
     }
     closeAllSkillMenus();
+    // 同步 Agent 配置页中对应技能项的禁用标记
     const skillId = card.dataset.skillId;
     if (skillId) syncConfigPanelSkillDisabled(skillId, disabled);
   }
@@ -3517,6 +4122,7 @@
         disabledTag = document.createElement('span');
         disabledTag.className = 'fe-config-skill-disabled';
         disabledTag.textContent = '已禁用';
+        // 插到名称之后
         const nameEl = item.querySelector('.fe-config-skill-name');
         nameEl.insertAdjacentElement('afterend', disabledTag);
       }
@@ -3527,7 +4133,7 @@
 
   function trialSkillFromLibrary(skill) {
     closeAllSkillMenus();
-    openAddToAgent(skill, true);
+    openAddToAgent(skill);
   }
 
   // ── 导入社区技能弹窗 ──
@@ -3706,6 +4312,7 @@
     ['upload-step-1','upload-step-2','upload-step-3','upload-step-error'].forEach(id => {
       document.getElementById(id).classList.remove('active');
     });
+    // reset parse step styles
     ['ps-unzip','ps-skill-md','ps-meta','ps-validate'].forEach(id => {
       const el = document.getElementById(id);
       el.className = 'upload-parse-step';
@@ -3835,17 +4442,74 @@
      技能详情抽屉
   ══════════════════════════════════════════ */
   const skillRegistry = {
-    skill_data_query: { name:'数据查询', type:'official', iconBg:'#EEF3FF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="#0047FD" stroke-width="1.5"/><path d="M6 9h6M9 6v6" stroke="#0047FD" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'通过自然语言查询数据库，自动生成 SQL 并返回结构化结果，支持多数据源联查。', createdAt:'系统内置', sourcePath:null },
-    skill_code_gen:   { name:'代码生成', type:'official', iconBg:'#E8F8F5', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="12" height="12" rx="2" stroke="#009880" stroke-width="1.5"/><path d="M6 9l2 2 4-4" stroke="#009880" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>', desc:'根据描述生成 Python/SQL 代码片段，可直接运行，支持数据分析场景。', createdAt:'系统内置', sourcePath:null },
-    skill_report:     { name:'报表生成', type:'official', iconBg:'#F3EEFF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><path d="M3 14h12M3 10h12M3 6h8" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'基于数据源自动生成带格式的分析报告，支持图文混排和自定义模板。', createdAt:'系统内置', sourcePath:null },
-    skill_chart:      { name:'图表生成', type:'official', iconBg:'#E8F5FF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><polyline points="3,13 7,8 10,11 14,5" stroke="#019EDF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>', desc:'将数据转化为 ECharts 可视化图表，支持折线、柱状、饼图等多种类型。', createdAt:'系统内置', sourcePath:null },
-    skill_dashboard:  { name:'看板检索', type:'official', iconBg:'#F3EEFF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="6" stroke="#7B50D8" stroke-width="1.5"/><path d="M6 9l2 2 4-4" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'在 FineBI 看板中快速检索目标图表或分析结论，结果直接嵌入对话。', createdAt:'系统内置', sourcePath:null },
-    skill_frontend:   { name:'前端设计', type:'official', iconBg:'#F3EEFF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="12" height="12" rx="2" stroke="#7B50D8" stroke-width="1.5"/><path d="M6 6h6M6 9h4" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'根据数据描述生成前端组件代码，支持响应式布局和主题适配。', createdAt:'系统内置', sourcePath:null },
-    csc_1: { name:'销售数据查询', type:'dora', iconBg:'#EEF3FF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="#0047FD" stroke-width="1.5"/><path d="M6 9h6M9 6v6" stroke="#0047FD" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'通过自然语言查询销售数据库，支持按地区、产品线、时间段进行多维度筛选与汇总。', createdAt:'2025-03-12', sourcePath:null },
-    csc_2: { name:'用户行为分析', type:'dora', iconBg:'#F3EEFF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="6" r="3" stroke="#7B50D8" stroke-width="1.5"/><path d="M3 15c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'分析用户在产品中的点击路径与留存漏斗，输出热力图摘要和关键节点流失原因。', createdAt:'2025-03-18', sourcePath:null },
-    csc_3: { name:'竞品价格监控', type:'dora', iconBg:'#FFF8EC', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="6" stroke="#D18700" stroke-width="1.5"/><path d="M9 6v3l2 2" stroke="#D18700" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'定时抓取指定竞品页面价格，当变动幅度超过阈值时触发报警，并附带历史价格趋势图。', createdAt:'2025-02-27', sourcePath:null },
-    csc_4: { name:'财务预警提醒', type:'dora', iconBg:'#FFF8EC', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><path d="M9 3L2 15h14L9 3z" stroke="#D18700" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 9v3" stroke="#D18700" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="13.5" r="0.75" fill="#D18700"/></svg>', desc:'监控关键财务指标（利润率、应收账款等），超出预设阈值时向指定人员发送钉钉通知。', createdAt:'2025-04-01', sourcePath:null },
+    skill_data_query: { name:'数据查询', type:'official', status:'published', iconBg:'#EEF3FF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="#0047FD" stroke-width="1.5"/><path d="M6 9h6M9 6v6" stroke="#0047FD" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'通过自然语言查询数据库，自动生成 SQL 并返回结构化结果，支持多数据源联查。', createdAt:'系统内置', sourcePath:null },
+    skill_code_gen:   { name:'代码生成', type:'official', status:'published', iconBg:'#E8F8F5', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="12" height="12" rx="2" stroke="#009880" stroke-width="1.5"/><path d="M6 9l2 2 4-4" stroke="#009880" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>', desc:'根据描述生成 Python/SQL 代码片段，可直接运行，支持数据分析场景。', createdAt:'系统内置', sourcePath:null },
+    skill_report:     { name:'报表生成', type:'official', status:'published', iconBg:'#F3EEFF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><path d="M3 14h12M3 10h12M3 6h8" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'基于数据源自动生成带格式的分析报告，支持图文混排和自定义模板。', createdAt:'系统内置', sourcePath:null },
+    skill_chart:      { name:'图表生成', type:'official', status:'published', iconBg:'#E8F5FF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><polyline points="3,13 7,8 10,11 14,5" stroke="#019EDF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>', desc:'将数据转化为 ECharts 可视化图表，支持折线、柱状、饼图等多种类型。', createdAt:'系统内置', sourcePath:null },
+    skill_dashboard:  { name:'看板检索', type:'official', status:'published', iconBg:'#F3EEFF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="6" stroke="#7B50D8" stroke-width="1.5"/><path d="M6 9l2 2 4-4" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'在 FineBI 看板中快速检索目标图表或分析结论，结果直接嵌入对话。', createdAt:'系统内置', sourcePath:null },
+    skill_frontend:   { name:'前端设计', type:'official', status:'published', iconBg:'#F3EEFF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="12" height="12" rx="2" stroke="#7B50D8" stroke-width="1.5"/><path d="M6 6h6M6 9h4" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'根据数据描述生成前端组件代码，支持响应式布局和主题适配。', createdAt:'系统内置', sourcePath:null },
+    skill_sales_query: { name:'销售数据查询', type:'conversation', status:'draft', sourceAgentId:'dora', sourceAgentName:'dora', emoji:'⚡', iconBg:'#EEF3FF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="#0047FD" stroke-width="1.5"/><path d="M6 9h6M9 6v6" stroke="#0047FD" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'通过自然语言查询销售相关数据，自动生成 SQL 并返回结构化结果，支持区域、时间、产品等多维度筛选。', createdAt:'2026-04-21', sourcePath:null, tag:'通用技能草稿' },
+    my_draft_1: { name:'异常订单定位', type:'conversation', status:'draft', sourceAgentId:'analyst', sourceAgentName:'数据分析师', emoji:'📊', iconBg:'#E8F8F5', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="12" height="12" rx="2" stroke="#009880" stroke-width="1.5"/><path d="M6 12l2.2-3 2.1 1.8L12.5 7" stroke="#009880" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>', desc:'结合订单明细与风控规则，快速定位金额异常、重复支付或退款链路异常的订单记录。', createdAt:'2026-04-20', sourcePath:null, tag:'数据分析师 草稿' },
+    csc_1: { name:'销售数据查询', type:'conversation', status:'published', sourceAgentId:'dora', sourceAgentName:'dora', emoji:'📊', iconBg:'#EEF3FF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="#0047FD" stroke-width="1.5"/><path d="M6 9h6M9 6v6" stroke="#0047FD" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'通过自然语言查询销售数据库，支持按地区、产品线、时间段进行多维度筛选与汇总。', createdAt:'2025-03-12', sourcePath:null, tag:'通用技能' },
+    csc_2: { name:'用户行为分析', type:'conversation', status:'published', sourceAgentId:'dora', sourceAgentName:'dora', emoji:'👥', iconBg:'#F3EEFF', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="6" r="3" stroke="#7B50D8" stroke-width="1.5"/><path d="M3 15c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#7B50D8" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'分析用户在产品中的点击路径与留存漏斗，输出热力图摘要和关键节点流失原因。', createdAt:'2025-03-18', sourcePath:null, tag:'通用技能' },
+    csc_3: { name:'竞品价格监控', type:'conversation', status:'published', sourceAgentId:'dora', sourceAgentName:'dora', emoji:'💰', iconBg:'#FFF8EC', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="6" stroke="#D18700" stroke-width="1.5"/><path d="M9 6v3l2 2" stroke="#D18700" stroke-width="1.5" stroke-linecap="round"/></svg>', desc:'定时抓取指定竞品页面价格，当变动幅度超过阈值时触发报警，并附带历史价格趋势图。', createdAt:'2025-02-27', sourcePath:null, tag:'通用技能' },
+    csc_4: { name:'财务预警提醒', type:'conversation', status:'published', sourceAgentId:'finance', sourceAgentName:'财务小助手', emoji:'⚠️', iconBg:'#FFF8EC', iconSvg:'<svg width="22" height="22" viewBox="0 0 18 18" fill="none"><path d="M9 3L2 15h14L9 3z" stroke="#D18700" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 9v3" stroke="#D18700" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="13.5" r="0.75" fill="#D18700"/></svg>', desc:'监控关键财务指标（利润率、应收账款等），超出预设阈值时向指定人员发送钉钉通知。', createdAt:'2025-04-01', sourcePath:null, tag:'财务技能' },
   };
+
+  function buildLibraryCardHtml(skillId, cardId) {
+    const skill = skillRegistry[skillId];
+    if (!skill) return '';
+    const skillObj = `{id:'${skillId}',name:'${skill.name}',emoji:'${skill.emoji || '⚡'}',iconBg:'${skill.iconBg}'}`;
+    return `
+      <div class="skill-card" data-status="active" id="${cardId}" data-skill-id="${skillId}">
+        <div class="skill-card-inner">
+          <div class="skill-card-title">
+            <div class="skill-icon" style="background:${skill.iconBg};">${skill.iconSvg || (skill.emoji || '⚡')}</div>
+            <span class="skill-name" style="flex:1;min-width:0;">${skill.name}</span>
+            <div class="csc-ctrl">
+              <span class="csc-badge active">可用</span>
+              <button class="skill-more-btn" onclick="toggleSkillMenu(this, event)" title="更多操作">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="2.5" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="7" cy="11.5" r="1.2"/></svg>
+              </button>
+              <div class="skill-ctx-menu">
+                <div class="skill-ctx-item csc-if-active" style="display:flex;" onclick="trialSkillFromLibrary(${skillObj}); closeAllSkillMenus();">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><polygon points="5.5,4.5 10,7 5.5,9.5" fill="currentColor" stroke="none"/></svg>试用技能
+                </div>
+                <div class="skill-ctx-item csc-if-active" style="display:flex;" onclick="setSkillDisabled(document.getElementById('${cardId}'), true)">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><line x1="3.5" y1="7" x2="10.5" y2="7"/></svg>禁用
+                </div>
+                <div class="skill-ctx-item csc-if-disabled" style="display:none;" onclick="setSkillDisabled(document.getElementById('${cardId}'), false)">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5.5"/><path d="M4.5 7l2 2 3-3"/></svg>取消禁用
+                </div>
+                <div class="skill-ctx-item" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="10" height="10" rx="1.5"/><path d="M5 7h4M7 5v4"/></svg>复制
+                </div>
+                <div class="skill-ctx-item" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10v1.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V10"/><path d="M7 2v7M4.5 6.5L7 9l2.5-2.5"/></svg>导出 zip
+                </div>
+                <div class="skill-ctx-item danger" onclick="closeAllSkillMenus()">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1.5,3.5 12.5,3.5"/><path d="M5.5,3.5v-1.5a.5.5,0,0,1,.5-.5h2a.5.5,0,0,1,.5.5v1.5"/><path d="M3,3.5l.7,8a.5.5,0,0,0,.5.5h5.6a.5.5,0,0,0,.5-.5l.7-8"/></svg>删除
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="skill-desc">${skill.desc}</div>
+        </div>
+        <button class="skill-card-add-btn" onclick="trialSkillFromLibrary(${skillObj})">添加到 Agent 中试用</button>
+      </div>`;
+  }
+
+  function appendPublishedSkillToLibrary(skillId) {
+    const cardId = `csc-card-${skillId}`;
+    if (document.getElementById(cardId)) return;
+    const grid = document.querySelector('#skill-tab-custom .card-grid');
+    if (!grid) return;
+    const wrap = document.createElement('div');
+    wrap.innerHTML = buildLibraryCardHtml(skillId, cardId);
+    const card = wrap.firstElementChild;
+    card.style.animation = 'fadeInCard 0.3s ease';
+    grid.prepend(card);
+  }
 
   function openSkillDrawer(skillId) {
     const skill = skillRegistry[skillId];
@@ -3853,8 +4517,8 @@
     const cardEl = document.querySelector(`.skill-card[data-skill-id="${skillId}"]`);
     const isDisabled = cardEl && cardEl.dataset.status === 'disabled';
     const isCustom = skill.type !== 'official';
-    const srcClass = { official:'sd-src-official', dora:'sd-src-dora', upload:'sd-src-upload', import:'sd-src-import' }[skill.type];
-    const srcLabel = { official:'官方', dora:'dora 创建', upload:'上传', import:'导入' }[skill.type];
+    const srcClass = { official:'sd-src-official', conversation:'sd-src-dora', upload:'sd-src-upload', import:'sd-src-import' }[skill.type];
+    const srcLabel = { official:'官方', conversation:'前台对话创建', upload:'上传', import:'导入' }[skill.type];
 
     document.getElementById('sd-header').innerHTML = `
       <div class="sd-icon" style="background:${skill.iconBg}">${skill.iconSvg}</div>
@@ -3941,6 +4605,7 @@
     setTimeout(() => openSkillDrawer(skillId), 60);
   }
 
+  // Open drawer on card click, skip action controls
   document.addEventListener('click', function(e) {
     const card = e.target.closest('.skill-card');
     if (!card) return;
@@ -3949,60 +4614,10 @@
     if (skillId) openSkillDrawer(skillId);
   });
 
-  // ── 初始化：固定新 Tab 方案 ──
-  (function initNewTabMode() {
-    const baseUrl = location.href.split('#')[0];
-
-    // 前台对话入口：始终以新 Tab 打开
-    const sidebarLink = document.getElementById('sidebar-fe-link');
-    sidebarLink.href = baseUrl + '#fe';
-    sidebarLink.target = '_blank';
-
-    // 通过 Dora 创建：始终以新 Tab 打开
-    const doraLink = document.getElementById('dora-dropdown-link');
-    doraLink.href = baseUrl + '#fe-dora';
-    doraLink.target = '_blank';
-
-    // Hash 路由
-    if (location.hash === '#fe-dora') {
-      document.getElementById('frontend-overlay').classList.add('open');
-      enterAgent('dora');
-    } else if (location.hash === '#agent-config') {
-      // 前台「添加到Agent」跳转而来（前台→后台），读取 localStorage 还原配置页
-      const raw = localStorage.getItem('pendingAgentConfig');
-      localStorage.removeItem('pendingAgentConfig');
-      if (raw) {
-        const { agentId, skill } = JSON.parse(raw);
-        if (agentId) {
-          openAgentConfig(agentId, skill);
-        } else {
-          document.getElementById('fe-acp-name').textContent = '未命名 Agent';
-          document.getElementById('fe-acp-preview-icon').textContent = '🤖';
-          document.getElementById('fe-acp-preview-name').textContent = '未命名 Agent';
-          const skillsEl = document.getElementById('fe-acp-skills');
-          skillsEl.innerHTML = '';
-          if (skill) {
-            const newItem = document.createElement('div');
-            newItem.className = 'fe-config-skill-item';
-            newItem.innerHTML = `
-              <div class="fe-config-skill-icon" style="background:${skill.iconBg}">${skill.emoji}</div>
-              <span class="fe-config-skill-name">${escapeHtml(skill.name)}</span>
-              <span class="fe-config-skill-new">新加入</span>`;
-            skillsEl.appendChild(newItem);
-          }
-          document.getElementById('fe-agent-config').classList.add('open');
-        }
-      }
-    } else if (location.hash === '#admin') {
-      // 管理后台 — 默认技能库（skill-library 已默认显示，无需额外操作）
-    } else if (location.hash === '#agent-mgmt') {
-      showAdminPage('agent-mgmt');
-    } else {
-      // 默认进入前台首页（含无 hash 的情况）
-      document.getElementById('frontend-overlay').classList.add('open');
-      showView('home');
-    }
-  })();
+  switchVariant('b', document.querySelectorAll('.v-tab')[1]);
+  // 默认进入前台首页
+  renderFrontendSkillEntry();
+  openFrontend();
 </script>
 </body>
 </html>

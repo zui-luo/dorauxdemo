@@ -1,0 +1,71 @@
+<!-- ══════════════════════════════════════════
+     方案切换栏模板 — 复制到 prototype.html 顶部使用
+     注意：切换栏固定在页面顶部，不属于业务区域
+     ══════════════════════════════════════════ -->
+
+<!-- 1. 在 <head> 或文件顶部加入以下 CSS -->
+<style>
+  /* ── 方案切换栏 ── */
+  #variant-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+    height: 40px; background: #1a1a2e;
+    display: flex; align-items: center; gap: 4px; padding: 0 16px;
+    font-family: -apple-system, sans-serif;
+  }
+  #variant-bar .label { color: #888; font-size: 12px; margin-right: 8px; }
+  .v-tab {
+    padding: 4px 14px; border-radius: 4px; border: none; cursor: pointer;
+    font-size: 12px; background: transparent; color: #aaa;
+  }
+  .v-tab.active { background: #0047FD; color: #fff; }
+  .v-tab:hover:not(.active) { background: rgba(255,255,255,0.1); color: #fff; }
+  /* 交互说明开关 */
+  .v-demo-toggle {
+    padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 11px;
+    background: transparent; color: #666; border: 1px solid rgba(255,255,255,0.15);
+    transition: background 120ms, color 120ms, border-color 120ms;
+  }
+  .v-demo-toggle.active { background: rgba(255,200,0,0.12); color: #FFC107; border-color: rgba(255,193,7,0.35); }
+  .v-demo-toggle:hover:not(.active) { background: rgba(255,255,255,0.08); color: #bbb; }
+  /* 演示控件：默认隐藏，开启「交互说明」后显示 */
+  .demo-control { display: none !important; }
+  body.demo-mode .demo-control { display: block !important; }
+  /* 多方案时使用 */
+  .variant { display: none; }
+  .variant.active { display: contents; }
+  /* 为切换栏留出空间 */
+  body { padding-top: 40px; }
+</style>
+
+<!-- 2. 在 <body> 最顶部放切换栏 HTML（根据实际方案数增减 v-tab） -->
+<div id="variant-bar">
+  <span class="label">方案对比：</span>
+  <button class="v-tab active" onclick="switchVariant('a', this)">方案 A</button>
+  <button class="v-tab" onclick="switchVariant('b', this)">方案 B</button>
+  <div style="flex:1;"></div>
+  <button class="v-demo-toggle" onclick="toggleDemoMode(this)">交互说明</button>
+</div>
+
+<!-- 3. 方案内容包裹 div（只有一个方案时也保留结构） -->
+<div id="variant-a" class="variant active">
+  <!-- 方案 A 的业务内容 -->
+</div>
+
+<div id="variant-b" class="variant">
+  <!-- 方案 B 的业务内容 -->
+</div>
+
+<!-- 4. 在 </body> 前加入 JS -->
+<script>
+  function switchVariant(id, el) {
+    document.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.v-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('variant-' + id).classList.add('active');
+    el.classList.add('active');
+  }
+
+  function toggleDemoMode(el) {
+    document.body.classList.toggle('demo-mode');
+    el.classList.toggle('active');
+  }
+</script>
