@@ -1,0 +1,2260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dora / 专家 / 资源库 · 资料联动原型</title>
+<style>
+  #variant-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    height: 40px;
+    background: #1a1a2e;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 16px;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  }
+  #variant-bar .label { color: #888; font-size: 12px; margin-right: 8px; }
+  .v-tab { padding: 4px 14px; border-radius: 4px; border: none; cursor: pointer; font-size: 12px; background: transparent; color: #aaa; }
+  .v-tab.active { background: #0047FD; color: #fff; }
+  .v-tab:hover:not(.active) { background: rgba(255,255,255,0.1); color: #fff; }
+  .v-demo-toggle { padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; background: transparent; color: #666; border: 1px solid rgba(255,255,255,0.15); }
+  .v-demo-toggle.active { background: rgba(255,200,0,0.12); color: #FFC107; border-color: rgba(255,193,7,0.35); }
+  .demo-control { display: none !important; }
+  body.demo-mode .demo-control { display: flex !important; }
+
+  :root {
+    --brand-1: #EAF0FF;
+    --brand-2: #D8E4FF;
+    --brand-6: #2562FF;
+    --brand-7: #0047FD;
+    --ink-1: #FFFFFF;
+    --ink-2: #F7F8FA;
+    --ink-3: #F0F1F5;
+    --ink-4: #E6E8ED;
+    --ink-6: #C3C8D4;
+    --ink-8: #8C95B0;
+    --ink-9: #5D6581;
+    --ink-10: #222D53;
+    --ink-11: #091640;
+    --green: #1E8A64;
+    --red: #B3353F;
+    --orange: #F26B4F;
+    --purple: #7C5CFF;
+    --shadow-card: 0 0 6px rgba(9,30,64,0.08);
+    --shadow-pop: 0 12px 32px rgba(9,30,64,0.18);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    padding-top: 40px;
+    background: var(--ink-3);
+    color: var(--ink-11);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, textarea { font: inherit; }
+  button { cursor: pointer; }
+  .annotated { position: relative; }
+  body.demo-mode .change-marker.demo-control { display: flex !important; }
+  .change-marker {
+    position: absolute;
+    z-index: 40;
+    top: -8px;
+    right: -8px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    background: var(--brand-7);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(0,71,253,0.28);
+    cursor: help;
+  }
+  .change-marker::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,71,253,0.28);
+    animation: markerPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes markerPulse {
+    0%, 100% { transform: scale(1); opacity: 0.55; }
+    50% { transform: scale(1.45); opacity: 0; }
+  }
+  #change-tooltip-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 300000;
+    pointer-events: none;
+    display: none;
+  }
+  #change-tooltip-layer.open { display: block; }
+  #change-tooltip-bubble {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 248px;
+    max-width: min(280px, calc(100vw - 24px));
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(9,22,64,0.94);
+    color: #fff;
+    font-size: 12px;
+    line-height: 1.6;
+    box-shadow: 0 8px 20px rgba(9,30,64,0.16);
+  }
+
+  .app {
+    height: calc(100vh - 40px);
+    min-height: 720px;
+    display: flex;
+    background: var(--ink-3);
+  }
+  .rail {
+    width: 72px;
+    flex: 0 0 72px;
+    background: #F4F7FC;
+    border-right: 1px solid var(--ink-4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0 14px;
+  }
+  .rail-tab {
+    width: 72px;
+    min-height: 78px;
+    border: none;
+    background: transparent;
+    color: #10264A;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    font-size: 14px;
+    transition: background 140ms;
+  }
+  .rail-tab:hover { background: #EAF0FF; }
+  .rail-tab.active { background: #DCE9FF; color: #08204B; }
+  .rail-tab svg { width: 18px; height: 18px; }
+  .rail-spacer { flex: 1; }
+  .rail-search,
+  .rail-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #10264A;
+  }
+  .rail-avatar {
+    margin-top: 4px;
+    background: linear-gradient(135deg, #1DB6A0, #2457FF);
+    color: #fff;
+    font-weight: 700;
+    font-size: 12px;
+  }
+  .main {
+    flex: 1;
+    min-width: 0;
+    padding: 8px;
+    overflow: hidden;
+  }
+  .surface {
+    height: 100%;
+    border-radius: 10px;
+    background: var(--ink-1);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    display: none;
+  }
+  .surface.active { display: flex; }
+
+  .dora-workspace {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    background: #fff;
+  }
+  .dora-side-panel {
+    width: 260px;
+    flex: 0 0 260px;
+    border-right: 1px solid var(--ink-4);
+    background: var(--ink-2);
+    padding: 12px;
+    display: none;
+    flex-direction: column;
+  }
+  .dora-workspace.sidebar-open .dora-side-panel { display: flex; }
+  .dora-side-head {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    color: var(--ink-11);
+  }
+  .dora-expand-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--ink-10);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .dora-expand-btn:hover { background: var(--ink-3); color: var(--brand-7); }
+  .dora-expand-btn {
+    position: absolute;
+    left: 18px;
+    top: 18px;
+    z-index: 3;
+    background: rgba(255,255,255,0.82);
+    border: 1px solid rgba(230,232,237,0.9);
+    box-shadow: var(--shadow-card);
+  }
+  .dora-side-action {
+    height: 44px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-10);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 12px;
+    text-align: left;
+    font-weight: 600;
+  }
+  .dora-side-action.active { background: #DCE9FF; color: var(--brand-7); }
+  .dora-side-history { display: flex; flex-direction: column; gap: 2px; }
+  .dora-side-history button {
+    min-height: 34px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--ink-10);
+    text-align: left;
+    padding: 7px 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dora-side-history button.active { background: var(--ink-4); font-weight: 600; }
+
+  .dora-home {
+    position: relative;
+    flex: 1;
+    overflow: auto;
+    padding: 18vh 0 60px;
+    background:
+      radial-gradient(circle at 42% 16%, rgba(124,92,255,0.18), transparent 32%),
+      radial-gradient(circle at 26% 12%, rgba(0,198,168,0.16), transparent 28%),
+      linear-gradient(105deg, #F3FCFF 0%, #F6F7FF 54%, #FFFFFF 100%);
+  }
+  .home-center {
+    width: min(890px, calc(100vw - 220px));
+    margin: 0 auto;
+    text-align: center;
+  }
+  .dora-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    font-size: 40px;
+    line-height: 1.2;
+    font-weight: 700;
+    color: #081B41;
+  }
+  .bot-face {
+    width: 72px;
+    height: 56px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 20%, #fff, transparent 30%), linear-gradient(135deg, #F5F8FF 0%, #8296D8 78%);
+    box-shadow: inset 0 -8px 12px rgba(17,38,83,0.22), 0 10px 28px rgba(37,98,255,0.18);
+    position: relative;
+    flex: 0 0 72px;
+  }
+  .bot-face::before {
+    content: "";
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    top: 17px;
+    height: 24px;
+    border-radius: 14px;
+    background: #060B2A;
+    box-shadow: 0 0 0 3px rgba(33,191,255,0.62);
+  }
+  .bot-face::after {
+    content: "";
+    position: absolute;
+    left: 23px;
+    top: 24px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 22px 0 0 #fff, 0 0 10px #38C7FF, 22px 0 10px #38C7FF;
+  }
+  .dora-sub { margin-top: 20px; font-size: 24px; color: #10264A; }
+  .dora-sub .prompt {
+    color: var(--brand-7);
+    background: rgba(37,98,255,0.12);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+  .hero-input {
+    margin: 14px auto 0;
+    width: min(890px, calc(100vw - 240px));
+    min-height: 118px;
+    background: rgba(255,255,255,0.9);
+    border: 2px solid #30B8F2;
+    border-bottom-color: #625CFF;
+    border-radius: 18px;
+    box-shadow: 0 12px 34px rgba(37,98,255,0.12);
+    padding: 18px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .hero-input textarea {
+    border: none;
+    background: transparent;
+    resize: none;
+    min-height: 48px;
+    outline: none;
+    color: var(--ink-11);
+  }
+  .hero-actions { display: flex; align-items: center; justify-content: space-between; }
+  .hero-asset-quick {
+    width: min(890px, calc(100vw - 240px));
+    margin: 34px auto 0;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+  }
+  .hero-asset-btn {
+    height: 38px;
+    border: 1px solid rgba(37,98,255,0.18);
+    border-radius: 19px;
+    background: rgba(255,255,255,0.78);
+    color: #10264A;
+    padding: 0 16px 0 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 8px 24px rgba(37,98,255,0.08);
+  }
+  .hero-asset-btn:hover {
+    border-color: rgba(37,98,255,0.42);
+    background: #fff;
+    color: var(--brand-7);
+    transform: translateY(-1px);
+  }
+  .hero-asset-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hero-asset-icon.bi { background: #2E7DFF; }
+  .hero-asset-icon.fr { background: #745CFF; }
+  .sender-attachments { display: none; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .sender-attachments.has-file { display: flex; }
+  .sender-file-chip {
+    height: 34px;
+    max-width: 240px;
+    border: 1px solid var(--ink-4);
+    border-radius: 9px;
+    background: #fff;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    color: var(--ink-10);
+    box-shadow: var(--shadow-card);
+  }
+  .sender-file-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    background: #1DB6A0;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .sender-left-tools { position: relative; display: flex; align-items: center; gap: 10px; }
+  .sender-menu {
+    position: absolute;
+    left: 0;
+    bottom: 42px;
+    width: 198px;
+    border: 1px solid var(--ink-4);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: var(--shadow-pop);
+    padding: 6px;
+    display: none;
+    z-index: 80;
+  }
+  .sender-menu.open,
+  body[data-sender-variant="menu"] .sender-left-tools:hover .sender-menu { display: grid; gap: 2px; }
+  .sender-menu button {
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--ink-10);
+    text-align: left;
+    padding: 0 12px;
+    white-space: nowrap;
+  }
+  .sender-menu button:hover { background: var(--ink-2); color: var(--brand-7); }
+  .sender-action-btn {
+    height: 34px;
+    min-width: 48px;
+    border: none;
+    border-radius: 17px;
+    background: #EDF1F8;
+    color: #50607E;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+  }
+  .sender-action-btn:hover { background: #E2E9F7; color: var(--brand-7); }
+  .sender-cluster { position: relative; width: 74px; height: 32px; display: none; }
+  .sender-cluster .round-btn,
+  .sender-cluster .sender-action-btn {
+    position: absolute;
+    top: 0;
+    min-width: 32px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+  }
+  .sender-cluster .round-btn { left: 0; z-index: 3; background: #1C2A52; color: #fff; }
+  .sender-cluster .cluster-bi { left: 22px; z-index: 2; background: #6D94FF; color: #10264A; }
+  .sender-cluster .cluster-fr { left: 44px; z-index: 1; background: #5C86FF; color: #10264A; }
+  .sender-cluster:hover .cluster-bi { transform: translateX(6px); }
+  .sender-cluster:hover .cluster-fr { transform: translateX(12px); }
+  body[data-sender-variant="menu"] .sender-menu-trigger { display: inline-flex; }
+  body[data-sender-variant="flat"] .sender-flat-action { display: inline-flex; }
+  body[data-sender-variant="stack"] .sender-cluster { display: block; }
+  body[data-sender-variant="stack"] .sender-menu-trigger,
+  body[data-sender-variant="flat"] .sender-menu-trigger,
+  body[data-sender-variant="menu"] .sender-flat-action { display: none; }
+  .sender-added-row {
+    display: none;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .sender-added-row.has-file { display: flex; }
+  .round-btn {
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 17px;
+    background: #EDF1F8;
+    color: #50607E;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .round-btn.primary { background: #304360; color: #fff; }
+  .practice-title { margin: 150px 0 22px; color: #10264A; font-size: 16px; }
+  .practice-grid {
+    width: min(970px, calc(100vw - 200px));
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  .practice-card {
+    min-height: 150px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.74);
+    box-shadow: var(--shadow-card);
+    border: 1px solid rgba(230,232,237,0.8);
+    padding: 20px;
+    text-align: left;
+    color: var(--ink-10);
+    backdrop-filter: blur(12px);
+  }
+  .practice-card strong { display: block; color: var(--ink-11); font-size: 16px; margin-bottom: 10px; }
+
+  .expert-page,
+  .space-home {
+    flex: 1;
+    min-width: 0;
+    overflow: auto;
+    padding: 20px 24px 36px;
+  }
+  .expert-page {
+    background:
+      radial-gradient(circle at 38% 10%, rgba(124,92,255,0.18), transparent 30%),
+      radial-gradient(circle at 16% 4%, rgba(0,198,168,0.14), transparent 26%),
+      linear-gradient(105deg, #F3FCFF 0%, #F6F7FF 54%, #FFFFFF 100%);
+  }
+  .page-title {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .page-title h1 { margin: 0; font-size: 18px; font-weight: 600; color: var(--ink-11); }
+  .filters { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .select-pill,
+  .search-box,
+  .primary-btn {
+    height: 34px;
+    border-radius: 7px;
+    border: 1px solid var(--ink-4);
+    background: #fff;
+    color: var(--ink-10);
+    padding: 0 12px;
+  }
+  .search-box {
+    width: 486px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .search-box input { border: none; outline: none; flex: 1; min-width: 0; color: var(--ink-10); }
+  .primary-btn { border-color: var(--brand-7); background: var(--brand-7); color: #fff; }
+  .agent-grid { display: grid; grid-template-columns: repeat(4, minmax(220px, 1fr)); gap: 16px; }
+  .agent-card {
+    min-height: 190px;
+    border: 1px solid var(--ink-4);
+    border-radius: 8px;
+    background: #fff;
+    padding: 16px;
+    box-shadow: var(--shadow-card);
+    cursor: pointer;
+  }
+  .agent-card:hover { border-color: var(--brand-6); }
+  .agent-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .agent-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, #E8F0FF, #FFFFFF);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--brand-7);
+    font-weight: 800;
+  }
+  .agent-card h3 { margin: 0; font-size: 15px; color: var(--ink-11); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .agent-card p { color: var(--ink-9); font-size: 13px; margin: 0 0 16px; }
+  .agent-meta { color: var(--ink-8); font-size: 12px; margin-top: auto; }
+
+  .conversation-page {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    background: #fff;
+  }
+  .conversation-page.dora-mode .conversation-back-btn,
+  .conversation-page.dora-mode .agent-switch-btn,
+  .conversation-page.dora-mode .agent-switch-spacer { display: none !important; }
+  .conversation-page.sidebar-collapsed .conversation-side { display: none; }
+  .conversation-side {
+    width: 260px;
+    flex: 0 0 260px;
+    border-right: 1px solid var(--ink-4);
+    background: var(--ink-2);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+  }
+  .conversation-agent-head {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    color: var(--ink-11);
+    position: relative;
+  }
+  .conversation-back-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--ink-10);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 28px;
+  }
+  .conversation-back-btn:hover { background: var(--ink-3); color: var(--brand-7); }
+  .conversation-agent-name {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .agent-switch-spacer { flex: 1; }
+  .agent-switch-btn {
+    height: 28px;
+    padding: 0 9px;
+    border: 1px solid var(--ink-4);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ink-10);
+    font-size: 12px;
+    flex: 0 0 auto;
+  }
+  .agent-switch-btn:hover { border-color: var(--brand-6); color: var(--brand-7); }
+  .agent-switch-popover {
+    position: absolute;
+    left: 36px;
+    top: 46px;
+    width: 260px;
+    border: 1px solid var(--ink-4);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: var(--shadow-pop);
+    padding: 12px;
+    z-index: 50;
+    display: none;
+  }
+  .agent-switch-popover.open { display: block; }
+  .agent-switch-title {
+    font-size: 13px;
+    color: var(--ink-11);
+    margin-bottom: 10px;
+  }
+  .agent-switch-search {
+    height: 34px;
+    border: 1px solid var(--ink-4);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    margin-bottom: 10px;
+    color: var(--ink-8);
+    font-weight: 400;
+  }
+  .agent-switch-search input {
+    border: none;
+    outline: none;
+    min-width: 0;
+    flex: 1;
+    color: var(--ink-11);
+  }
+  .agent-switch-list { display: grid; gap: 4px; max-height: 280px; overflow: auto; }
+  .agent-switch-item {
+    min-height: 54px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    text-align: left;
+    color: var(--ink-10);
+  }
+  .agent-switch-item:hover { background: var(--ink-2); }
+  .agent-switch-item.active { background: #DCE9FF; color: var(--brand-7); }
+  .agent-switch-copy { min-width: 0; flex: 1; }
+  .agent-switch-name { font-weight: 700; color: var(--ink-11); }
+  .agent-switch-desc {
+    margin-top: 3px;
+    color: var(--ink-8);
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 400;
+  }
+  .agent-switch-empty { display: none; padding: 14px 8px 6px; color: var(--ink-8); font-size: 12px; font-weight: 400; }
+  .agent-switch-empty.visible { display: block; }
+  .conversation-nav-btn {
+    height: 38px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--ink-10);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 12px;
+    text-align: left;
+  }
+  .conversation-nav-btn.active { background: #DCE9FF; color: var(--brand-7); font-weight: 600; }
+  .conversation-history { display: flex; flex-direction: column; gap: 2px; }
+  .conversation-history button {
+    min-height: 34px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--ink-10);
+    text-align: left;
+    padding: 7px 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .conversation-history button.active { background: var(--ink-4); font-weight: 600; }
+  .conversation-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .conversation-header {
+    height: 56px;
+    flex: 0 0 56px;
+    border-bottom: 1px solid var(--ink-4);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 22px;
+  }
+  .conversation-header-spacer { flex: 1; }
+  .folder-trigger { position: relative; }
+  .folder-count {
+    position: absolute;
+    right: -4px;
+    top: -5px;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    background: var(--brand-7);
+    color: #fff;
+    font-size: 10px;
+    line-height: 16px;
+    text-align: center;
+    font-weight: 700;
+  }
+  .conversation-sidebar-toggle {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--ink-10);
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .conversation-page.sidebar-collapsed .conversation-sidebar-toggle { display: inline-flex; }
+  .conversation-sidebar-toggle:hover { background: var(--ink-3); }
+  .conversation-title { font-weight: 700; color: var(--ink-11); }
+  .conversation-subtitle { color: var(--ink-8); font-size: 12px; }
+  .conversation-body {
+    flex: 1;
+    overflow: auto;
+    padding: 32px;
+    background: linear-gradient(180deg, #FBFCFF 0%, #FFFFFF 36%);
+  }
+  .conversation-row { display: flex; margin-bottom: 22px; }
+  .conversation-row.user { justify-content: flex-end; }
+  .conversation-row.agent { gap: 10px; align-items: flex-start; }
+  .conversation-bubble {
+    max-width: min(620px, 78%);
+    border-radius: 12px;
+    padding: 12px 14px;
+    background: var(--brand-1);
+    color: var(--ink-11);
+  }
+  .conversation-row.agent .conversation-bubble {
+    background: transparent;
+    padding: 0;
+    max-width: min(720px, 86%);
+  }
+  .process-card {
+    margin-top: 12px;
+    border: 1px solid var(--ink-4);
+    border-radius: 10px;
+    background: var(--ink-2);
+    overflow: hidden;
+  }
+  .process-head {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    color: var(--ink-10);
+  }
+  .process-list { padding: 0 14px 12px; display: grid; gap: 8px; }
+  .process-item { display: flex; align-items: center; gap: 8px; color: var(--ink-9); font-size: 13px; }
+  .process-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand-7); box-shadow: 0 0 0 5px rgba(0,71,253,0.08); }
+  .conversation-input-wrap { padding: 14px 28px 16px; }
+  .conversation-input {
+    min-height: 104px;
+    border: 1px solid var(--ink-4);
+    border-radius: 16px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+  }
+  .conversation-input textarea { flex: 1; border: none; resize: none; outline: none; }
+
+  .section-title { font-size: 15px; font-weight: 600; color: var(--ink-11); margin: 18px 0 14px; }
+  .recent-row {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+  .mini-asset {
+    height: 126px;
+    border: 1px solid var(--ink-4);
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .mini-thumb { height: 78px; background: linear-gradient(135deg, #F2F6FF, #DCE8FF); padding: 10px; font-size: 10px; color: var(--ink-9); }
+  .mini-thumb.dark { background: linear-gradient(135deg, #111A36, #232F62); color: #fff; }
+  .mini-thumb.ppt { background: linear-gradient(135deg, #FFFFFF, #F2F7E6); color: #3481D8; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .mini-info { padding: 8px; display: flex; align-items: center; justify-content: space-between; color: var(--ink-8); font-size: 11px; }
+  .asset-grid { display: grid; grid-template-columns: repeat(4, minmax(230px, 1fr)); gap: 16px; }
+  .asset-card {
+    border: 1px solid var(--ink-4);
+    border-radius: 7px;
+    background: #fff;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: var(--shadow-card);
+    transition: border-color 140ms, transform 140ms;
+  }
+  .asset-card:hover { border-color: var(--brand-6); transform: translateY(-1px); }
+  .asset-preview {
+    height: 174px;
+    background: linear-gradient(180deg, #F8FBFF, #E7F0FF);
+    border-bottom: 1px solid var(--ink-4);
+    padding: 14px;
+  }
+  .asset-preview.dashboard {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: 42px;
+    gap: 8px;
+  }
+  .kpi { border-radius: 4px; background: #EAF8F1; color: var(--green); padding: 7px; font-size: 10px; }
+  .kpi.red { background: #FDEBEC; color: var(--red); }
+  .line-chart { grid-column: 1 / 4; border-radius: 4px; background: linear-gradient(180deg, #fff, #F7FAFF); position: relative; }
+  .line-chart::after {
+    content: "";
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    top: 50%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--green), var(--brand-6));
+    transform: rotate(-2deg);
+  }
+  .asset-preview.article { background: linear-gradient(135deg, #0E1837, #11182F); color: #fff; display: flex; align-items: center; font-size: 22px; font-weight: 700; }
+  .asset-preview.bi { background: linear-gradient(135deg, #F7FAFF, #FFFFFF); display: grid; grid-template-columns: 1fr 84px; gap: 10px; }
+  .asset-preview.bi .panel { border-radius: 5px; background: #EEF4FF; }
+  .asset-preview.bi .side { border-radius: 5px; background: #20164F; }
+  .asset-info { padding: 12px 14px 14px; }
+  .asset-name { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--ink-11); margin-bottom: 14px; }
+  .file-badge {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    flex: 0 0 28px;
+  }
+  .file-badge.html { background: #F6BF33; }
+  .file-badge.ppt { background: #F26B4F; }
+  .file-badge.bi { background: #8168FF; }
+  .asset-foot { display: flex; align-items: center; justify-content: space-between; color: var(--ink-8); font-size: 12px; }
+  .avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1DB6A0, #2457FF);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .detail-page { flex: 1; min-width: 0; display: none; background: #fff; position: relative; }
+  .detail-page.active { display: flex; }
+  .preview-pane {
+    flex: 1;
+    min-width: 0;
+    border-right: 1px solid var(--ink-4);
+    display: flex;
+    flex-direction: column;
+  }
+  .preview-pane.full { border-right: none; }
+  .preview-header {
+    height: 66px;
+    flex: 0 0 66px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--ink-4);
+    background: #FAFBFD;
+  }
+  .back-btn,
+  .icon-btn {
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--ink-10);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .back-btn:hover,
+  .icon-btn:hover { background: var(--ink-3); }
+  .asset-title { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--ink-11); min-width: 0; }
+  .version-menu { position: relative; }
+  .version-trigger {
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 17px;
+    border: 1px solid var(--ink-4);
+    background: #fff;
+    color: var(--ink-10);
+  }
+  .version-list {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    width: 150px;
+    border: 1px solid var(--ink-4);
+    background: #fff;
+    border-radius: 7px;
+    box-shadow: var(--shadow-pop);
+    padding: 6px 0;
+    display: none;
+    z-index: 20;
+  }
+  .version-menu.open .version-list { display: block; }
+  .version-item {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px 0 12px;
+    color: var(--ink-10);
+    font-size: 13px;
+  }
+  .version-item:hover { background: var(--ink-2); }
+  .source-icon {
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--ink-9);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .source-icon:hover { background: var(--brand-1); color: var(--brand-7); }
+  .source-popover {
+    position: absolute;
+    top: 60px;
+    left: 364px;
+    width: 330px;
+    border: 1px solid var(--ink-4);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: var(--shadow-pop);
+    padding: 18px;
+    z-index: 30;
+    display: none;
+    color: var(--ink-11);
+  }
+  .source-popover.open { display: block; }
+  .source-popover::before {
+    content: "";
+    position: absolute;
+    left: -44px;
+    top: 132px;
+    width: 44px;
+    border-top: 1px dashed var(--red);
+  }
+  .source-label {
+    display: inline-flex;
+    align-items: center;
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 8px;
+    background: #FF5630;
+    color: #fff;
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .source-popover p { margin: 0; line-height: 1.65; }
+  .preview-header-spacer { flex: 1; }
+  .owner { color: var(--ink-8); font-size: 13px; }
+  .draft-pill {
+    height: 30px;
+    padding: 0 13px;
+    border: 1px solid var(--ink-4);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ink-10);
+  }
+  .preview-content { flex: 1; overflow: auto; background: #F8F9FB; padding: 16px; }
+  .report-card { border: 1px solid var(--ink-4); background: #fff; border-radius: 8px; padding: 18px; margin-bottom: 14px; }
+  .report-card h3 { margin: 0 0 12px; color: var(--ink-9); font-size: 13px; font-weight: 600; }
+  .rule-row {
+    display: grid;
+    grid-template-columns: 160px 150px 1fr 150px 74px;
+    align-items: center;
+    min-height: 42px;
+    border-top: 1px solid var(--ink-4);
+    color: var(--ink-10);
+    font-size: 13px;
+  }
+  .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .metric-card { height: 106px; border: 1px solid var(--ink-4); border-radius: 8px; background: #fff; padding: 14px 16px; }
+  .metric-card.green { background: #E8F8F1; border-color: #BFEAD7; }
+  .metric-card.blue { background: #EAF4FF; border-color: #BBD8FF; }
+  .metric-card.red { background: #FDEBED; border-color: #F5C9CE; }
+  .metric-label { color: var(--ink-9); font-size: 12px; }
+  .metric-value { margin-top: 10px; font-size: 27px; font-weight: 700; }
+  .chart-block {
+    height: 276px;
+    border: 1px solid var(--ink-4);
+    border-radius: 8px;
+    background: #fff;
+    margin-top: 14px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .chart-grid {
+    position: absolute;
+    left: 42px;
+    right: 22px;
+    top: 72px;
+    bottom: 34px;
+    background-image: linear-gradient(var(--ink-3) 1px, transparent 1px), linear-gradient(90deg, var(--ink-3) 1px, transparent 1px);
+    background-size: 100% 36px, 120px 100%;
+  }
+  .chart-line {
+    position: absolute;
+    left: 58px;
+    right: 34px;
+    top: 150px;
+    height: 3px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--green), var(--brand-6), var(--red));
+    transform: rotate(-2deg);
+  }
+
+  .chat-pane {
+    width: 350px;
+    flex: 0 0 350px;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    transition: width 180ms, flex-basis 180ms, opacity 160ms;
+  }
+  .chat-pane.collapsed { width: 0; flex-basis: 0; opacity: 0; overflow: hidden; }
+  .chat-head {
+    height: 66px;
+    border-bottom: 1px solid var(--ink-4);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 10px;
+  }
+  .agent-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #F5F8FF 0%, #8296D8 78%);
+    box-shadow: inset 0 -5px 8px rgba(17,38,83,0.2);
+    flex: 0 0 30px;
+    position: relative;
+  }
+  .agent-avatar::before {
+    content: "";
+    position: absolute;
+    left: 5px;
+    right: 5px;
+    top: 9px;
+    height: 13px;
+    border-radius: 8px;
+    background: #060B2A;
+    box-shadow: 0 0 0 2px rgba(33,191,255,0.5);
+  }
+  .chat-title { font-weight: 600; color: var(--ink-11); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chat-body { flex: 1; padding: 26px 16px 16px; overflow: auto; }
+  .msg { display: flex; margin-bottom: 22px; }
+  .msg.user { justify-content: flex-end; }
+  .bubble { max-width: 270px; border-radius: 8px; padding: 10px 13px; background: var(--brand-1); color: var(--ink-11); }
+  .msg.agent { gap: 10px; align-items: flex-start; }
+  .agent-text { flex: 1; color: var(--ink-11); }
+  .agent-name { color: var(--ink-9); font-size: 12px; margin-bottom: 8px; }
+  .status-pill { margin-top: 12px; height: 40px; padding: 0 14px; border: 1px solid var(--ink-4); border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; color: var(--ink-10); }
+  .message-actions { display: flex; gap: 8px; margin: 12px 0 0 40px; color: var(--ink-9); }
+  .message-actions button { width: 24px; height: 24px; border: none; background: transparent; color: inherit; }
+  .chat-input-wrap { padding: 14px 16px 10px; }
+  .chat-input-box { min-height: 116px; border: 1px solid var(--ink-4); border-radius: 16px; display: flex; flex-direction: column; padding: 12px; }
+  .chat-input-box textarea { flex: 1; border: none; outline: none; resize: none; color: var(--ink-11); }
+  .input-tools { display: flex; justify-content: space-between; align-items: center; }
+  .tiny-note { text-align: center; color: var(--ink-8); font-size: 12px; margin-top: 8px; }
+  .floating-dora {
+    position: absolute;
+    right: 18px;
+    bottom: 18px;
+    width: 52px;
+    height: 52px;
+    border: none;
+    border-radius: 26px;
+    box-shadow: var(--shadow-pop);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+  }
+  .floating-dora.visible { display: flex; }
+
+  .modal-mask {
+    position: fixed;
+    inset: 40px 0 0;
+    z-index: 2000;
+    background: transparent;
+    display: none;
+    align-items: stretch;
+    justify-content: flex-end;
+  }
+  .modal-mask.open { display: flex; }
+  .files-modal {
+    width: min(590px, calc(100vw - 180px));
+    height: 100%;
+    border-left: 1px solid var(--ink-4);
+    border-radius: 0;
+    background: #fff;
+    box-shadow: var(--shadow-pop);
+    padding: 18px 16px 22px;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-tabs { display: flex; align-items: center; gap: 22px; border-bottom: 1px solid var(--ink-4); padding: 0 4px 10px; }
+  .modal-tab { border: none; background: transparent; height: 34px; color: var(--ink-10); position: relative; }
+  .modal-tab.active { color: var(--brand-7); font-weight: 600; }
+  .modal-tab.active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -11px; height: 2px; background: var(--brand-7); }
+  .modal-close { margin-left: auto; }
+  .modal-filter { display: flex; align-items: center; gap: 12px; padding: 16px 0; flex-wrap: wrap; }
+  .chip { height: 32px; border-radius: 16px; padding: 0 18px; border: 1px solid var(--ink-4); background: #fff; color: var(--ink-10); }
+  .chip.active { background: var(--brand-7); border-color: var(--brand-7); color: #fff; }
+  .modal-search { width: 100%; flex: 0 0 100%; margin-left: 0; margin-top: 2px; }
+  .file-list { display: flex; flex-direction: column; gap: 10px; overflow: auto; padding-right: 4px; }
+  .session-context {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 2px 0;
+    color: var(--ink-8);
+    font-size: 12px;
+  }
+  .session-context strong { color: var(--ink-11); }
+  .file-row.favorited {
+    border-color: rgba(0,71,253,0.2);
+    background: #F4F8FF;
+  }
+  .file-row.favorited .favorite-btn {
+    background: var(--brand-7);
+    color: #fff;
+    border-color: var(--brand-7);
+  }
+  .space-asset-hidden { display: none; }
+  .space-asset-hidden.visible { display: block; }
+  .toast {
+    position: fixed;
+    right: 28px;
+    top: 58px;
+    z-index: 3000;
+    min-width: 220px;
+    border-radius: 8px;
+    background: rgba(16,27,51,0.96);
+    color: #fff;
+    padding: 11px 14px;
+    box-shadow: var(--shadow-pop);
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+    transition: opacity 160ms, transform 160ms;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .file-row { min-height: 70px; border-radius: 6px; background: var(--ink-2); display: flex; align-items: center; gap: 14px; padding: 12px 20px; }
+  .file-info { flex: 1; min-width: 0; }
+  .file-info strong { display: block; font-size: 14px; color: var(--ink-10); margin-bottom: 3px; }
+  .file-info span { color: var(--ink-9); font-size: 12px; }
+  .file-actions { display: flex; align-items: center; gap: 8px; }
+  .outline-btn { height: 32px; padding: 0 12px; border: 1px solid var(--ink-4); border-radius: 6px; background: #fff; color: var(--ink-10); }
+  .outline-btn:hover { border-color: var(--brand-6); color: var(--brand-7); }
+  .danger-btn { color: #F5483B; }
+  .asset-picker-mask {
+    position: fixed;
+    inset: 40px 0 0;
+    z-index: 2100;
+    background: rgba(20,32,54,0.24);
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .asset-picker-mask.open { display: flex; }
+  .asset-picker {
+    width: min(760px, calc(100vw - 120px));
+    max-height: min(560px, calc(100vh - 120px));
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: var(--shadow-pop);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .asset-picker-head {
+    height: 48px;
+    border-bottom: 1px solid var(--ink-4);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+    font-weight: 700;
+  }
+  .asset-picker-body { display: grid; grid-template-columns: 210px 1fr; min-height: 380px; }
+  .asset-tree { border-right: 1px solid var(--ink-4); padding: 12px; color: var(--ink-10); }
+  .asset-tree-row {
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 8px;
+  }
+  .asset-tree-row.active { background: var(--brand-1); color: var(--brand-7); font-weight: 700; }
+  .asset-preview-panel { padding: 16px; background: #FAFBFD; }
+  .asset-preview-table {
+    height: 300px;
+    border: 1px solid var(--ink-4);
+    border-radius: 8px;
+    background:
+      linear-gradient(var(--ink-4) 1px, transparent 1px),
+      linear-gradient(90deg, var(--ink-4) 1px, transparent 1px),
+      #fff;
+    background-size: 100% 34px, 25% 100%;
+  }
+  .asset-preview-report {
+    height: 300px;
+    border-radius: 8px;
+    background:
+      radial-gradient(circle at 68% 35%, rgba(45,202,255,0.48), transparent 22%),
+      linear-gradient(135deg, #0B1740, #102A73);
+    position: relative;
+    overflow: hidden;
+  }
+  .asset-preview-report::after {
+    content: "";
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 32px;
+    height: 3px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #3BE2FF, #2E64FF);
+    box-shadow: 0 -44px 0 rgba(59,226,255,0.38), 0 -88px 0 rgba(59,226,255,0.24);
+  }
+  .asset-picker-foot {
+    height: 54px;
+    border-top: 1px solid var(--ink-4);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px;
+  }
+
+  @media (max-width: 980px) {
+    .rail { width: 60px; flex-basis: 60px; }
+    .rail-tab { width: 60px; font-size: 12px; }
+    .recent-row,
+    .asset-grid,
+    .agent-grid { grid-template-columns: repeat(2, minmax(180px, 1fr)); }
+    .chat-pane { width: 320px; flex-basis: 320px; }
+    .dora-title { font-size: 30px; }
+    .home-center,
+    .hero-input,
+    .practice-grid { width: calc(100vw - 120px); }
+    .practice-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div id="variant-bar">
+  <span class="label">方案对比：</span>
+  <button class="v-tab active" onclick="switchVariant('menu', this)">方案1：菜单入口</button>
+  <button class="v-tab" onclick="switchVariant('flat', this)">方案2：入口平铺</button>
+  <button class="v-tab" onclick="switchVariant('stack', this)">方案3：半遮挡入口</button>
+  <div style="flex:1;"></div>
+  <button class="v-demo-toggle" onclick="toggleDemoMode(this)">交互说明</button>
+</div>
+
+<div class="app">
+  <aside class="rail">
+    <button class="rail-tab active annotated" data-view="dora" onclick="switchView('dora')">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 9.5L10 4l6 5.5V16a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"/></svg>
+      Dora
+      <span class="change-marker demo-control" data-change-tooltip="Dora 是默认对话入口，用户从这里直接发起任务。" data-change-placement="right">1</span>
+    </button>
+    <button class="rail-tab annotated" data-view="experts" onclick="switchView('experts')">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="7" r="3"/><path d="M4 17c0-3 2.6-5 6-5s6 2 6 5"/></svg>
+      专家
+      <span class="change-marker demo-control" data-change-tooltip="专家视角用于查找和进入特定 Agent。" data-change-placement="right">2</span>
+    </button>
+    <button class="rail-tab annotated" data-view="space" onclick="switchView('space')">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6a2 2 0 012-2h3l1.5 2H15a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V6z"/></svg>
+      资源库
+      <span class="change-marker demo-control" data-change-tooltip="资源库视角用于查找资料、文件和仪表盘。" data-change-placement="right">3</span>
+    </button>
+    <div class="rail-spacer"></div>
+    <div class="rail-search"><svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="5"/><path d="M13 13l4 4"/></svg></div>
+    <div class="rail-avatar">N</div>
+  </aside>
+
+  <main class="main">
+    <section class="surface active" id="view-dora">
+      <div class="dora-workspace" id="doraWorkspace">
+        <aside class="dora-side-panel">
+          <div class="dora-side-head">
+            <span class="agent-avatar"></span>
+            <span>Dora</span>
+          </div>
+          <button class="dora-side-action active" id="doraNewConversation" onclick="selectConversationEntry('dora', 'new', this)">✦ 新会话</button>
+          <div class="section-title" style="margin:24px 10px 8px;color:var(--ink-8);font-size:12px;">最近会话</div>
+          <div class="dora-side-history">
+            <button id="doraLatestHistory" onclick="selectConversationEntry('dora', 'history', this)">ROI 同比环比拆解</button>
+            <button onclick="selectConversationEntry('dora', 'history', this)">经营分析会材料整理</button>
+            <button onclick="selectConversationEntry('dora', 'history', this)">销售预测系统规则调整</button>
+            <button onclick="selectConversationEntry('dora', 'history', this)">客户反馈归因分析</button>
+          </div>
+        </aside>
+        <div class="dora-home">
+          <button class="dora-expand-btn annotated" onclick="toggleDoraSidebar()" title="展开/收起会话侧栏">☰<span class="change-marker demo-control" data-change-tooltip="Dora 左上角按钮同时负责展开和收起会话侧栏。" data-change-placement="right">13</span></button>
+          <div class="home-center">
+            <div class="dora-title"><span class="bot-face"></span><span>嗨，我是 Dora，全能助手随时待命</span></div>
+            <div class="dora-sub">我可以帮你 <span class="prompt">计算ROI与同比环比，拆解增长驱动因素_</span></div>
+            <div class="hero-asset-quick annotated">
+              <button class="hero-asset-btn" onclick="openAssetPicker('bi')"><span class="hero-asset-icon bi">BI</span>添加 BI 资产</button>
+              <button class="hero-asset-btn" onclick="openAssetPicker('fr')"><span class="hero-asset-icon fr">FR</span>添加 FR 资产</button>
+              <span class="change-marker demo-control" data-change-tooltip="新会话空态在 Sender 上方前置强调 BI / FR 资产添加入口，便于用户先补充分析上下文。" data-change-placement="top">17</span>
+            </div>
+            <div class="hero-input annotated">
+              <div class="sender-added-row" id="heroSenderFiles"></div>
+              <textarea>帮我计算ROI与同比环比，拆解增长驱动因素</textarea>
+              <div class="hero-actions">
+                <div class="sender-left-tools">
+                  <div class="sender-menu" id="heroSenderMenu">
+                    <button onclick="openLocalUpload('hero')">上传本地文件</button>
+                    <button onclick="openAssetPicker('bi')">添加 FineBI 资产</button>
+                    <button onclick="openAssetPicker('fr')">添加 FineReport 资产</button>
+                  </div>
+                  <button class="round-btn sender-menu-trigger" onmouseenter="openSenderMenu('hero')" onclick="toggleSenderMenu('hero', this)">+</button>
+                  <button class="sender-action-btn sender-flat-action" onclick="openLocalUpload('hero')">上传</button>
+                  <button class="sender-action-btn sender-flat-action" onclick="openAssetPicker('bi')">BI</button>
+                  <button class="sender-action-btn sender-flat-action" onclick="openAssetPicker('fr')">FR</button>
+                  <div class="sender-cluster sender-stack-action">
+                    <button class="round-btn" onclick="toggleSenderMenu('hero', this)">+</button>
+                    <button class="round-btn cluster-bi" title="添加 FineBI 资产" aria-label="添加 FineBI 资产" onclick="openAssetPicker('bi')">BI</button>
+                    <button class="round-btn cluster-fr" title="添加 FineReport 资产" aria-label="添加 FineReport 资产" onclick="openAssetPicker('fr')">FR</button>
+                  </div>
+                </div>
+                <button class="round-btn primary" onclick="openConversation('dora')">↑</button>
+              </div>
+              <span class="change-marker demo-control" data-change-tooltip="Dora 新会话空态中可直接发起任务，并可在发送前添加本地文件、BI 或 FR 资产。" data-change-placement="top">4</span>
+            </div>
+            <div class="practice-title">探索最佳实践⌃</div>
+            <div class="practice-grid">
+              <div class="practice-card"><strong>智能问数</strong>基于业务问题生成数据分析、指标拆解和趋势判断。</div>
+              <div class="practice-card"><strong>智能报告</strong>把分析结果整理成报告、PPT 或可交互页面。</div>
+              <div class="practice-card"><strong>沉淀资料</strong>将 Agent 产出保存到资源库，后续可继续引用。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="surface" id="view-experts">
+      <div class="expert-page">
+        <div class="page-title">
+          <h1>专家 Agent</h1>
+          <button class="primary-btn">去创建</button>
+        </div>
+        <div class="filters">
+          <button class="select-pill">全部 ▾</button>
+          <div class="search-box"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="#8C95B0" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input placeholder="搜索名称/描述" /></div>
+        </div>
+        <div class="agent-grid">
+          <div class="agent-card annotated" onclick="openConversation('smart-data')">
+            <div class="agent-card-head"><div class="agent-logo">S</div><h3>智能问数</h3></div>
+            <p>面向经营分析、指标归因和同比环比拆解的专家 Agent。</p>
+            <div class="agent-meta">最近编辑：2026/02/12</div>
+            <span class="change-marker demo-control" data-change-tooltip="点击专家 Agent 可进入对应会话。" data-change-placement="top">5</span>
+          </div>
+          <div class="agent-card" onclick="openConversation('report')"><div class="agent-card-head"><div class="agent-logo">R</div><h3>智能报告</h3></div><p>可生成报告、PPT、HTML 原型与结构化结论。</p><div class="agent-meta">最近编辑：2026/02/12</div></div>
+          <div class="agent-card" onclick="openConversation('analysis')"><div class="agent-card-head"><div class="agent-logo">A</div><h3>经营分析助手</h3></div><p>围绕销售、客户、产品与区域展开分析。</p><div class="agent-meta">最近编辑：2026/02/10</div></div>
+          <div class="agent-card" onclick="openConversation('modeling')"><div class="agent-card-head"><div class="agent-logo">D</div><h3>数据建模顾问</h3></div><p>辅助定义指标、维度、口径和数据模型。</p><div class="agent-meta">最近编辑：2026/02/08</div></div>
+          <div class="agent-card" onclick="openConversation('finance')"><div class="agent-card-head"><div class="agent-logo">F</div><h3>财务小助手</h3></div><p>处理预算、预测、费用结构与异常波动。</p><div class="agent-meta">最近编辑：2026/02/07</div></div>
+          <div class="agent-card" onclick="openConversation('marketing')"><div class="agent-card-head"><div class="agent-logo">M</div><h3>营销策略助手</h3></div><p>输出营销策略、客户分层和活动复盘。</p><div class="agent-meta">最近编辑：2026/02/05</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="surface" id="view-conversation">
+      <div class="conversation-page" id="conversationPage">
+        <aside class="conversation-side">
+          <div class="conversation-agent-head">
+            <button class="conversation-back-btn" onclick="backFromConversation()" title="返回">‹</button>
+            <span class="agent-avatar"></span>
+            <span class="conversation-agent-name" id="conversationSideAgent">Dora</span>
+            <span class="agent-switch-spacer"></span>
+            <button class="agent-switch-btn annotated" id="agentSwitchButton" onclick="toggleAgentSwitch(event)">切换<span class="change-marker demo-control tooltip-left" data-change-tooltip="专家会话可从标题区快速切换到其他专家 Agent。">16</span></button>
+            <div class="agent-switch-popover" id="agentSwitchPopover">
+              <div class="agent-switch-title">切换专家 Agent</div>
+              <label class="agent-switch-search">
+                <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+                <input id="agentSwitchSearch" placeholder="搜索专家 Agent" oninput="filterAgentSwitchList(this.value)" />
+              </label>
+              <div class="agent-switch-list" id="agentSwitchList"></div>
+              <div class="agent-switch-empty" id="agentSwitchEmpty">未找到匹配的专家 Agent</div>
+            </div>
+          </div>
+          <button class="conversation-nav-btn active" id="expertNewConversation" onclick="handleConversationNewClick(this)">✦ 新会话</button>
+          <div class="section-title" style="margin:18px 10px 8px;color:var(--ink-8);font-size:12px;">最近会话</div>
+          <div class="conversation-history">
+            <button id="conversationHistoryTitle" onclick="selectConversationEntry('expert', 'history', this)">ROI 同比环比拆解</button>
+            <button onclick="selectConversationEntry('expert', 'history', this)">经营分析会材料整理</button>
+            <button onclick="selectConversationEntry('expert', 'history', this)">销售预测系统规则调整</button>
+            <button onclick="selectConversationEntry('expert', 'history', this)">客户反馈归因分析</button>
+          </div>
+        </aside>
+        <section class="conversation-main">
+          <header class="conversation-header">
+            <button class="conversation-sidebar-toggle" onclick="expandConversationSidebar()" title="展开会话侧栏">☰</button>
+            <span class="agent-avatar"></span>
+            <div>
+              <div class="conversation-title" id="conversationTitle">Dora 会话</div>
+              <div class="conversation-subtitle" id="conversationSubtitle">全能助手 · 通用任务</div>
+            </div>
+            <div class="conversation-header-spacer"></div>
+            <button class="icon-btn folder-trigger annotated" title="会话文件" aria-label="会话文件" onclick="openSessionFiles()">
+              <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round">
+                <path d="M2.8 6.2h5l1.6 2h7.8v7.1a1.4 1.4 0 0 1-1.4 1.4H4.2a1.4 1.4 0 0 1-1.4-1.4V6.2Z"/>
+                <path d="M2.8 6.2V4.7a1.4 1.4 0 0 1 1.4-1.4h3.6l1.6 1.9h6.4a1.4 1.4 0 0 1 1.4 1.4v1.6"/>
+              </svg>
+              <span class="folder-count">3</span>
+              <span class="change-marker demo-control tooltip-left" data-change-tooltip="每个会话拥有独立的会话文件，入口位于会话头部文件夹。">15</span>
+            </button>
+          </header>
+          <div class="conversation-body">
+            <div class="conversation-row user">
+              <div class="conversation-bubble" id="conversationUserText">帮我计算ROI与同比环比，拆解增长驱动因素</div>
+            </div>
+            <div class="conversation-row agent annotated">
+              <span class="agent-avatar"></span>
+              <div class="conversation-bubble">
+                <div class="agent-name" id="conversationAgentName">Dora</div>
+                <div id="conversationAnswer">好的，我会先理解你的分析目标，再读取相关数据、拆解指标口径，并整理出可继续追问的结论。</div>
+                <div class="process-card">
+                  <div class="process-head"><span>执行过程</span><span>进行中</span></div>
+                  <div class="process-list">
+                    <div class="process-item"><span class="process-dot"></span><span id="processStepOne">理解任务意图与指标口径</span></div>
+                    <div class="process-item"><span class="process-dot"></span><span id="processStepTwo">匹配可用资料和分析上下文</span></div>
+                    <div class="process-item"><span class="process-dot"></span><span id="processStepThree">生成分析结论与后续建议</span></div>
+                  </div>
+                </div>
+              </div>
+              <span class="change-marker demo-control" data-change-tooltip="Dora 与专家 Agent 都会进入会话页；会话标题、Agent 名称和任务内容跟随入口变化。" data-change-placement="top">13</span>
+            </div>
+          </div>
+          <div class="conversation-input-wrap">
+            <div class="conversation-input annotated">
+              <div class="sender-added-row" id="conversationSenderFiles"></div>
+              <textarea id="conversationInput" placeholder="在此输入任何您想查询或分析的问题，输入 @ 引用会话文件"></textarea>
+              <div class="input-tools">
+                <div class="sender-left-tools">
+                  <div class="sender-menu" id="conversationSenderMenu">
+                    <button onclick="openLocalUpload('conversation')">上传本地文件</button>
+                    <button onclick="openAssetPicker('bi')">添加 FineBI 资产</button>
+                    <button onclick="openAssetPicker('fr')">添加 FineReport 资产</button>
+                  </div>
+                  <button class="round-btn sender-menu-trigger" onmouseenter="openSenderMenu('conversation')" onclick="toggleSenderMenu('conversation', this)">+</button>
+                  <button class="sender-action-btn sender-flat-action" onclick="openLocalUpload('conversation')">上传</button>
+                  <button class="sender-action-btn sender-flat-action" onclick="openAssetPicker('bi')">BI</button>
+                  <button class="sender-action-btn sender-flat-action" onclick="openAssetPicker('fr')">FR</button>
+                  <div class="sender-cluster sender-stack-action">
+                    <button class="round-btn" onclick="toggleSenderMenu('conversation', this)">+</button>
+                    <button class="round-btn cluster-bi" title="添加 FineBI 资产" aria-label="添加 FineBI 资产" onclick="openAssetPicker('bi')">BI</button>
+                    <button class="round-btn cluster-fr" title="添加 FineReport 资产" aria-label="添加 FineReport 资产" onclick="openAssetPicker('fr')">FR</button>
+                  </div>
+                </div>
+                <button class="round-btn primary">↑</button>
+              </div>
+              <span class="change-marker demo-control tooltip-left" data-change-tooltip="会话页输入区保留会话文件入口，可继续引用资料或产出。">14</span>
+            </div>
+            <div class="tiny-note">内容均由AI生成，仅供参考</div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="surface" id="view-space">
+      <div class="space-home" id="spaceHome">
+        <div class="page-title"><h1>资源库</h1></div>
+        <div class="section-title">最近常用</div>
+        <div class="recent-row">
+          <div class="mini-asset" onclick="openAssetDetail()"><div class="mini-thumb"><div>销售预测系统.html</div><br><div>图表与预测规则</div></div><div class="mini-info"><span>财务小助手</span><span class="avatar">N</span></div></div>
+          <div class="mini-asset"><div class="mini-thumb">风险营销助手.html</div><div class="mini-info"><span>Dora</span><span class="avatar">N</span></div></div>
+          <div class="mini-asset"><div class="mini-thumb dark">From Enterprise Data Services to a Trusted Data Agent Platform</div><div class="mini-info"><span>产品小助手</span><span class="avatar">N</span></div></div>
+          <div class="mini-asset"><div class="mini-thumb">产品概念原型.html</div><div class="mini-info"><span>设计助手</span><span class="avatar">N</span></div></div>
+          <div class="mini-asset"><div class="mini-thumb ppt">2025年9月生产经营分析会</div><div class="mini-info"><span>经营助手</span><span class="avatar">N</span></div></div>
+          <div class="mini-asset"><div class="mini-thumb">BI仪表板</div><div class="mini-info"><span>财务助手</span><span class="avatar">N</span></div></div>
+        </div>
+
+        <div class="section-title">全部资源</div>
+        <div class="filters">
+          <button class="select-pill">全部类型 ▾</button>
+          <div class="search-box annotated">
+            <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="#8C95B0" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+            <input placeholder="搜索名称/来源对话/来源Agent" />
+            <span class="change-marker demo-control" data-change-tooltip="资源库支持按名称、来源对话和来源 Agent 查找资料。" data-change-placement="top">6</span>
+          </div>
+        </div>
+        <div class="asset-grid">
+          <div class="asset-card space-asset-hidden" id="savedFromSessionAsset" onclick="openAssetDetail()">
+            <div class="asset-preview dashboard"><div class="kpi">已存入</div><div class="kpi">$510.854 亿</div><div class="kpi red">V2</div><div class="line-chart"></div></div>
+            <div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>销售预测系统.html</div><div class="asset-foot"><span>来自会话文件</span><span class="avatar">N</span></div></div>
+          </div>
+          <div class="asset-card annotated" onclick="openAssetDetail()">
+            <div class="asset-preview dashboard"><div class="kpi">+$28.854 亿</div><div class="kpi">+$510.854 亿</div><div class="kpi red">$491.618 亿</div><div class="line-chart"></div></div>
+            <div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>销售预测系统.html</div><div class="asset-foot"><span>财务小助手：XXXXXXXX</span><span class="avatar">N</span></div></div>
+            <span class="change-marker demo-control" data-change-tooltip="点击资源库资料进入资料详情页。" data-change-placement="top">7</span>
+          </div>
+          <div class="asset-card"><div class="asset-preview"><div style="font-size:22px;font-weight:700;margin-top:48px;text-align:center;">复杂市场环境下<br>自营风险管理</div></div><div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>风险营销助手.html</div><div class="asset-foot"><span>Dora：XXXXXXXX</span><span class="avatar">N</span></div></div></div>
+          <div class="asset-card"><div class="asset-preview article">From Enterprise Data Services to a Trusted Data Agent Platform</div><div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>产品架构说明.html</div><div class="asset-foot"><span>产品小助手：XXXXXXXX</span><span class="avatar">N</span></div></div></div>
+          <div class="asset-card"><div class="asset-preview bi"><div class="panel"></div><div class="side"></div></div><div class="asset-info"><div class="asset-name"><span class="file-badge bi">BI</span>BI仪表板</div><div class="asset-foot"><span>财务助手：XXXXXXXX</span><span class="avatar">N</span></div></div></div>
+          <div class="asset-card"><div class="asset-preview ppt" style="height:174px;font-size:24px;color:#2B7BD8;">2025年9月生产经营分析会</div><div class="asset-info"><div class="asset-name"><span class="file-badge ppt">PPT</span>XXXX.ppt</div><div class="asset-foot"><span>经营助手：XXXXXXXX</span><span class="avatar">N</span></div></div></div>
+        </div>
+      </div>
+
+      <div class="detail-page" id="assetDetail">
+        <div class="preview-pane" id="previewPane">
+          <header class="preview-header">
+            <button class="back-btn" onclick="closeAssetDetail()"><svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 5l-5 5 5 5"/></svg></button>
+            <div class="asset-title"><span class="file-badge html">HTML</span><span>销售预测系统.html</span></div>
+            <div class="version-menu annotated" id="versionMenu">
+              <button class="version-trigger" onclick="toggleVersionMenu(event)">V2 ⌘</button>
+              <div class="version-list">
+                <div class="version-item"><span>V3</span><button class="source-icon" title="查看来源对话" onclick="showSourceHint(event)">☰</button></div>
+                <div class="version-item"><span>V2</span><button class="source-icon" title="查看来源对话" onclick="showSourceHint(event)">☰</button></div>
+                <div class="version-item"><span>V1</span><button class="source-icon" title="查看来源对话" onclick="showSourceHint(event)">☰</button></div>
+              </div>
+              <span class="change-marker demo-control" data-change-tooltip="版本下拉展示资料的临时修改版本，并可查看来源对话。" data-change-placement="top">8</span>
+            </div>
+            <div class="source-popover" id="sourcePopover">
+              <div class="source-label">讨论</div>
+              <p>版本变更记录来源包含两类：在当前资料页右侧对话产生的修改，以及原始会话中的修改。每个版本均可回看对应来源对话。</p>
+            </div>
+            <div class="preview-header-spacer"></div>
+            <span class="owner">财务小助手：XXXXXXXX</span>
+            <button class="draft-pill">暂存</button>
+            <button class="icon-btn" onclick="openSourceDialog()" title="查看来源对话">↻</button>
+            <button class="icon-btn">⇩</button>
+          </header>
+          <div class="preview-content">
+            <div class="report-card">
+              <h3>数据源 & 规则配置</h3>
+              <div style="font-size:13px;color:var(--ink-9);margin-bottom:12px;">📊 已加载 1153 行 · 12 个月 (2025-04~2026-03) · 8 个 BU</div>
+              <div class="rule-row" style="background:#F8F8F9;border-top:none;font-weight:600;color:var(--ink-9);"><span>科目</span><span>方法</span><span>参数</span><span>来源</span><span></span></div>
+              <div class="rule-row"><span>员工薪酬</span><span>avg</span><span>{"window":3}</span><span>🤖 薪资按前 3 个月平均滚动</span><button class="outline-btn">删除</button></div>
+            </div>
+            <div class="metric-grid">
+              <div class="metric-card"><div class="metric-label">未来 3 个月净流入(基准)</div><div class="metric-value" style="color:var(--green)">+$28.854 亿</div><div class="metric-label">乐观 +$32.417 / 保守 +$24.887</div></div>
+              <div class="metric-card"><div class="metric-label">Q2 末资金总额预测(基准)</div><div class="metric-value">$510.854 亿</div><div class="metric-label">乐观 $514.417 / 保守 $506.887</div></div>
+              <div class="metric-card"><div class="metric-label">Q2 最低流动性</div><div class="metric-value" style="color:var(--green)">$491.618 亿</div><div class="metric-label">警戒线 $0.80 亿 · √ 安全</div></div>
+              <div class="metric-card green"><div class="metric-label">乐观情景</div><div class="metric-value">$546.833 亿</div><div class="metric-label">≈ 39.65 亿 CNY · 9月末</div></div>
+              <div class="metric-card blue"><div class="metric-label">基准 ★情景</div><div class="metric-value">$539.709 亿</div><div class="metric-label">≈ 39.13 亿 CNY · 9月末</div></div>
+              <div class="metric-card red"><div class="metric-label">保守情景</div><div class="metric-value">$531.775 亿</div><div class="metric-label">≈ 38.55 亿 CNY · 9月末</div></div>
+            </div>
+            <div class="chart-block"><h3>6 个月资金余额预测(USD 亿)</h3><div class="chart-grid"></div><div class="chart-line"></div></div>
+            <div class="report-card"><h3>逐月明细 · 点击单元格查看血缘 · 数值三舍五入调整</h3><div class="rule-row" style="grid-template-columns: repeat(7, 1fr);"><span>科目</span><span>04月</span><span>05月</span><span>06月</span><span>07月</span><span>08月</span><span>09月</span></div></div>
+          </div>
+        </div>
+        <aside class="chat-pane" id="detailChat">
+          <header class="chat-head">
+            <span class="agent-avatar"></span>
+            <span class="chat-title">会话标题XXXXXX</span>
+            <button class="icon-btn folder-trigger" title="文件夹" aria-label="文件夹" onclick="openSessionFiles()">
+              <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round">
+                <path d="M2.8 6.2h5l1.6 2h7.8v7.1a1.4 1.4 0 0 1-1.4 1.4H4.2a1.4 1.4 0 0 1-1.4-1.4V6.2Z"/>
+                <path d="M2.8 6.2V4.7a1.4 1.4 0 0 1 1.4-1.4h3.6l1.6 1.9h6.4a1.4 1.4 0 0 1 1.4 1.4v1.6"/>
+              </svg>
+              <span class="folder-count">3</span>
+            </button>
+            <button class="icon-btn annotated" onclick="collapseChat()" title="收起">收起<span class="change-marker demo-control tooltip-left" data-change-tooltip="资料详情中的右侧对话可收起，进入沉浸预览。">9</span></button>
+          </header>
+          <div class="chat-body">
+            <div class="msg user"><div class="bubble">帮我改一下这个页面里的预测规则吧</div></div>
+            <div class="msg agent annotated">
+              <span class="agent-avatar"></span>
+              <div class="agent-text"><div class="agent-name">Dora</div><div>好的我已经改好了，您看看效果如何</div><div class="status-pill">› 全部工作已完成，耗时23秒</div></div>
+              <span class="change-marker demo-control" data-change-tooltip="Dora 可读取当前打开资料，并基于资料内容生成临时修改版本。" data-change-placement="left">10</span>
+            </div>
+            <div class="message-actions"><button>□</button><button>↻</button><button>♡</button><button>♧</button></div>
+          </div>
+          <div class="chat-input-wrap">
+            <div class="chat-input-box annotated">
+              <div class="sender-added-row" id="detailSenderFiles"></div>
+              <textarea placeholder="在此输入任何您想查询或分析的问题，输入 @ 引用会话文件"></textarea>
+              <div class="input-tools">
+                <div class="sender-left-tools">
+                  <div class="sender-menu" id="detailSenderMenu">
+                    <button onclick="openLocalUpload('detail')">上传本地文件</button>
+                    <button onclick="openAssetPicker('bi')">添加 FineBI 资产</button>
+                    <button onclick="openAssetPicker('fr')">添加 FineReport 资产</button>
+                  </div>
+                  <button class="round-btn sender-menu-trigger" onmouseenter="openSenderMenu('detail')" onclick="toggleSenderMenu('detail', this)">+</button>
+                  <button class="sender-action-btn sender-flat-action" onclick="openLocalUpload('detail')">上传</button>
+                  <button class="sender-action-btn sender-flat-action" onclick="openAssetPicker('bi')">BI</button>
+                  <button class="sender-action-btn sender-flat-action" onclick="openAssetPicker('fr')">FR</button>
+                  <div class="sender-cluster sender-stack-action">
+                    <button class="round-btn" onclick="toggleSenderMenu('detail', this)">+</button>
+                    <button class="round-btn cluster-bi" title="添加 FineBI 资产" aria-label="添加 FineBI 资产" onclick="openAssetPicker('bi')">BI</button>
+                    <button class="round-btn cluster-fr" title="添加 FineReport 资产" aria-label="添加 FineReport 资产" onclick="openAssetPicker('fr')">FR</button>
+                  </div>
+                </div>
+                <button class="round-btn primary">↑</button>
+              </div>
+              <span class="change-marker demo-control tooltip-left" data-change-tooltip="Sender 支持按当前方案添加本地文件、BI 资产或 FR 资产，添加后同步进入当前会话文件。">11</span>
+            </div>
+            <div class="tiny-note">内容均由AI生成，仅供参考</div>
+          </div>
+        </aside>
+        <button class="floating-dora" id="floatingDora" onclick="expandChat()"><span class="agent-avatar"></span></button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-mask" id="filesModal">
+  <div class="files-modal annotated">
+    <div class="modal-tabs">
+      <button class="modal-tab active" data-modal-tab="materials" onclick="switchModalTab('materials')">资料</button>
+      <button class="modal-tab" data-modal-tab="outputs" onclick="switchModalTab('outputs')">产出</button>
+      <button class="icon-btn modal-close" onclick="closeSessionFiles()">×</button>
+    </div>
+    <div class="session-context">
+      <span>当前会话：<strong id="modalSessionTitle">会话标题XXXXXX</strong></span>
+      <span>会话文件仅归属当前会话，收藏后进入资源库</span>
+    </div>
+    <div class="modal-filter">
+      <button class="chip active">全部</button>
+      <button class="chip">技能</button>
+      <button class="chip">PPT</button>
+      <button class="chip">HTML</button>
+      <button class="chip">MD</button>
+      <div class="search-box modal-search"><input placeholder="搜索名称" /></div>
+    </div>
+    <div class="file-list" id="modalMaterials">
+      <div class="file-row"><span class="file-badge html">DOCX</span><div class="file-info"><strong>文件.XXX</strong><span>2MB</span></div><div class="file-actions"><button class="outline-btn">@引用</button><button class="outline-btn favorite-btn" onclick="favoriteFile(this)">存到资源库</button><button class="icon-btn">↻</button><button class="icon-btn">⇩</button><button class="icon-btn danger-btn">删</button></div></div>
+      <div class="file-row"><span class="file-badge html" style="background:#35B85A">XLSX</span><div class="file-info"><strong>excel表.xlsx</strong><span>2MB</span></div><div class="file-actions"><button class="outline-btn">@引用</button><button class="outline-btn favorite-btn" onclick="favoriteFile(this)">存到资源库</button><button class="icon-btn">↻</button><button class="icon-btn">⇩</button><button class="icon-btn danger-btn">删</button></div></div>
+    </div>
+    <div class="file-list" id="modalOutputs" hidden>
+      <div class="file-row"><span class="file-badge ppt">PPT</span><div class="file-info"><strong>分析主题</strong><span>这里是描述这里是描述这里是描述</span></div><div class="file-actions"><button class="outline-btn">@引用</button><button class="outline-btn favorite-btn" onclick="favoriteFile(this)">存到资源库</button><button class="icon-btn">↻</button><button class="icon-btn">⇩</button><button class="icon-btn danger-btn">删</button></div></div>
+      <div class="file-row"><span class="file-badge html">HTML</span><div class="file-info"><strong>销售预测系统.html</strong><span>这里是描述这里是描述这里是描述</span></div><div class="file-actions"><button class="outline-btn">@引用</button><button class="outline-btn favorite-btn" onclick="favoriteFile(this)">存到资源库</button><button class="icon-btn">↻</button><button class="icon-btn">⇩</button><button class="icon-btn danger-btn">删</button></div></div>
+      <div class="file-row"><span class="file-badge html" style="background:#8B5CF6">MD</span><div class="file-info"><strong>财务报销知识.html</strong><span>这里是描述这里是描述这里是描述</span></div><div class="file-actions"><button class="outline-btn">@引用</button><button class="outline-btn favorite-btn" onclick="favoriteFile(this)">存到资源库</button><button class="icon-btn">↻</button><button class="icon-btn">⇩</button><button class="icon-btn danger-btn">删</button></div></div>
+    </div>
+    <span class="change-marker demo-control tooltip-left" data-change-tooltip="会话文件通过右侧面板打开，资料和产出分 Tab 展示，并提供引用、存到资源库、刷新、下载和删除操作。">12</span>
+  </div>
+</div>
+
+<div class="toast" id="toast">已存到资源库</div>
+<input type="file" id="localFileInput" hidden multiple />
+
+<div class="asset-picker-mask" id="assetPickerMask">
+  <div class="asset-picker">
+    <div class="asset-picker-head">
+      <span id="assetPickerTitle">添加资产</span>
+      <button class="icon-btn" onclick="closeAssetPicker()">×</button>
+    </div>
+    <div class="asset-picker-body">
+      <div class="asset-tree">
+        <div class="asset-tree-row active">全部数据</div>
+        <div class="asset-tree-row">仪表板</div>
+        <div class="asset-tree-row">文件夹1</div>
+        <div class="asset-tree-row">文件夹2</div>
+      </div>
+      <div class="asset-preview-panel">
+        <div class="asset-preview-table" id="assetPickerPreview"></div>
+      </div>
+    </div>
+    <div class="asset-picker-foot">
+      <button class="outline-btn" onclick="closeAssetPicker()">取消</button>
+      <button class="round-btn primary" onclick="confirmAssetPicker()">确定</button>
+    </div>
+  </div>
+</div>
+
+<div id="change-tooltip-layer" aria-hidden="true"><div id="change-tooltip-bubble"></div></div>
+
+<script>
+  function $(id) { return document.getElementById(id); }
+  let currentVariant = 'menu';
+  let activeSenderContext = 'hero';
+  let pendingAssetType = 'bi';
+  let pendingAssetLabel = '';
+  let conversationReturnView = 'dora';
+  let currentConversationType = 'smart-data';
+  const conversationConfigs = {
+    dora: {
+      returnView: 'dora',
+      sidebarCollapsed: true,
+      sideAgent: 'Dora',
+      title: 'Dora 会话',
+      subtitle: '全能助手 · 通用任务',
+      history: 'ROI 同比环比拆解',
+      userText: '帮我计算ROI与同比环比，拆解增长驱动因素',
+      answer: '好的，我会先理解你的分析目标，再读取相关数据、拆解指标口径，并整理出可继续追问的结论。',
+      steps: ['理解任务意图与指标口径', '匹配可用资料和分析上下文', '生成分析结论与后续建议']
+    },
+    'smart-data': {
+      returnView: 'experts',
+      sidebarCollapsed: false,
+      sideAgent: '智能问数',
+      title: '智能问数会话',
+      subtitle: '专家 Agent · 指标归因与经营分析',
+      history: '经营指标归因分析',
+      userText: '帮我分析本月销售额下滑的主要原因，并拆到区域和产品线。',
+      answer: '收到。我会优先匹配销售相关数据模型，拆解区域、产品线和客户结构，再输出下滑原因与可行动建议。',
+      steps: ['匹配销售数据模型', '拆解区域与产品线贡献', '输出下滑原因和建议']
+    },
+    report: {
+      returnView: 'experts',
+      sidebarCollapsed: false,
+      sideAgent: '智能报告',
+      title: '智能报告会话',
+      subtitle: '专家 Agent · 报告与PPT生成',
+      history: '经营分析PPT生成',
+      userText: '把这次经营分析结果整理成一份适合汇报的 PPT。',
+      answer: '好的。我会先整理汇报结构，再把关键指标、图表和行动建议组织成可交付的 PPT 产出。',
+      steps: ['整理汇报大纲', '组织图表和关键结论', '生成PPT交付文件']
+    },
+    analysis: {
+      returnView: 'experts',
+      sidebarCollapsed: false,
+      sideAgent: '经营分析助手',
+      title: '经营分析助手会话',
+      subtitle: '专家 Agent · 经营诊断',
+      history: '经营健康度诊断',
+      userText: '帮我看一下本季度经营表现，找出增长和风险点。',
+      answer: '我会从收入、成本、客户和产品结构四个方向展开诊断，并优先标出需要关注的风险点。',
+      steps: ['读取经营指标', '识别增长和风险信号', '生成诊断结论']
+    },
+    modeling: {
+      returnView: 'experts',
+      sidebarCollapsed: false,
+      sideAgent: '数据建模顾问',
+      title: '数据建模顾问会话',
+      subtitle: '专家 Agent · 指标和模型设计',
+      history: '销售分析模型设计',
+      userText: '帮我梳理销售分析需要哪些指标、维度和口径。',
+      answer: '我会先定义核心业务对象，再拆出指标口径、维度层级和可复用的数据模型建议。',
+      steps: ['识别业务对象', '定义指标与维度', '输出模型设计建议']
+    },
+    finance: {
+      returnView: 'experts',
+      sidebarCollapsed: false,
+      sideAgent: '财务小助手',
+      title: '财务小助手会话',
+      subtitle: '专家 Agent · 财务分析',
+      history: '费用结构异常分析',
+      userText: '帮我分析本月费用结构是否有异常。',
+      answer: '好的。我会对费用科目、部门和时间趋势进行对比，定位异常波动并生成解释。',
+      steps: ['读取费用明细', '定位异常波动', '生成财务解释']
+    },
+    marketing: {
+      returnView: 'experts',
+      sidebarCollapsed: false,
+      sideAgent: '营销策略助手',
+      title: '营销策略助手会话',
+      subtitle: '专家 Agent · 客户分层与活动复盘',
+      history: '营销活动复盘',
+      userText: '帮我复盘这次营销活动，看看哪些客户群体转化最好。',
+      answer: '我会按客户分层、渠道和转化路径展开分析，并给出下一轮活动优化建议。',
+      steps: ['拆解客户分层', '分析渠道转化', '生成活动优化建议']
+    }
+  };
+  const agentSwitchOptions = [
+    { type: 'smart-data', logo: 'S', name: '智能问数', desc: '指标归因与经营分析' },
+    { type: 'report', logo: 'R', name: '智能报告', desc: '报告、PPT 与结构化结论' },
+    { type: 'analysis', logo: 'A', name: '经营分析助手', desc: '经营表现诊断与风险识别' },
+    { type: 'modeling', logo: 'D', name: '数据建模顾问', desc: '指标、维度、口径和模型设计' },
+    { type: 'finance', logo: 'F', name: '财务小助手', desc: '预算、费用结构与异常波动' },
+    { type: 'marketing', logo: 'M', name: '营销策略助手', desc: '客户分层与活动复盘' }
+  ];
+
+  function switchVariant(id, el) {
+    currentVariant = id;
+    document.body.dataset.senderVariant = id;
+    document.querySelectorAll('.v-tab').forEach(tab => tab.classList.remove('active'));
+    if (el) el.classList.add('active');
+  }
+
+  function toggleSenderMenu(context) {
+    activeSenderContext = context;
+    const menu = $(context + 'SenderMenu');
+    const isOpen = menu.classList.contains('open');
+    document.querySelectorAll('.sender-menu').forEach(item => item.classList.remove('open'));
+    if (!isOpen) menu.classList.add('open');
+  }
+
+  function openSenderMenu(context) {
+    activeSenderContext = context;
+    document.querySelectorAll('.sender-menu').forEach(item => item.classList.remove('open'));
+    $(context + 'SenderMenu').classList.add('open');
+  }
+
+  function closeSenderMenus() {
+    document.querySelectorAll('.sender-menu').forEach(item => item.classList.remove('open'));
+  }
+
+  function openLocalUpload(context) {
+    activeSenderContext = context;
+    closeSenderMenus();
+    $('localFileInput').click();
+  }
+
+  function openAssetPicker(type) {
+    pendingAssetType = type;
+    pendingAssetLabel = type === 'bi' ? 'BI demo_门店销售表' : 'FR demo_地区看板';
+    $('assetPickerTitle').textContent = type === 'bi' ? '添加 FineBI 资产' : '添加 FineReport 资产';
+    $('assetPickerPreview').className = type === 'bi' ? 'asset-preview-table' : 'asset-preview-report';
+    $('assetPickerMask').classList.add('open');
+    closeSenderMenus();
+  }
+
+  function closeAssetPicker() {
+    $('assetPickerMask').classList.remove('open');
+  }
+
+  function addSessionFileEntry(kind, label) {
+    const list = $('modalMaterials');
+    if (!list) return;
+    const row = document.createElement('div');
+    row.className = 'file-row';
+    row.innerHTML = `<span class="file-badge ${kind === 'FR' ? 'ppt' : kind === 'BI' ? 'bi' : 'html'}">${kind}</span><div class="file-info"><strong>${label}</strong><span>已添加到当前会话</span></div><div class="file-actions"><button class="outline-btn">@引用</button><button class="outline-btn favorite-btn" onclick="favoriteFile(this)">存到资源库</button><button class="icon-btn">↻</button><button class="icon-btn">⇩</button><button class="icon-btn danger-btn">删</button></div>`;
+    list.prepend(row);
+  }
+
+  function addSenderFileChip(context, kind, label, tone) {
+    const row = $(context + 'SenderFiles');
+    if (!row) return;
+    const chip = document.createElement('div');
+    chip.className = 'sender-file-chip';
+    chip.innerHTML = `<span class="sender-file-icon" style="background:${tone === 'purple' ? '#7C5CFF' : tone === 'teal' ? '#1DB6A0' : '#6D94FF'}">${kind}</span><span>${label}</span>`;
+    row.appendChild(chip);
+    row.classList.add('has-file');
+  }
+
+  function confirmAssetPicker() {
+    const context = activeSenderContext || 'hero';
+    addSenderFileChip(context, pendingAssetType === 'bi' ? 'BI' : 'FR', pendingAssetLabel, pendingAssetType === 'bi' ? 'blue' : 'purple');
+    addSessionFileEntry(pendingAssetType.toUpperCase(), pendingAssetLabel);
+    closeAssetPicker();
+    showToast(`已添加 ${pendingAssetType === 'bi' ? 'FineBI' : 'FineReport'} 资产`);
+  }
+
+  function getFileKind(fileName) {
+    const lowerName = (fileName || '').toLowerCase();
+    if (lowerName.endsWith('.ppt') || lowerName.endsWith('.pptx')) return { kind: 'PPT', tone: 'purple' };
+    if (lowerName.endsWith('.xls') || lowerName.endsWith('.xlsx') || lowerName.endsWith('.csv')) return { kind: 'XLSX', tone: 'teal' };
+    if (lowerName.endsWith('.md')) return { kind: 'MD', tone: 'blue' };
+    if (lowerName.endsWith('.doc') || lowerName.endsWith('.docx')) return { kind: 'DOCX', tone: 'blue' };
+    if (lowerName.endsWith('.html') || lowerName.endsWith('.htm')) return { kind: 'HTML', tone: 'blue' };
+    return { kind: 'FILE', tone: 'blue' };
+  }
+
+  $('localFileInput').addEventListener('change', event => {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+    files.forEach(file => {
+      const fileKind = getFileKind(file.name);
+      addSenderFileChip(activeSenderContext || 'hero', fileKind.kind, file.name, fileKind.tone);
+      addSessionFileEntry(fileKind.kind, file.name);
+    });
+    showToast(`已添加 ${files.length} 个本地文件`);
+    event.target.value = '';
+  });
+
+  document.addEventListener('pointerdown', event => {
+    if (!event.target.closest('.sender-left-tools')) closeSenderMenus();
+    if (!event.target.closest('.asset-picker')) closeAssetPicker();
+  });
+
+  function switchView(view) {
+    document.querySelectorAll('.rail-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.view === view));
+    document.querySelectorAll('.surface').forEach(surface => surface.classList.remove('active'));
+    $('view-' + view).classList.add('active');
+    closeSourcePopover();
+  }
+
+  function openAssetDetail() {
+    switchView('space');
+    $('spaceHome').style.display = 'none';
+    $('assetDetail').classList.add('active');
+    expandChat();
+  }
+
+  function closeAssetDetail() {
+    $('spaceHome').style.display = '';
+    $('assetDetail').classList.remove('active');
+    $('versionMenu').classList.remove('open');
+    closeSourcePopover();
+  }
+
+  function openConversation(type) {
+    if (type === 'dora') {
+      startDoraConversationFlow();
+      return;
+    }
+    const config = conversationConfigs[type] || conversationConfigs.dora;
+    applyConversationConfig(type, config, config.returnView);
+    selectConversationEntry('expert', 'new', $('expertNewConversation'));
+  }
+
+  function applyConversationConfig(type, config, activeRailView) {
+    currentConversationType = type || 'smart-data';
+    conversationReturnView = config.returnView;
+    const isDoraConversation = currentConversationType === 'dora';
+    $('conversationSideAgent').textContent = config.sideAgent;
+    $('conversationTitle').textContent = config.title;
+    $('conversationSubtitle').textContent = config.subtitle;
+    $('conversationHistoryTitle').textContent = config.history;
+    $('conversationUserText').textContent = config.userText;
+    $('conversationAgentName').textContent = config.sideAgent;
+    $('conversationAnswer').textContent = config.answer;
+    $('processStepOne').textContent = config.steps[0];
+    $('processStepTwo').textContent = config.steps[1];
+    $('processStepThree').textContent = config.steps[2];
+    $('conversationPage').classList.toggle('sidebar-collapsed', Boolean(config.sidebarCollapsed));
+    $('conversationPage').classList.toggle('dora-mode', isDoraConversation);
+    document.querySelector('.conversation-back-btn').style.display = isDoraConversation ? 'none' : '';
+    $('agentSwitchButton').style.display = isDoraConversation ? 'none' : '';
+    document.querySelector('.agent-switch-spacer').style.display = isDoraConversation ? 'none' : '';
+    $('conversationInput').value = '';
+    closeAgentSwitch();
+    if (!isDoraConversation) renderAgentSwitchList('');
+    document.querySelectorAll('.rail-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.view === activeRailView));
+    document.querySelectorAll('.surface').forEach(surface => surface.classList.remove('active'));
+    $('view-conversation').classList.add('active');
+  }
+
+  function startDoraConversationFlow() {
+    const title = '计算ROI与同比环比拆解';
+    const config = {
+      ...conversationConfigs.dora,
+      sidebarCollapsed: false,
+      history: title,
+      userText: '帮我计算ROI与同比环比，拆解增长驱动因素',
+      answer: '收到。我会基于你提出的问题继续拆解 ROI、同比环比和增长驱动因素，并把结论沉淀在当前 Dora 会话中。',
+      steps: ['理解问题和指标口径', '拆解 ROI 与同比环比', '整理增长驱动因素']
+    };
+    const doraHistory = $('doraLatestHistory');
+    doraHistory.textContent = title;
+    selectConversationEntry('dora', 'history', doraHistory);
+    applyConversationConfig('dora', config, 'dora');
+    $('conversationPage').classList.remove('sidebar-collapsed');
+    $('conversationHistoryTitle').textContent = title;
+    selectConversationEntry('expert', 'history', $('conversationHistoryTitle'));
+  }
+
+  function showDoraNewConversation() {
+    selectConversationEntry('dora', 'new', $('doraNewConversation'));
+    switchView('dora');
+    toggleDoraSidebar(true);
+  }
+
+  function handleConversationNewClick(target) {
+    if (currentConversationType === 'dora') {
+      selectConversationEntry('expert', 'new', target);
+      showDoraNewConversation();
+      return;
+    }
+    selectConversationEntry('expert', 'new', target);
+  }
+
+  function toggleAgentSwitch(event) {
+    event.stopPropagation();
+    const popover = $('agentSwitchPopover');
+    const nextOpen = !popover.classList.contains('open');
+    if (nextOpen) {
+      $('agentSwitchSearch').value = '';
+      renderAgentSwitchList('');
+      popover.classList.add('open');
+      setTimeout(() => $('agentSwitchSearch').focus(), 0);
+      return;
+    }
+    closeAgentSwitch();
+  }
+
+  function closeAgentSwitch() {
+    if ($('agentSwitchPopover')) $('agentSwitchPopover').classList.remove('open');
+  }
+
+  function filterAgentSwitchList(keyword) {
+    renderAgentSwitchList(keyword);
+  }
+
+  function renderAgentSwitchList(keyword) {
+    const list = $('agentSwitchList');
+    if (!list) return;
+    const normalizedKeyword = (keyword || '').trim().toLowerCase();
+    const matchedOptions = agentSwitchOptions.filter(option => {
+      const text = `${option.name} ${option.desc}`.toLowerCase();
+      return text.includes(normalizedKeyword);
+    });
+    list.innerHTML = matchedOptions.map(option => `
+      <button class="agent-switch-item ${option.type === currentConversationType ? 'active' : ''}" onclick="selectAgentFromSwitch('${option.type}')">
+        <span class="agent-logo">${option.logo}</span>
+        <span class="agent-switch-copy">
+          <span class="agent-switch-name">${option.name}</span>
+          <span class="agent-switch-desc">${option.desc}</span>
+        </span>
+      </button>
+    `).join('');
+    $('agentSwitchEmpty').classList.toggle('visible', matchedOptions.length === 0);
+  }
+
+  function selectAgentFromSwitch(type) {
+    openConversation(type);
+    closeAgentSwitch();
+  }
+
+  function backFromConversation() {
+    switchView(conversationReturnView);
+  }
+
+  function expandConversationSidebar() {
+    $('conversationPage').classList.remove('sidebar-collapsed');
+  }
+
+  function toggleDoraSidebar(open) {
+    const workspace = $('doraWorkspace');
+    workspace.classList.toggle('sidebar-open', typeof open === 'boolean' ? open : !workspace.classList.contains('sidebar-open'));
+  }
+
+  function selectConversationEntry(scope, type, target) {
+    const newButton = scope === 'dora' ? $('doraNewConversation') : $('expertNewConversation');
+    const historySelector = scope === 'dora' ? '.dora-side-history button' : '.conversation-history button';
+    if (newButton) newButton.classList.toggle('active', type === 'new');
+    document.querySelectorAll(historySelector).forEach(item => item.classList.remove('active'));
+    if (type === 'history' && target) target.classList.add('active');
+  }
+
+  function toggleVersionMenu(event) {
+    event.stopPropagation();
+    $('versionMenu').classList.toggle('open');
+  }
+
+  function showSourceHint(event) {
+    event.stopPropagation();
+    $('sourcePopover').classList.add('open');
+  }
+
+  function openSourceDialog() {
+    $('sourcePopover').classList.add('open');
+  }
+
+  function closeSourcePopover() {
+    if ($('sourcePopover')) $('sourcePopover').classList.remove('open');
+  }
+
+  function collapseChat() {
+    $('detailChat').classList.add('collapsed');
+    $('previewPane').classList.add('full');
+    $('floatingDora').classList.add('visible');
+  }
+
+  function expandChat() {
+    $('detailChat').classList.remove('collapsed');
+    $('previewPane').classList.remove('full');
+    $('floatingDora').classList.remove('visible');
+  }
+
+  function openSessionFiles() {
+    const activeConversationTitle = $('view-conversation').classList.contains('active') ? $('conversationTitle').textContent : null;
+    const activeAssetTitle = $('assetDetail').classList.contains('active') ? '销售预测系统.html 关联会话' : null;
+    $('modalSessionTitle').textContent = activeConversationTitle || activeAssetTitle || 'Dora 新会话';
+    $('filesModal').classList.add('open');
+  }
+  function closeSessionFiles() { $('filesModal').classList.remove('open'); }
+
+  function favoriteFile(button) {
+    const row = button.closest('.file-row');
+    row.classList.add('favorited');
+    button.textContent = '已存到资源库';
+    const savedAsset = $('savedFromSessionAsset');
+    if (savedAsset) savedAsset.classList.add('visible');
+    showToast('已存到资源库，可在资源库中打开并继续与 Dora 对话');
+  }
+
+  let toastTimer = null;
+  function showToast(text) {
+    const toast = $('toast');
+    toast.textContent = text;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+
+  function switchModalTab(tab) {
+    document.querySelectorAll('.modal-tab').forEach(item => item.classList.toggle('active', item.dataset.modalTab === tab));
+    $('modalMaterials').hidden = tab !== 'materials';
+    $('modalOutputs').hidden = tab !== 'outputs';
+  }
+
+  function toggleDemoMode(el) {
+    document.body.classList.toggle('demo-mode');
+    el.classList.toggle('active');
+    if (!document.body.classList.contains('demo-mode')) hideChangeTooltip();
+  }
+
+  let activeChangeMarker = null;
+  function hideChangeTooltip() {
+    activeChangeMarker = null;
+    const layer = $('change-tooltip-layer');
+    const bubble = $('change-tooltip-bubble');
+    if (!layer || !bubble) return;
+    layer.classList.remove('open');
+    bubble.textContent = '';
+  }
+  function getChangeTooltipPlacement(marker) {
+    if (!marker) return 'right';
+    if (marker.dataset.changePlacement) return marker.dataset.changePlacement;
+    if (marker.classList.contains('tooltip-left')) return 'left';
+    if (marker.classList.contains('tooltip-top')) return 'top';
+    return 'right';
+  }
+  function syncChangeTooltipPosition() {
+    if (!activeChangeMarker || !document.body.classList.contains('demo-mode')) {
+      hideChangeTooltip();
+      return;
+    }
+    const bubble = $('change-tooltip-bubble');
+    if (!bubble) return;
+    const markerRect = activeChangeMarker.getBoundingClientRect();
+    bubble.style.left = '0px';
+    bubble.style.top = '0px';
+    const bubbleRect = bubble.getBoundingClientRect();
+    const gap = 12;
+    const pad = 12;
+    const placement = getChangeTooltipPlacement(activeChangeMarker);
+    let left = markerRect.right + gap;
+    let top = markerRect.top + markerRect.height / 2 - bubbleRect.height / 2;
+    if (placement === 'left') {
+      left = markerRect.left - bubbleRect.width - gap;
+      if (left < pad) left = markerRect.right + gap;
+    }
+    if (placement === 'top') {
+      left = markerRect.left + markerRect.width / 2 - bubbleRect.width / 2;
+      top = markerRect.top - bubbleRect.height - gap;
+      if (top < pad) top = markerRect.bottom + gap;
+    }
+    if (left + bubbleRect.width > window.innerWidth - pad) left = window.innerWidth - bubbleRect.width - pad;
+    if (left < pad) left = pad;
+    if (top + bubbleRect.height > window.innerHeight - pad) top = window.innerHeight - bubbleRect.height - pad;
+    if (top < pad) top = pad;
+    bubble.style.left = Math.round(left) + 'px';
+    bubble.style.top = Math.round(top) + 'px';
+  }
+  function showChangeTooltip(marker) {
+    if (!marker || !document.body.classList.contains('demo-mode')) return;
+    const text = marker.dataset.changeTooltip || '';
+    const layer = $('change-tooltip-layer');
+    const bubble = $('change-tooltip-bubble');
+    if (!text || !layer || !bubble) return;
+    activeChangeMarker = marker;
+    bubble.textContent = text;
+    layer.classList.add('open');
+    syncChangeTooltipPosition();
+  }
+  document.addEventListener('pointerover', event => {
+    const marker = event.target.closest('.change-marker');
+    if (marker) showChangeTooltip(marker);
+  });
+  document.addEventListener('pointerout', event => {
+    if (!activeChangeMarker) return;
+    const nextMarker = event.relatedTarget && event.relatedTarget.closest ? event.relatedTarget.closest('.change-marker') : null;
+    if (nextMarker === activeChangeMarker) return;
+    hideChangeTooltip();
+  });
+  window.addEventListener('scroll', syncChangeTooltipPosition, true);
+  window.addEventListener('resize', syncChangeTooltipPosition);
+  document.addEventListener('click', event => {
+    if (!event.target.closest('.version-menu')) $('versionMenu').classList.remove('open');
+    if (!event.target.closest('.agent-switch-popover') && !event.target.closest('#agentSwitchButton')) closeAgentSwitch();
+    if (!event.target.closest('.source-popover') && !event.target.closest('.source-icon') && !event.target.closest('[title="查看来源对话"]')) closeSourcePopover();
+    if (event.target === $('filesModal')) closeSessionFiles();
+  });
+
+  switchVariant('menu', document.querySelector('.v-tab.active'));
+  document.body.dataset.senderVariant = currentVariant;
+</script>
+</body>
+</html>
