@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dora · 多视图 + Agent 对话深度体验（合并原型 · Step 1）</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- 顶部方案切换栏 -->
+<div id="variant-bar">
+  <span class="label">方案对比：</span>
+  <div id="variantGroupA" class="variant-group">
+    <button class="v-tab active" onclick="switchVariant('menu', this)">方案1：菜单入口</button>
+    <button class="v-tab" onclick="switchVariant('flat', this)">方案2：入口平铺</button>
+    <button class="v-tab" onclick="switchVariant('stack', this)">方案3：半遮挡入口</button>
+  </div>
+  <div id="variantGroupB" class="variant-group" style="display:none">
+    <button class="v-tab v-tab-b active" onclick="switchBVariant('default', this)">默认方案</button>
+    <button class="v-tab v-tab-b" onclick="switchBVariant('process-top', this)">方案2：过程前置</button>
+    <button class="v-tab v-tab-b" onclick="switchBVariant('product-live', this)">方案3：产物直出</button>
+    <button class="v-tab v-tab-b" onclick="switchBVariant('muted-process', this)">方案4：素色过程</button>
+  </div>
+  <div style="flex:1;"></div>
+  <button class="v-demo-toggle" onclick="toggleDemoMode(this)">交互说明</button>
+</div>
+
+<div class="app">
+  <!-- 左侧 rail 导航 -->
+  <aside class="rail">
+    <button class="rail-tab active annotated" data-view="dora" onclick="switchView('dora')">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 9.5L10 4l6 5.5V16a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"/></svg>
+      Dora
+      <span class="change-marker demo-control" data-change-tooltip="Dora 是默认对话入口，用户从这里直接发起任务。" data-change-placement="right">1</span>
+    </button>
+    <div class="rail-tab-wrap has-popover" id="expertRailWrap">
+      <button class="rail-tab annotated has-unread" data-view="experts" data-unread="2" onclick="switchView('experts')">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="7" r="3"/><path d="M4 17c0-3 2.6-5 6-5s6 2 6 5"/></svg>
+        专家
+        <span class="change-marker demo-control" data-change-tooltip="专家视角用于查找和进入特定 Agent。" data-change-placement="right">2</span>
+      </button>
+      <div class="rail-tab-popover-hitbox" aria-hidden="true"></div>
+      <div class="rail-tab-popover" id="expertUnreadPopover">
+        <div class="rail-tab-popover-head"><span>专家有新消息</span><span class="unread-count">2</span></div>
+        <div class="rail-tab-popover-list">
+          <button class="rail-tab-popover-item" onclick="openUnreadExpert('smart-data')">
+            <strong>智能问数</strong>
+            <span>经营指标归因分析 · 2 条新消息</span>
+            <span class="unread-count">2</span>
+          </button>
+          <button class="rail-tab-popover-item" onclick="openUnreadExpert('report')">
+            <strong>智能报告</strong>
+            <span>报告生成任务已完成 · 1 条新消息</span>
+            <span class="unread-count">1</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <button class="rail-tab annotated" data-view="space" onclick="switchView('space')">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6a2 2 0 012-2h3l1.5 2H15a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V6z"/></svg>
+      资源库
+      <span class="change-marker demo-control" data-change-tooltip="资源库视角用于查找资料、文件和仪表盘。" data-change-placement="right">3</span>
+    </button>
+    <div class="rail-spacer"></div>
+    <div class="rail-search"><svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="5"/><path d="M13 13l4 4"/></svg></div>
+    <div class="rail-avatar">N</div>
+  </aside>
+
+  <main class="main">
+
+    <!-- ============== Dora 首页 ============== -->
+    <section class="surface active" id="view-dora">
+      <div class="dora-workspace" id="doraWorkspace">
+        <aside class="dora-side-panel">
+          <div class="dora-side-head">
+            <span class="agent-avatar"></span>
+            <span>Dora</span>
+          </div>
+          <button class="dora-side-action active" id="doraNewConversation" onclick="selectConversationEntry('dora', 'new', this)">✦ 新会话</button>
+          <div class="section-title" style="margin:24px 10px 8px;color:var(--ink-8);font-size:12px;">最近会话</div>
+          <div class="dora-side-history">
+            <button id="doraLatestHistory" class="has-unread" data-unread="1" onclick="selectConversationEntry('dora', 'history', this)">ROI 同比环比拆解</button>
+            <button onclick="selectConversationEntry('dora', 'history', this)">经营分析会材料整理</button>
+            <button onclick="selectConversationEntry('dora', 'history', this)">销售预测系统规则调整</button>
+            <button onclick="selectConversationEntry('dora', 'history', this)">客户反馈归因分析</button>
+          </div>
+        </aside>
+        <div class="dora-home">
+          <button class="dora-expand-btn annotated" onclick="toggleDoraSidebar()" title="展开/收起会话侧栏">☰<span class="change-marker demo-control" data-change-tooltip="Dora 左上角按钮同时负责展开和收起会话侧栏。" data-change-placement="right">13</span></button>
+          <div class="home-center">
+            <div class="dora-title"><span class="bot-face"></span><span>嗨，我是 Dora，全能助手随时待命</span></div>
+            <div class="dora-sub">我可以帮你 <span class="prompt">计算ROI与同比环比，拆解增长驱动因素_</span></div>
+            <div class="hero-asset-quick annotated">
+              <button class="hero-asset-btn" onclick="openAssetPicker('bi')"><span class="hero-asset-icon bi">BI</span>添加 BI 资产</button>
+              <button class="hero-asset-btn" onclick="openAssetPicker('fr')"><span class="hero-asset-icon fr">FR</span>添加 FR 资产</button>
+              <span class="change-marker demo-control" data-change-tooltip="新会话空态在 Sender 上方前置强调 BI / FR 资产添加入口，便于用户先补充分析上下文。" data-change-placement="top">17</span>
+            </div>
+            <div class="hero-input annotated">
+              <div class="sender-added-row" id="heroSenderFiles"></div>
+              <textarea>帮我计算ROI与同比环比，拆解增长驱动因素</textarea>
+              <div class="hero-actions">
+                <div class="sender-left-tools">
+                  <div class="sender-menu" id="heroSenderMenu">
+                    <button onclick="openLocalUpload('hero')">上传本地文件</button>
+                    <button onclick="openAssetPicker('bi')">添加 FineBI 资产</button>
+                    <button onclick="openAssetPicker('fr')">添加 FineReport 资产</button>
+                  </div>
+                  <button class="round-btn sender-menu-trigger" onmouseenter="openSenderMenu('hero')" onclick="toggleSenderMenu('hero', this)">+</button>
+                  <button class="sender-action-btn sender-flat-action" onclick="openLocalUpload('hero')">上传</button>
+                  <button class="sender-action-btn sender-flat-action" onclick="openAssetPicker('bi')">BI</button>
+                  <button class="sender-action-btn sender-flat-action" onclick="openAssetPicker('fr')">FR</button>
+                  <div class="sender-cluster sender-stack-action">
+                    <button class="round-btn" onclick="toggleSenderMenu('hero', this)">+</button>
+                    <button class="round-btn cluster-bi" title="添加 FineBI 资产" aria-label="添加 FineBI 资产" onclick="openAssetPicker('bi')">BI</button>
+                    <button class="round-btn cluster-fr" title="添加 FineReport 资产" aria-label="添加 FineReport 资产" onclick="openAssetPicker('fr')">FR</button>
+                  </div>
+                </div>
+                <button class="round-btn primary" onclick="openConversation('dora')">↑</button>
+              </div>
+              <span class="change-marker demo-control" data-change-tooltip="Dora 新会话空态中可直接发起任务，并可在发送前添加本地文件、BI 或 FR 资产。" data-change-placement="top">4</span>
+            </div>
+            <div class="practice-title">探索最佳实践⌃</div>
+            <div class="practice-grid">
+              <div class="practice-card"><strong>智能问数</strong>基于业务问题生成数据分析、指标拆解和趋势判断。</div>
+              <div class="practice-card"><strong>智能报告</strong>把分析结果整理成报告、PPT 或可交互页面。</div>
+              <div class="practice-card"><strong>沉淀资料</strong>将 Agent 产出保存到资源库，后续可继续引用。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== 专家 Agent 列表 ============== -->
+    <section class="surface" id="view-experts">
+      <div class="expert-page">
+        <div class="page-title">
+          <h1>专家 Agent</h1>
+          <button class="primary-btn">去创建</button>
+        </div>
+        <div class="filters">
+          <button class="select-pill">全部 ▾</button>
+          <div class="search-box"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="#8C95B0" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input placeholder="搜索名称/描述" /></div>
+        </div>
+        <div class="agent-grid">
+          <div class="agent-card annotated has-unread" data-unread="2" onclick="openConversation('smart-data')">
+            <div class="agent-card-head"><div class="agent-logo">S</div><h3>智能问数</h3></div>
+            <p>面向经营分析、指标归因和同比环比拆解的专家 Agent。</p>
+            <div class="agent-meta">最近编辑：2026/02/12</div>
+            <span class="change-marker demo-control" data-change-tooltip="点击专家 Agent 可进入对应会话。" data-change-placement="top">5</span>
+            <span class="unread-dot" aria-hidden="true"></span>
+          </div>
+          <div class="agent-card" onclick="openConversation('report')"><div class="agent-card-head"><div class="agent-logo">R</div><h3>智能报告</h3></div><p>可生成报告、PPT、HTML 原型与结构化结论。</p><div class="agent-meta">最近编辑：2026/02/12</div></div>
+          <div class="agent-card" onclick="openConversation('analysis')"><div class="agent-card-head"><div class="agent-logo">A</div><h3>经营分析助手</h3></div><p>围绕销售、客户、产品与区域展开分析。</p><div class="agent-meta">最近编辑：2026/02/10</div></div>
+          <div class="agent-card" onclick="openConversation('modeling')"><div class="agent-card-head"><div class="agent-logo">D</div><h3>数据建模顾问</h3></div><p>辅助定义指标、维度、口径和数据模型。</p><div class="agent-meta">最近编辑：2026/02/08</div></div>
+          <div class="agent-card" onclick="openConversation('finance')"><div class="agent-card-head"><div class="agent-logo">F</div><h3>财务小助手</h3></div><p>处理预算、预测、费用结构与异常波动。</p><div class="agent-meta">最近编辑：2026/02/07</div></div>
+          <div class="agent-card" onclick="openConversation('marketing')"><div class="agent-card-head"><div class="agent-logo">M</div><h3>营销策略助手</h3></div><p>输出营销策略、客户分层和活动复盘。</p><div class="agent-meta">最近编辑：2026/02/05</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== 会话页 (三列布局：A的历史侧栏 + B的对话区 + B的资料面板) ============== -->
+    <section class="surface" id="view-conversation">
+      <div class="conversation-page" id="conversationPage">
+
+        <!-- 左列: A 的会话历史侧栏 -->
+        <aside class="conversation-side">
+          <div class="conversation-agent-head">
+            <button class="conversation-back-btn" onclick="backFromConversation()" title="返回">‹</button>
+            <span class="agent-avatar"></span>
+            <span class="conversation-agent-name" id="conversationSideAgent">Dora</span>
+            <span class="agent-switch-spacer"></span>
+            <button class="agent-switch-btn annotated" id="agentSwitchButton" onclick="toggleAgentSwitch(event)">切换<span class="change-marker demo-control tooltip-left" data-change-tooltip="专家会话可从标题区快速切换到其他专家 Agent。">16</span></button>
+            <div class="agent-switch-popover" id="agentSwitchPopover">
+              <div class="agent-switch-title">切换专家 Agent</div>
+              <label class="agent-switch-search">
+                <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+                <input id="agentSwitchSearch" placeholder="搜索专家 Agent" oninput="filterAgentSwitchList(this.value)" />
+              </label>
+              <div class="agent-switch-list" id="agentSwitchList"></div>
+              <div class="agent-switch-empty" id="agentSwitchEmpty">未找到匹配的专家 Agent</div>
+            </div>
+          </div>
+          <button class="conversation-nav-btn active" id="expertNewConversation" onclick="handleConversationNewClick(this)">✦ 新会话</button>
+          <div class="section-title" style="margin:18px 10px 8px;color:var(--ink-8);font-size:12px;">最近会话</div>
+          <div class="conversation-history">
+            <button id="conversationHistoryTitle" class="has-unread" data-unread="2" onclick="selectConversationEntry('expert', 'history', this)">ROI 同比环比拆解</button>
+            <button onclick="selectConversationEntry('expert', 'history', this)">经营分析会材料整理</button>
+            <button onclick="selectConversationEntry('expert', 'history', this)">销售预测系统规则调整</button>
+            <button onclick="selectConversationEntry('expert', 'history', this)">客户反馈归因分析</button>
+          </div>
+        </aside>
+
+        <!-- 中列: B 的对话区 (scope: .conv-chat) -->
+        <section class="conv-chat">
+          <header class="conv-chat-head">
+            <button class="conversation-sidebar-toggle" onclick="expandConversationSidebar()" title="展开会话侧栏">☰</button>
+            <span class="agent-avatar"></span>
+            <div class="conv-chat-titles">
+              <div class="conversation-title" id="conversationTitle">Dora 会话</div>
+              <div class="conversation-subtitle" id="conversationSubtitle">全能助手 · 通用任务</div>
+            </div>
+            <div class="conversation-header-spacer"></div>
+            <button class="icon-btn annotated" title="展开/收起资料面板" onclick="toggleFilesPanel()">
+              <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round">
+                <path d="M2.8 6.2h5l1.6 2h7.8v7.1a1.4 1.4 0 0 1-1.4 1.4H4.2a1.4 1.4 0 0 1-1.4-1.4V6.2Z"/>
+                <path d="M2.8 6.2V4.7a1.4 1.4 0 0 1 1.4-1.4h3.6l1.6 1.9h6.4a1.4 1.4 0 0 1 1.4 1.4v1.6"/>
+              </svg>
+              <span class="folder-count" id="filesFolderCount">3</span>
+              <span class="change-marker demo-control tooltip-left" data-change-tooltip="会话拥有独立的资料面板，可在右侧常驻显示，也可点此收起。">15</span>
+            </button>
+          </header>
+
+          <div class="chat-body" id="chatBody">
+            <div class="msg-user">
+              <div class="user-file-pill">
+                <span class="mini-icon">XLSX</span>
+                <div>
+                  <div class="file-meta-name">客户反馈明细.xlsx</div>
+                  <div class="file-meta-size">161.17 KB</div>
+                </div>
+              </div>
+              <div class="bubble" id="conversationUserText">请帮我分析这份客户反馈 Excel，找出主要问题，并生成一份汇报 PPT。</div>
+            </div>
+
+            <div class="agent-reply" id="agentReply">
+              <div class="agent-row">
+                <span class="agent-avatar"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5C8 1.5 3.5 6.5 3.5 10.2a4.5 4.5 0 009 0C12.5 6.5 8 1.5 8 1.5z"/></svg></span>
+                <span class="agent-name" id="conversationAgentName">Dora</span>
+              </div>
+
+              <div class="result-slot is-interim is-empty" id="resultSlot"></div>
+              <div class="chart-slot" id="chartSlot" hidden></div>
+              <div class="genui-slot" id="genuiSlot" hidden></div>
+              <div class="outputs-section" id="outputsSection" hidden></div>
+
+              <div class="exec-panel" id="execPanel">
+                <header class="exec-header" onclick="togglePanel()">
+                  <span class="exec-title" id="execTitle">准备中....</span>
+                  <button class="exec-toggle" type="button" tabindex="-1"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5l4 4 4-4"/></svg></button>
+                </header>
+                <div class="exec-body"><ul class="exec-timeline" id="execTimeline"></ul></div>
+              </div>
+
+              <div class="wait-line" id="waitLine" hidden>
+                <svg class="wait-spark" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l1.5 5L14 7.5 9.5 9 8 14l-1.5-5L2 7.5 6.5 6z"/></svg>
+                <span class="wait-time" id="waitTime">0s</span>
+                <span class="wait-text" id="waitText" hidden></span>
+                <div class="wait-carousel" id="waitCarousel" hidden><div class="wait-carousel-track" id="waitCarouselTrack"></div></div>
+              </div>
+
+              <div class="msg-actions is-hidden" id="finalActions">
+                <button title="复制"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="8.5" height="8.5" rx="1.5"/><path d="M3 10.5V3.5A1 1 0 014 2.5h7"/></svg></button>
+                <button title="重新生成"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8a4.5 4.5 0 018.4-2.2"/><path d="M12 3.5V6h-2.5"/><path d="M12.5 8a4.5 4.5 0 01-8.4 2.2"/><path d="M4 12.5V10h2.5"/></svg></button>
+                <button title="分享"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v2.5a1 1 0 001 1h8a1 1 0 001-1V10"/><path d="M8 3v8"/><path d="M5 6l3-3 3 3"/></svg></button>
+                <button title="赞"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 7.5V13H3.5a1 1 0 01-1-1V8.5a1 1 0 011-1h2z"/><path d="M5.5 7.5l2.2-4.4A1.2 1.2 0 0110 3.7v2.3h2.6a1.2 1.2 0 011.2 1.4l-0.8 4.5a1.2 1.2 0 01-1.2 1H5.5"/></svg></button>
+                <button title="踩"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 8.5V3H12.5a1 1 0 011 1v3.5a1 1 0 01-1 1h-2z"/><path d="M10.5 8.5L8.3 12.9A1.2 1.2 0 016 12.3V10H3.4a1.2 1.2 0 01-1.2-1.4L3 4.1A1.2 1.2 0 014.2 3.1H10.5"/></svg></button>
+              </div>
+            </div>
+
+            <div class="demo-control demo-control-bar">
+              <span>客户反馈剧本（DeerFlow 7 阶段 / ~43s）</span>
+              <button onclick="playScenario()">▶ 重播剧本</button>
+              <button onclick="appendGenUIReply('给我 genui 看看分布')">💡 追加 GenUI 消息</button>
+            </div>
+
+            <div id="extraReplies"></div>
+          </div>
+
+          <!-- A 的 Sender 三方案输入 -->
+          <div class="chat-footer-wrap">
+            <div class="conversation-input annotated">
+              <div class="sender-added-row" id="conversationSenderFiles"></div>
+              <textarea id="conversationInput" placeholder="试试输入「给我 genui」回车追加一条 GenUI 消息 · 或输入 @ 引用会话文件"></textarea>
+              <div class="input-tools">
+                <div class="sender-left-tools">
+                  <div class="sender-menu" id="conversationSenderMenu">
+                    <button onclick="openLocalUpload('conversation')">上传本地文件</button>
+                    <button onclick="openAssetPicker('bi')">添加 FineBI 资产</button>
+                    <button onclick="openAssetPicker('fr')">添加 FineReport 资产</button>
+                  </div>
+                  <button class="round-btn sender-menu-trigger" onmouseenter="openSenderMenu('conversation')" onclick="toggleSenderMenu('conversation', this)">+</button>
+                  <button class="sender-action-btn sender-flat-action" onclick="openLocalUpload('conversation')">上传</button>
+                  <button class="sender-action-btn sender-flat-action" onclick="openAssetPicker('bi')">BI</button>
+                  <button class="sender-action-btn sender-flat-action" onclick="openAssetPicker('fr')">FR</button>
+                  <div class="sender-cluster sender-stack-action">
+                    <button class="round-btn" onclick="toggleSenderMenu('conversation', this)">+</button>
+                    <button class="round-btn cluster-bi" title="添加 FineBI 资产" aria-label="添加 FineBI 资产" onclick="openAssetPicker('bi')">BI</button>
+                    <button class="round-btn cluster-fr" title="添加 FineReport 资产" aria-label="添加 FineReport 资产" onclick="openAssetPicker('fr')">FR</button>
+                  </div>
+                </div>
+                <button class="round-btn primary" id="conversationSendBtn" onclick="handleSend()">↑</button>
+              </div>
+              <span class="change-marker demo-control tooltip-left" data-change-tooltip="会话页输入区保留 Sender 三方案（菜单/平铺/堆叠），可继续引用资料或产出。">14</span>
+            </div>
+            <div class="tiny-note">内容均由AI生成，仅供参考 · 试试输入「genui」追加交互卡片</div>
+          </div>
+        </section>
+
+        <!-- 拖拽分割条 (中列 ↔ 右列) -->
+        <div class="conv-resize-handle" id="convResizeHandle" role="separator" aria-orientation="vertical" aria-label="拖拽调整对话和资料区域的宽度"></div>
+
+        <!-- 右列: B 的资料面板 (scope: .conv-files) -->
+        <aside class="conv-files" id="paneFiles">
+          <header class="files-header">
+            <div class="files-tabs">
+              <button class="files-tab is-active" data-tab="materials">资料<span class="tab-count" id="materialsCount">1</span></button>
+              <button class="files-tab" data-tab="outputs">产出<span class="tab-count" id="outputsCount">0</span></button>
+            </div>
+            <button class="icon-btn files-close" title="关闭" onclick="toggleFilesPanel()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
+          </header>
+
+          <div class="files-toolbar">
+            <div class="toolbar-group">
+              <button class="btn-pill is-primary">上传文件</button>
+              <button class="btn-pill">平台数据</button>
+              <input class="search-input" placeholder="搜索名称" />
+            </div>
+            <button class="btn-upload"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="5" height="5" rx="0.6"/><rect x="9" y="2" width="5" height="5" rx="0.6"/><rect x="2" y="9" width="5" height="5" rx="0.6"/><rect x="9" y="9" width="5" height="5" rx="0.6"/></svg>上传</button>
+          </div>
+
+          <div class="files-list" id="filesListMaterials">
+            <div class="file-row" onclick="openPreview('xlsx', '客户反馈明细.xlsx')">
+              <div class="file-icon xlsx">XLSX</div>
+              <div class="file-info">
+                <div class="file-name">客户反馈明细.xlsx</div>
+                <div class="file-size">161.17 KB · 用户上传</div>
+              </div>
+              <div class="file-actions">
+                <button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button>
+                <button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button>
+                <button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="files-list" id="filesListOutputs" hidden>
+            <div class="file-row" id="outputSkillRow" style="display:none">
+              <div class="file-icon skill"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v5l-2 2"/><path d="M9 5l4 4-2.5 2.5L7 8"/><path d="M5.5 10.5L4 12l2 2 1.5-1.5"/></svg></div>
+              <div class="file-info"><div class="file-name">客户反馈分析技能</div><div class="file-size">技能 · Agent 自动生成</div></div>
+              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
+            </div>
+            <div class="file-row" id="outputPptRow" style="display:none" onclick="openPreview('pptx', '客户反馈分析汇报.pptx')">
+              <div class="file-icon pptx">PPTX</div>
+              <div class="file-info"><div class="file-name">客户反馈分析汇报.pptx</div><div class="file-size">2.4 MB · Agent 产出</div></div>
+              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
+            </div>
+            <div class="file-row" id="outputDocxRow" style="display:none" onclick="openPreview('docx', '反馈分析报告.docx')">
+              <div class="file-icon docx">DOCX</div>
+              <div class="file-info"><div class="file-name">反馈分析报告.docx</div><div class="file-size">320 KB · 给管理层 · Agent 产出</div></div>
+              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
+            </div>
+            <div class="file-row" id="outputPdfRow" style="display:none" onclick="openPreview('pdf', '反馈分析报告.pdf')">
+              <div class="file-icon pdf">PDF</div>
+              <div class="file-info"><div class="file-name">反馈分析报告.pdf</div><div class="file-size">480 KB · 归档版 · Agent 产出</div></div>
+              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
+            </div>
+            <div class="file-row" id="outputMdRow" style="display:none" onclick="openPreview('md', '反馈分析报告.md')">
+              <div class="file-icon md">MD</div>
+              <div class="file-info"><div class="file-name">反馈分析报告.md</div><div class="file-size">12 KB · Agent 产出</div></div>
+              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
+            </div>
+            <div class="file-row" id="outputHtmlRow" style="display:none" onclick="openPreview('html', '反馈分布看板.html')">
+              <div class="file-icon html">HTML</div>
+              <div class="file-info"><div class="file-name">反馈分布看板.html</div><div class="file-size">24 KB · 可交互 · Agent 产出</div></div>
+              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
+            </div>
+            <div class="file-row" id="outputXlsxRow" style="display:none" onclick="openPreview('xlsx', '反馈分类结果.xlsx')">
+              <div class="file-icon xlsx">XLSX</div>
+              <div class="file-info"><div class="file-name">反馈分类结果.xlsx</div><div class="file-size">186 KB · 清洗后数据 · Agent 产出</div></div>
+              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
+            </div>
+            <div class="file-row" id="outputCsvRow" style="display:none" onclick="openPreview('csv', '反馈分类明细.csv')">
+              <div class="file-icon csv">CSV</div>
+              <div class="file-info"><div class="file-name">反馈分类明细.csv</div><div class="file-size">142 KB · 1,247 行 · Agent 产出</div></div>
+              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
+            </div>
+            <div class="file-row" id="outputJsonRow" style="display:none" onclick="openPreview('json', 'analysis_result.json')">
+              <div class="file-icon json">JSON</div>
+              <div class="file-info"><div class="file-name">analysis_result.json</div><div class="file-size">38 KB · 结构化结果 · Agent 产出</div></div>
+              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
+            </div>
+            <div class="file-row" id="outputImgRow" style="display:none" onclick="openPreview('imgs', '反馈分布图组')">
+              <div class="file-icon imgs">PNG</div>
+              <div class="file-info"><div class="file-name">反馈分布图组（3 张）</div><div class="file-size">1.8 MB · Agent 产出</div></div>
+              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
+            </div>
+            <div class="file-row" id="outputZipRow" style="display:none" onclick="openPreview('zip', '完整交付包.zip')">
+              <div class="file-icon zip">ZIP</div>
+              <div class="file-info"><div class="file-name">完整交付包.zip</div><div class="file-size">5.2 MB · 包含全部产物 · Agent 产出</div></div>
+              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
+            </div>
+          </div>
+
+          <div class="files-preview" id="filesPreview">
+            <div class="preview-toolbar">
+              <button class="preview-back" title="返回" onclick="closePreview()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3L5 8l5 5"/></svg></button>
+              <div class="file-icon pptx" id="previewIcon">PPTX</div>
+              <span class="preview-filename" id="previewFilename">客户反馈分析汇报.pptx</span>
+              <div class="preview-actions">
+                <button class="btn-attach">@到对话</button>
+                <button class="icon-btn" title="分享"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v3a1 1 0 001 1h10a1 1 0 001-1v-3"/><path d="M10 4v9"/><path d="M6.5 7.5L10 4l3.5 3.5"/></svg></button>
+                <button class="icon-btn" title="下载"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4v10"/><path d="M6 10l4 4 4-4"/><path d="M4 17h12"/></svg></button>
+              </div>
+            </div>
+            <div class="preview-body">
+              <div class="slide-list" id="slideList"></div>
+              <div class="slide-main">
+                <div class="slide-canvas" id="slideCanvas"><div style="text-align:center;color:rgba(255,255,255,0.5);margin-top:32%;">等待 PPT 生成...</div></div>
+                <div class="slide-notes">点击添加演示者备注</div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- ============== 资源库 ============== -->
+    <section class="surface" id="view-space">
+      <div class="space-home" id="spaceHome">
+        <div class="page-title"><h1>资源库</h1></div>
+        <div class="section-title">最近常用</div>
+        <div class="recent-row">
+          <div class="mini-asset" onclick="openAssetDetail()"><div class="mini-thumb"><div>销售预测系统.html</div><br><div>图表与预测规则</div></div><div class="mini-info"><span>财务小助手</span><span class="avatar">N</span></div></div>
+          <div class="mini-asset"><div class="mini-thumb">风险营销助手.html</div><div class="mini-info"><span>Dora</span><span class="avatar">N</span></div></div>
+          <div class="mini-asset"><div class="mini-thumb dark">From Enterprise Data Services to a Trusted Data Agent Platform</div><div class="mini-info"><span>产品小助手</span><span class="avatar">N</span></div></div>
+          <div class="mini-asset"><div class="mini-thumb">产品概念原型.html</div><div class="mini-info"><span>设计助手</span><span class="avatar">N</span></div></div>
+          <div class="mini-asset"><div class="mini-thumb ppt">2025年9月生产经营分析会</div><div class="mini-info"><span>经营助手</span><span class="avatar">N</span></div></div>
+          <div class="mini-asset"><div class="mini-thumb">BI仪表板</div><div class="mini-info"><span>财务助手</span><span class="avatar">N</span></div></div>
+        </div>
+
+        <div class="section-title">全部资源</div>
+        <div class="filters">
+          <button class="select-pill">全部类型 ▾</button>
+          <div class="search-box annotated">
+            <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="#8C95B0" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+            <input placeholder="搜索名称/来源对话/来源Agent" />
+            <span class="change-marker demo-control" data-change-tooltip="资源库支持按名称、来源对话和来源 Agent 查找资料。" data-change-placement="top">6</span>
+          </div>
+        </div>
+        <div class="asset-grid">
+          <div class="asset-card space-asset-hidden" id="savedFromSessionAsset" onclick="openAssetDetail()">
+            <div class="asset-preview dashboard"><div class="kpi">已存入</div><div class="kpi">$510.854 亿</div><div class="kpi red">V2</div><div class="line-chart"></div></div>
+            <div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>销售预测系统.html</div><div class="asset-foot"><span>来自会话文件</span><span class="avatar">N</span></div></div>
+          </div>
+          <div class="asset-card annotated" onclick="openAssetDetail()">
+            <div class="asset-preview dashboard"><div class="kpi">+$28.854 亿</div><div class="kpi">+$510.854 亿</div><div class="kpi red">$491.618 亿</div><div class="line-chart"></div></div>
+            <div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>销售预测系统.html</div><div class="asset-foot"><span>财务小助手：XXXXXXXX</span><span class="avatar">N</span></div></div>
+            <span class="change-marker demo-control" data-change-tooltip="点击资源库资料进入资料详情页。" data-change-placement="top">7</span>
+          </div>
+          <div class="asset-card"><div class="asset-preview"><div style="font-size:22px;font-weight:700;margin-top:48px;text-align:center;">复杂市场环境下<br>自营风险管理</div></div><div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>风险营销助手.html</div><div class="asset-foot"><span>Dora：XXXXXXXX</span><span class="avatar">N</span></div></div></div>
+          <div class="asset-card"><div class="asset-preview article">From Enterprise Data Services to a Trusted Data Agent Platform</div><div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>产品架构说明.html</div><div class="asset-foot"><span>产品小助手：XXXXXXXX</span><span class="avatar">N</span></div></div></div>
+          <div class="asset-card"><div class="asset-preview bi"><div class="panel"></div><div class="side"></div></div><div class="asset-info"><div class="asset-name"><span class="file-badge bi">BI</span>BI仪表板</div><div class="asset-foot"><span>财务助手：XXXXXXXX</span><span class="avatar">N</span></div></div></div>
+          <div class="asset-card"><div class="asset-preview ppt" style="height:174px;font-size:24px;color:#2B7BD8;">2025年9月生产经营分析会</div><div class="asset-info"><div class="asset-name"><span class="file-badge ppt">PPT</span>XXXX.ppt</div><div class="asset-foot"><span>经营助手：XXXXXXXX</span><span class="avatar">N</span></div></div></div>
+        </div>
+      </div>
+
+      <!-- 资源库 — 资料详情页 -->
+      <div class="detail-page" id="assetDetail">
+        <div class="preview-pane" id="previewPane">
+          <header class="preview-header">
+            <button class="back-btn" onclick="closeAssetDetail()"><svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 5l-5 5 5 5"/></svg></button>
+            <div class="asset-title"><span class="file-badge html">HTML</span><span>销售预测系统.html</span></div>
+            <div class="version-menu annotated" id="versionMenu">
+              <button class="version-trigger" onclick="toggleVersionMenu(event)">V2 ⌘</button>
+              <div class="version-list">
+                <div class="version-item"><span>V3</span><button class="source-icon" title="查看来源对话" onclick="showSourceHint(event)">☰</button></div>
+                <div class="version-item"><span>V2</span><button class="source-icon" title="查看来源对话" onclick="showSourceHint(event)">☰</button></div>
+                <div class="version-item"><span>V1</span><button class="source-icon" title="查看来源对话" onclick="showSourceHint(event)">☰</button></div>
+              </div>
+              <span class="change-marker demo-control" data-change-tooltip="版本下拉展示资料的临时修改版本，并可查看来源对话。" data-change-placement="top">8</span>
+            </div>
+            <div class="source-popover" id="sourcePopover">
+              <div class="source-label">讨论</div>
+              <p>版本变更记录来源包含两类：在当前资料页右侧对话产生的修改，以及原始会话中的修改。每个版本均可回看对应来源对话。</p>
+            </div>
+            <div class="preview-header-spacer"></div>
+            <span class="owner">财务小助手：XXXXXXXX</span>
+            <button class="draft-pill">暂存</button>
+            <button class="icon-btn" onclick="openSourceDialog()" title="查看来源对话">↻</button>
+            <button class="icon-btn">⇩</button>
+          </header>
+          <div class="preview-content">
+            <div class="report-card">
+              <h3>数据源 & 规则配置</h3>
+              <div style="font-size:13px;color:var(--ink-9);margin-bottom:12px;">📊 已加载 1153 行 · 12 个月 (2025-04~2026-03) · 8 个 BU</div>
+              <div class="rule-row" style="background:#F8F8F9;border-top:none;font-weight:600;color:var(--ink-9);"><span>科目</span><span>方法</span><span>参数</span><span>来源</span><span></span></div>
+              <div class="rule-row"><span>员工薪酬</span><span>avg</span><span>{"window":3}</span><span>🤖 薪资按前 3 个月平均滚动</span><button class="outline-btn">删除</button></div>
+            </div>
+            <div class="metric-grid">
+              <div class="metric-card"><div class="metric-label">未来 3 个月净流入(基准)</div><div class="metric-value" style="color:var(--green)">+$28.854 亿</div><div class="metric-label">乐观 +$32.417 / 保守 +$24.887</div></div>
+              <div class="metric-card"><div class="metric-label">Q2 末资金总额预测(基准)</div><div class="metric-value">$510.854 亿</div><div class="metric-label">乐观 $514.417 / 保守 $506.887</div></div>
+              <div class="metric-card"><div class="metric-label">Q2 最低流动性</div><div class="metric-value" style="color:var(--green)">$491.618 亿</div><div class="metric-label">警戒线 $0.80 亿 · √ 安全</div></div>
+              <div class="metric-card green"><div class="metric-label">乐观情景</div><div class="metric-value">$546.833 亿</div><div class="metric-label">≈ 39.65 亿 CNY · 9月末</div></div>
+              <div class="metric-card blue"><div class="metric-label">基准 ★情景</div><div class="metric-value">$539.709 亿</div><div class="metric-label">≈ 39.13 亿 CNY · 9月末</div></div>
+              <div class="metric-card red"><div class="metric-label">保守情景</div><div class="metric-value">$531.775 亿</div><div class="metric-label">≈ 38.55 亿 CNY · 9月末</div></div>
+            </div>
+            <div class="chart-block"><h3>6 个月资金余额预测(USD 亿)</h3><div class="chart-grid"></div><div class="chart-line"></div></div>
+            <div class="report-card"><h3>逐月明细 · 点击单元格查看血缘 · 数值三舍五入调整</h3><div class="rule-row" style="grid-template-columns: repeat(7, 1fr);"><span>科目</span><span>04月</span><span>05月</span><span>06月</span><span>07月</span><span>08月</span><span>09月</span></div></div>
+          </div>
+        </div>
+        <aside class="chat-pane" id="detailChat">
+          <header class="chat-head">
+            <span class="agent-avatar"></span>
+            <span class="chat-title">会话标题XXXXXX</span>
+            <button class="icon-btn annotated" onclick="collapseChat()" title="收起">收起<span class="change-marker demo-control tooltip-left" data-change-tooltip="资料详情中的右侧对话可收起，进入沉浸预览。">9</span></button>
+          </header>
+          <div class="chat-body-detail">
+            <div class="msg user"><div class="bubble">帮我改一下这个页面里的预测规则吧</div></div>
+            <div class="msg agent annotated">
+              <span class="agent-avatar"></span>
+              <div class="agent-text"><div class="agent-name">Dora</div><div>好的我已经改好了，您看看效果如何</div><div class="status-pill">› 全部工作已完成，耗时23秒</div></div>
+              <span class="change-marker demo-control" data-change-tooltip="Dora 可读取当前打开资料，并基于资料内容生成临时修改版本。" data-change-placement="left">10</span>
+            </div>
+            <div class="message-actions"><button>□</button><button>↻</button><button>♡</button><button>♧</button></div>
+          </div>
+          <div class="chat-input-wrap">
+            <div class="chat-input-box annotated">
+              <div class="sender-added-row" id="detailSenderFiles"></div>
+              <textarea placeholder="在此输入任何您想查询或分析的问题"></textarea>
+              <div class="input-tools">
+                <div class="sender-left-tools">
+                  <div class="sender-menu" id="detailSenderMenu">
+                    <button onclick="openLocalUpload('detail')">上传本地文件</button>
+                    <button onclick="openAssetPicker('bi')">添加 FineBI 资产</button>
+                    <button onclick="openAssetPicker('fr')">添加 FineReport 资产</button>
+                  </div>
+                  <button class="round-btn sender-menu-trigger" onmouseenter="openSenderMenu('detail')" onclick="toggleSenderMenu('detail', this)">+</button>
+                  <button class="sender-action-btn sender-flat-action" onclick="openLocalUpload('detail')">上传</button>
+                  <button class="sender-action-btn sender-flat-action" onclick="openAssetPicker('bi')">BI</button>
+                  <button class="sender-action-btn sender-flat-action" onclick="openAssetPicker('fr')">FR</button>
+                  <div class="sender-cluster sender-stack-action">
+                    <button class="round-btn" onclick="toggleSenderMenu('detail', this)">+</button>
+                    <button class="round-btn cluster-bi" title="添加 FineBI 资产" aria-label="添加 FineBI 资产" onclick="openAssetPicker('bi')">BI</button>
+                    <button class="round-btn cluster-fr" title="添加 FineReport 资产" aria-label="添加 FineReport 资产" onclick="openAssetPicker('fr')">FR</button>
+                  </div>
+                </div>
+                <button class="round-btn primary">↑</button>
+              </div>
+              <span class="change-marker demo-control tooltip-left" data-change-tooltip="Sender 支持按当前方案添加本地文件、BI 资产或 FR 资产。">11</span>
+            </div>
+            <div class="tiny-note">内容均由AI生成，仅供参考</div>
+          </div>
+        </aside>
+        <button class="floating-dora" id="floatingDora" onclick="expandChat()"><span class="agent-avatar"></span></button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">已存到资源库</div>
+<input type="file" id="localFileInput" hidden multiple />
+
+<!-- 资产选择弹窗 (BI/FR) — 复刻自 sender-data-source-entry -->
+<div class="modal-mask" id="assetModal">
+  <div class="modal" data-source="bi">
+    <div class="modal-head">
+      <div class="modal-title" id="assetModalTitle">添加 FineBI 资产</div>
+      <button class="modal-close" onclick="closeAssetModal()" aria-label="关闭">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <path d="M4 4l8 8M12 4l-8 8"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-tree">
+        <input type="text" class="modal-search" placeholder="搜索名称" />
+        <div class="tree-list">
+          <div class="tree-node">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4l3 3 3-3"/></svg>
+            全部数据
+          </div>
+          <div class="tree-node tree-indent">
+            <input type="checkbox" checked />
+            <span class="src-dot">D</span>
+            仪表板
+          </div>
+          <div class="tree-node tree-indent active">
+            <input type="checkbox" checked />
+            <span class="src-dot">D</span>
+            分析主题B的名称…
+          </div>
+          <div class="tree-node tree-indent">
+            <input type="checkbox" />
+            <span style="display:inline-block;width:12px"></span>
+            <span style="color:var(--ink-9)">📁</span>
+            文件夹1
+          </div>
+          <div class="tree-node tree-indent" style="padding-left:36px">
+            <input type="checkbox" checked />
+            <span class="src-dot">D</span>
+            分析主题1
+          </div>
+          <div class="tree-node tree-indent" style="padding-left:36px">
+            <input type="checkbox" />
+            <span class="src-dot" style="background:var(--ink-6)">N</span>
+            节点名称2
+          </div>
+          <div class="tree-node tree-indent">
+            <input type="checkbox" />
+            <span style="display:inline-block;width:12px"></span>
+            <span style="color:var(--ink-9)">📁</span>
+            文件夹3 的名称…
+          </div>
+        </div>
+      </div>
+      <div class="modal-detail">
+        <div class="detail-bar">
+          <span class="detail-tag" id="assetModalTag">
+            <span class="detail-tag-dot"></span>
+            <span id="assetModalTagText">BI demo_门店销售表</span>
+          </span>
+        </div>
+        <div class="detail-preview">
+          (资产预览占位 — 此原型不复刻弹窗细节)
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <div class="selected-count">已选择资产：<strong style="color:var(--ink-11); margin-left:6px">5个</strong></div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeAssetModal()">取消</button>
+        <button class="btn btn-primary" onclick="confirmAssetModal()">确定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="change-tooltip-layer" aria-hidden="true"><div id="change-tooltip-bubble"></div></div>
+
+<script src="script.js"></script>
+</body>
+</html>
