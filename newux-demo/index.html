@@ -219,6 +219,7 @@
                   <div class="file-meta-name">客户反馈明细.xlsx</div>
                   <div class="file-meta-size">161.17 KB</div>
                 </div>
+                <button class="library-state-btn" id="chatFileLibraryBtn" onclick="handleLibraryStateButton(event)">存入资料库</button>
               </div>
               <div class="bubble" id="conversationUserText">请帮我分析这份客户反馈 Excel，找出主要问题，并生成一份汇报 PPT。</div>
             </div>
@@ -262,6 +263,8 @@
               <span>客户反馈剧本（DeerFlow 7 阶段 / ~43s）</span>
               <button onclick="playScenario()">▶ 重播剧本</button>
               <button onclick="appendGenUIReply('给我 genui 看看分布')">💡 追加 GenUI 消息</button>
+              <button onclick="markSessionFileDirty()">模拟会话文件更新</button>
+              <button onclick="deleteLibrarySnapshot()">模拟资料库删除</button>
             </div>
 
             <div id="extraReplies"></div>
@@ -327,6 +330,7 @@
                 <div class="file-size">161.17 KB · 用户上传</div>
               </div>
               <div class="file-actions">
+                <button class="library-state-btn is-compact" id="panelFileLibraryBtn" onclick="handleLibraryStateButton(event)">存入资料库</button>
                 <button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button>
                 <button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button>
                 <button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button>
@@ -442,17 +446,17 @@
         <div class="asset-grid">
           <div class="asset-card space-asset-hidden" id="savedFromSessionAsset" onclick="openAssetDetail()">
             <div class="asset-preview dashboard"><div class="kpi">已存入</div><div class="kpi">$510.854 亿</div><div class="kpi red">V2</div><div class="line-chart"></div></div>
-            <div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>销售预测系统.html</div><div class="asset-foot"><span>来自会话文件</span><span class="avatar">N</span></div></div>
+            <div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>销售预测系统.html</div><div class="asset-permissions"><span class="permission-badge read">只读</span><span class="permission-badge write">可写</span><span class="permission-badge cite">可引用</span></div><div class="asset-foot"><span>来自会话文件快照</span><span class="avatar">N</span></div></div>
           </div>
           <div class="asset-card annotated" onclick="openAssetDetail()">
             <div class="asset-preview dashboard"><div class="kpi">+$28.854 亿</div><div class="kpi">+$510.854 亿</div><div class="kpi red">$491.618 亿</div><div class="line-chart"></div></div>
-            <div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>销售预测系统.html</div><div class="asset-foot"><span>财务小助手：XXXXXXXX</span><span class="avatar">N</span></div></div>
+            <div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>销售预测系统.html</div><div class="asset-permissions"><span class="permission-badge read">只读</span><span class="permission-badge write">可写</span><span class="permission-badge cite">可引用</span></div><div class="asset-foot"><span>财务小助手：XXXXXXXX</span><span class="avatar">N</span></div></div>
             <span class="change-marker demo-control" data-change-tooltip="点击资源库资料进入资料详情页。" data-change-placement="top">7</span>
           </div>
-          <div class="asset-card"><div class="asset-preview"><div style="font-size:22px;font-weight:700;margin-top:48px;text-align:center;">复杂市场环境下<br>自营风险管理</div></div><div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>风险营销助手.html</div><div class="asset-foot"><span>Dora：XXXXXXXX</span><span class="avatar">N</span></div></div></div>
-          <div class="asset-card"><div class="asset-preview article">From Enterprise Data Services to a Trusted Data Agent Platform</div><div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>产品架构说明.html</div><div class="asset-foot"><span>产品小助手：XXXXXXXX</span><span class="avatar">N</span></div></div></div>
-          <div class="asset-card"><div class="asset-preview bi"><div class="panel"></div><div class="side"></div></div><div class="asset-info"><div class="asset-name"><span class="file-badge bi">BI</span>BI仪表板</div><div class="asset-foot"><span>财务助手：XXXXXXXX</span><span class="avatar">N</span></div></div></div>
-          <div class="asset-card"><div class="asset-preview ppt" style="height:174px;font-size:24px;color:#2B7BD8;">2025年9月生产经营分析会</div><div class="asset-info"><div class="asset-name"><span class="file-badge ppt">PPT</span>XXXX.ppt</div><div class="asset-foot"><span>经营助手：XXXXXXXX</span><span class="avatar">N</span></div></div></div>
+          <div class="asset-card"><div class="asset-preview"><div style="font-size:22px;font-weight:700;margin-top:48px;text-align:center;">复杂市场环境下<br>自营风险管理</div></div><div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>风险营销助手.html</div><div class="asset-permissions"><span class="permission-badge read">只读</span><span class="permission-badge cite">可引用</span></div><div class="asset-foot"><span>Dora：XXXXXXXX</span><span class="avatar">N</span></div></div></div>
+          <div class="asset-card"><div class="asset-preview article">From Enterprise Data Services to a Trusted Data Agent Platform</div><div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>产品架构说明.html</div><div class="asset-permissions"><span class="permission-badge read">只读</span><span class="permission-badge cite">可引用</span></div><div class="asset-foot"><span>产品小助手：XXXXXXXX</span><span class="avatar">N</span></div></div></div>
+          <div class="asset-card"><div class="asset-preview bi"><div class="panel"></div><div class="side"></div></div><div class="asset-info"><div class="asset-name"><span class="file-badge bi">BI</span>BI仪表板</div><div class="asset-permissions"><span class="permission-badge read">只读</span><span class="permission-badge cite">可引用</span></div><div class="asset-foot"><span>财务助手：XXXXXXXX</span><span class="avatar">N</span></div></div></div>
+          <div class="asset-card"><div class="asset-preview ppt" style="height:174px;font-size:24px;color:#2B7BD8;">2025年9月生产经营分析会</div><div class="asset-info"><div class="asset-name"><span class="file-badge ppt">PPT</span>XXXX.ppt</div><div class="asset-permissions"><span class="permission-badge read">只读</span><span class="permission-badge write">可写</span><span class="permission-badge cite">可引用</span></div><div class="asset-foot"><span>经营助手：XXXXXXXX</span><span class="avatar">N</span></div></div></div>
         </div>
       </div>
 
@@ -478,7 +482,8 @@
             <div class="preview-header-spacer"></div>
             <span class="owner">财务小助手：XXXXXXXX</span>
             <button class="draft-pill">暂存</button>
-            <button class="icon-btn" onclick="openSourceDialog()" title="查看来源对话">↻</button>
+            <button class="draft-pill save-copy-pill" onclick="saveDetailCopyToLibrary()">另存到资料库</button>
+            <button class="icon-btn" onclick="openSourceDialog()" title="查看来源对话：打开产生或引用此资料的会话">↻</button>
             <button class="icon-btn">⇩</button>
           </header>
           <div class="preview-content">
@@ -504,9 +509,15 @@
           <header class="chat-head">
             <span class="agent-avatar"></span>
             <span class="chat-title">会话标题XXXXXX</span>
+            <button class="history-filter-btn" onclick="toggleAssetHistoryMode()">该文件历史会话</button>
             <button class="icon-btn annotated" onclick="collapseChat()" title="收起">收起<span class="change-marker demo-control tooltip-left" data-change-tooltip="资料详情中的右侧对话可收起，进入沉浸预览。">9</span></button>
           </header>
           <div class="chat-body-detail">
+            <div class="history-filter-panel" id="assetHistoryPanel">
+              <div class="history-filter-title">仅展示 dora 中由此文件发起的会话</div>
+              <button onclick="openSourceConversationFromAsset()">销售预测系统规则调整 · 原始生成会话</button>
+              <button onclick="openSourceConversationFromAsset()">现金流预测复盘 · 引用该资料</button>
+            </div>
             <div class="msg user"><div class="bubble">帮我改一下这个页面里的预测规则吧</div></div>
             <div class="msg agent annotated">
               <span class="agent-avatar"></span>
@@ -544,6 +555,7 @@
           </div>
         </aside>
         <button class="floating-dora" id="floatingDora" onclick="expandChat()"><span class="agent-avatar"></span></button>
+        <div class="narrow-mode-todo">TODO：窄屏模式相关定义待设计稿补充后实现</div>
       </div>
     </section>
 
@@ -553,6 +565,15 @@
 <!-- Toast -->
 <div class="toast" id="toast">已存到资源库</div>
 <input type="file" id="localFileInput" hidden multiple />
+
+<div class="library-popconfirm" id="libraryPopconfirm">
+  <div class="library-pop-title">资料库中已有同名文件</div>
+  <div class="library-pop-desc">会话文件会作为当前快照副本存入资料库；资料库中的变更不会反向影响原会话文件。</div>
+  <div class="library-pop-actions">
+    <button onclick="saveLibrarySnapshotAsNew()">另存新文件</button>
+    <button class="is-primary" onclick="overwriteLibrarySnapshot()">覆盖存入</button>
+  </div>
+</div>
 
 <!-- 资产选择弹窗 (BI/FR) — 复刻自 sender-data-source-entry -->
 <div class="modal-mask" id="assetModal">

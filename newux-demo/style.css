@@ -1044,6 +1044,7 @@ body[data-sender-variant="menu"] .sender-flat-action { display: none; }
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
   padding: 10px 14px;
   border: 1px solid var(--neutral-3);
   border-radius: var(--radius-lg);
@@ -1059,6 +1060,38 @@ body[data-sender-variant="menu"] .sender-flat-action { display: none; }
 .conv-chat .user-file-pill .file-meta-name { font-size: 13px; color: var(--neutral-11); font-weight: 500; }
 .conv-chat .user-file-pill .file-meta-size { font-size: 12px; color: var(--neutral-9); margin-top: 2px; }
 .conv-chat .msg-user .bubble { background: var(--brand-1); color: var(--neutral-11); padding: 10px 14px; border-radius: 12px; border-top-right-radius: 4px; font-size: 14px; max-width: 80%; }
+.library-state-btn {
+  position: relative;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--brand-6);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--brand-7);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.library-state-btn:hover { background: var(--brand-1); }
+.library-state-btn.is-compact { height: 30px; margin-right: 6px; }
+.library-state-btn.is-saved {
+  border-color: var(--neutral-3);
+  background: var(--neutral-2);
+  color: var(--neutral-8);
+  cursor: not-allowed;
+}
+.library-state-btn.is-dirty::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red-6);
+  box-shadow: 0 0 0 2px #fff;
+}
 
 /* B 的 agent-reply (整体) */
 .conv-chat .agent-reply { display: flex; flex-direction: column; gap: 14px; }
@@ -1122,6 +1155,25 @@ body[data-sender-variant="menu"] .sender-flat-action { display: none; }
 .conv-chat .result-slot a.file-link.csv::before  { background: linear-gradient(135deg, #6FD89C 0%, #2EAA61 100%); }
 .conv-chat .result-slot a.file-link.json::before { background: linear-gradient(135deg, #FFD66F 0%, #D98B00 100%); }
 .conv-chat .result-slot a.file-link.zip::before  { background: linear-gradient(135deg, #B0B8CC 0%, #707A99 100%); }
+.citation-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  margin: 0 2px;
+  padding: 0 5px;
+  border: 1px solid var(--brand-5);
+  border-radius: 999px;
+  background: var(--brand-1);
+  color: var(--brand-7);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  vertical-align: text-top;
+}
+.citation-mark:hover { background: #DCE9FF; }
 
 /* B 的执行过程 panel */
 .conv-chat .exec-panel {
@@ -2123,6 +2175,25 @@ body.demo-mode .conv-chat .demo-control-bar { display: flex !important; }
 .asset-preview.bi .side { border-radius: 5px; background: #20164F; }
 .asset-info { padding: 12px 14px 14px; }
 .asset-name { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--ink-11); margin-bottom: 14px; }
+.asset-permissions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: -6px 0 12px;
+}
+.permission-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+.permission-badge.read { color: #2562FF; background: #EEF4FF; border-color: #C8D9FF; }
+.permission-badge.write { color: #138A53; background: #EAF8F1; border-color: #BDE9D1; }
+.permission-badge.cite { color: #8A5A00; background: #FFF6DB; border-color: #F4D686; }
 .file-badge {
   width: 28px;
   height: 28px;
@@ -2281,6 +2352,12 @@ body.demo-mode .conv-chat .demo-control-bar { display: flex !important; }
   background: #fff;
   color: var(--ink-10);
 }
+.draft-pill:hover { border-color: var(--brand-6); color: var(--brand-7); }
+.save-copy-pill {
+  border-color: var(--brand-6);
+  color: var(--brand-7);
+  font-weight: 600;
+}
 .preview-content { flex: 1; overflow: auto; background: #F8F9FB; padding: 16px; }
 .report-card { border: 1px solid var(--ink-4); background: #fff; border-radius: 8px; padding: 18px; margin-bottom: 14px; }
 .report-card h3 { margin: 0 0 12px; color: var(--ink-9); font-size: 13px; font-weight: 600; }
@@ -2369,7 +2446,51 @@ body.demo-mode .conv-chat .demo-control-bar { display: flex !important; }
   box-shadow: 0 0 0 2px rgba(33,191,255,0.5);
 }
 .chat-title { font-weight: 600; color: var(--ink-11); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.history-filter-btn {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--ink-4);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink-10);
+  font-size: 12px;
+  cursor: pointer;
+}
+.history-filter-btn.is-active,
+.history-filter-btn:hover {
+  border-color: var(--brand-6);
+  color: var(--brand-7);
+  background: var(--brand-1);
+}
 .chat-body-detail { flex: 1; padding: 26px 16px 16px; overflow: auto; }
+.history-filter-panel {
+  display: none;
+  border: 1px solid var(--brand-3);
+  background: linear-gradient(135deg, #F8FBFF, #EEF4FF);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+.history-filter-panel.open { display: block; }
+.history-filter-title {
+  color: var(--ink-9);
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.history-filter-panel button {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--ink-4);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink-10);
+  text-align: left;
+  cursor: pointer;
+}
+.history-filter-panel button:hover { border-color: var(--brand-6); color: var(--brand-7); }
 .msg { display: flex; margin-bottom: 22px; }
 .msg.user { justify-content: flex-end; }
 .bubble { max-width: 270px; border-radius: 8px; padding: 10px 13px; background: var(--brand-1); color: var(--ink-11); }
@@ -2397,6 +2518,19 @@ body.demo-mode .conv-chat .demo-control-bar { display: flex !important; }
   background: #fff;
 }
 .floating-dora.visible { display: flex; }
+.narrow-mode-todo {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  max-width: 320px;
+  padding: 8px 12px;
+  border: 1px dashed var(--ink-5);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.92);
+  color: var(--ink-8);
+  font-size: 12px;
+  pointer-events: none;
+}
 
 /* 修复：会话页左侧侧栏 (.conversation-side) 内 A 的 .agent-avatar 样式被全局覆盖 */
 .conversation-side .agent-avatar,
@@ -2619,6 +2753,51 @@ body.demo-mode .conv-chat .demo-control-bar { display: flex !important; }
   transition: opacity 160ms, transform 160ms;
 }
 .toast.show { opacity: 1; transform: translateY(0); }
+.library-popconfirm {
+  position: fixed;
+  top: 238px;
+  right: 430px;
+  width: 276px;
+  padding: 14px;
+  border: 1px solid var(--ink-4);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: var(--shadow-pop);
+  z-index: 90;
+  display: none;
+}
+.library-popconfirm.open { display: block; }
+.library-pop-title {
+  color: var(--ink-11);
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.library-pop-desc {
+  color: var(--ink-9);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.library-pop-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+.library-pop-actions button {
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--ink-4);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--ink-10);
+  cursor: pointer;
+}
+.library-pop-actions button.is-primary {
+  border-color: var(--brand-7);
+  background: var(--brand-7);
+  color: #fff;
+}
 
 
 /* =========================================================================

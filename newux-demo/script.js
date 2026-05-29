@@ -29,6 +29,13 @@ let carouselIntervalId = null;
 let actionCount = 0;
 let nodeCounter = 0;
 
+const libraryFileState = {
+  status: 'neverSaved',
+  hasDuplicateName: true,
+  savedVersion: 0,
+  sessionVersion: 1
+};
+
 // chatBody 是 B 对话区的滚动容器
 const chatBody = $('chatBody');
 function scrollToBottom() {
@@ -541,6 +548,113 @@ function expandChat() {
   $('detailChat').classList.remove('collapsed');
   $('previewPane').classList.remove('full');
   $('floatingDora').classList.remove('visible');
+}
+
+function getLibraryButtonView() {
+  if (libraryFileState.status === 'savedClean') {
+    return { text: '已存入资料库', disabled: true, dirty: false };
+  }
+  if (libraryFileState.status === 'savedDirty') {
+    return { text: '存入资料库', disabled: false, dirty: true };
+  }
+  return { text: '存入资料库', disabled: false, dirty: false };
+}
+
+function syncLibraryStateButtons() {
+  const view = getLibraryButtonView();
+  ['chatFileLibraryBtn', 'panelFileLibraryBtn'].forEach(id => {
+    const btn = $(id);
+    if (!btn) return;
+    btn.textContent = view.text;
+    btn.disabled = view.disabled;
+    btn.classList.toggle('is-saved', view.disabled);
+    btn.classList.toggle('is-dirty', view.dirty);
+    btn.title = view.dirty ? '会话文件已有更新，点击同步最新快照到资料库' : '将当前会话文件快照存入资料库';
+  });
+  const savedAsset = $('savedFromSessionAsset');
+  if (savedAsset) savedAsset.classList.toggle('visible', libraryFileState.status === 'savedClean' || libraryFileState.status === 'savedDirty');
+}
+
+function handleLibraryStateButton(event) {
+  event.stopPropagation();
+  if (libraryFileState.status === 'savedClean') return;
+  if (libraryFileState.status === 'savedDirty') {
+    saveLibrarySnapshot('sync');
+    return;
+  }
+  if (libraryFileState.hasDuplicateName) {
+    libraryFileState.status = 'duplicate';
+    openLibraryPopconfirm();
+    return;
+  }
+  saveLibrarySnapshot('new');
+}
+
+function openLibraryPopconfirm() {
+  const pop = $('libraryPopconfirm');
+  if (pop) pop.classList.add('open');
+}
+
+function closeLibraryPopconfirm() {
+  const pop = $('libraryPopconfirm');
+  if (pop) pop.classList.remove('open');
+}
+
+function saveLibrarySnapshot(mode) {
+  libraryFileState.status = 'savedClean';
+  libraryFileState.savedVersion = libraryFileState.sessionVersion;
+  libraryFileState.hasDuplicateName = false;
+  closeLibraryPopconfirm();
+  syncLibraryStateButtons();
+  const copy = mode === 'sync' ? '已同步会话文件的最新快照到资料库' : mode === 'overwrite' ? '已覆盖存入资料库快照' : '已另存新文件到资料库';
+  showToast(copy);
+}
+
+function saveLibrarySnapshotAsNew() {
+  saveLibrarySnapshot('new');
+}
+
+function overwriteLibrarySnapshot() {
+  saveLibrarySnapshot('overwrite');
+}
+
+function markSessionFileDirty() {
+  libraryFileState.sessionVersion += 1;
+  libraryFileState.status = libraryFileState.savedVersion > 0 ? 'savedDirty' : 'neverSaved';
+  syncLibraryStateButtons();
+  showToast('会话文件已更新，资料库快照不会自动同步');
+}
+
+function deleteLibrarySnapshot() {
+  libraryFileState.status = 'neverSaved';
+  libraryFileState.savedVersion = 0;
+  syncLibraryStateButtons();
+  showToast('资料库副本已删除，会话文件仍保留');
+}
+
+function showCitationSource(label) {
+  showToast(`引用来源：${label}`);
+}
+
+function citation(label, index) {
+  return `<button class="citation-mark" onclick="showCitationSource('${label}')">[${index}]</button>`;
+}
+
+function saveDetailCopyToLibrary() {
+  showToast('已将当前资料版本另存为资料库副本');
+}
+
+function toggleAssetHistoryMode() {
+  const panel = $('assetHistoryPanel');
+  const btn = document.querySelector('.history-filter-btn');
+  if (!panel) return;
+  panel.classList.toggle('open');
+  if (btn) btn.classList.toggle('is-active', panel.classList.contains('open'));
+}
+
+function openSourceConversationFromAsset() {
+  showToast('已切换到由此文件发起的历史会话');
+  openConversation('dora');
 }
 
 
@@ -1302,10 +1416,10 @@ function playScenario() {
     if (isProductLiveScenario) return;
     hideWaitLine();
     setResult(`
-      <p>本季度客户反馈共 <strong>1,247</strong> 条，主要集中在 <strong>3 类问题</strong>。整体满意度均值为 3.6（满分 5），低于上季度的 3.9。原始数据来自 <a class="file-link xlsx" onclick="openPreview('xlsx','客户反馈明细.xlsx')">客户反馈明细.xlsx</a>。</p>
-      <p>从分布看，<strong>物流配送</strong>占比最高(42%)，主要为延迟交付与包装破损；<strong>客户服务</strong>(28%) 与 <strong>产品质量</strong>(18%) 紧随其后。</p>
+      <p>本季度客户反馈共 <strong>1,247</strong> 条，主要集中在 <strong>3 类问题</strong>。整体满意度均值为 3.6（满分 5），低于上季度的 3.9。原始数据来自 <a class="file-link xlsx" onclick="openPreview('xlsx','客户反馈明细.xlsx')">客户反馈明细.xlsx</a>${citation('客户反馈明细.xlsx · 原始反馈表', 1)}。</p>
+      <p>从分布看，<strong>物流配送</strong>占比最高(42%)，主要为延迟交付与包装破损；<strong>客户服务</strong>(28%) 与 <strong>产品质量</strong>(18%) 紧随其后${citation('反馈分类结果.xlsx · Agent 清洗结果', 2)}。</p>
       <div class="inline-img" data-caption="图 1 · 反馈类型分布">📊 反馈类型分布饼图</div>
-      <p>分类型来看：物流问题集中于"配送延迟（60%）"与"包装破损（40%）"；客户服务集中于"响应慢（55%）"与"态度问题（45%）"；产品质量集中于"外观瑕疵（68%）"。</p>
+      <p>分类型来看：物流问题集中于"配送延迟（60%）"与"包装破损（40%）"；客户服务集中于"响应慢（55%）"与"态度问题（45%）"；产品质量集中于"外观瑕疵（68%）"${citation('analysis_result.json · 分类明细', 3)}。</p>
       <div class="img-grid">
         <div class="inline-img" data-caption="图 2 · 满意度趋势">📈 满意度趋势</div>
         <div class="inline-img" data-caption="图 3 · Top 客户">🏆 Top 客户</div>
@@ -1343,8 +1457,8 @@ function playScenario() {
     at(46800, () => {
       hideWaitLine();
       setResult(`
-        <p>本季度客户反馈共 <strong>1,247</strong> 条，主要集中在 <strong>3 类问题</strong>。整体满意度均值为 3.6（满分 5），低于上季度的 3.9。</p>
-        <p>从分布看，<strong>物流配送</strong>占比最高(42%)，<strong>客户服务</strong>(28%) 与 <strong>产品质量</strong>(18%) 紧随其后。</p>
+        <p>本季度客户反馈共 <strong>1,247</strong> 条，主要集中在 <strong>3 类问题</strong>。整体满意度均值为 3.6（满分 5），低于上季度的 3.9${citation('客户反馈明细.xlsx · 原始反馈表', 1)}。</p>
+        <p>从分布看，<strong>物流配送</strong>占比最高(42%)，<strong>客户服务</strong>(28%) 与 <strong>产品质量</strong>(18%) 紧随其后${citation('反馈分类结果.xlsx · Agent 清洗结果', 2)}。</p>
         <div class="inline-img" data-caption="图 1 · 反馈类型分布">📊 反馈类型分布饼图</div>
       `, { isFinal: true });
     });
@@ -1527,6 +1641,7 @@ function initConvResize() {
 document.addEventListener('pointerdown', event => {
   if (!event.target.closest('.sender-left-tools')) closeSenderMenus();
   if (!event.target.closest('.modal') && !event.target.closest('[onclick*="openAssetModal"]') && !event.target.closest('[onclick*="openAssetPicker"]')) closeAssetModal();
+  if (!event.target.closest('.library-popconfirm') && !event.target.closest('.library-state-btn')) closeLibraryPopconfirm();
   if (!event.target.closest('.rail-tab-wrap') && $('expertUnreadPopover')) $('expertUnreadPopover').classList.remove('open');
 });
 
@@ -1583,6 +1698,9 @@ function init() {
 
   // 绑定 B 的 Tab 切换
   bindFilesTabClicks();
+
+  // 初始化会话文件和资料库快照状态
+  syncLibraryStateButtons();
 
   // 初始化会话页拖拽分割条
   initConvResize();
