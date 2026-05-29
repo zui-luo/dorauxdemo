@@ -200,6 +200,7 @@
               <div class="conversation-title" id="conversationTitle">Dora 会话</div>
               <div class="conversation-subtitle" id="conversationSubtitle">全能助手 · 通用任务</div>
             </div>
+            <div class="conversation-trace-pill" id="conversationTracePill" hidden></div>
             <div class="conversation-header-spacer"></div>
             <button class="icon-btn annotated" title="展开/收起资料面板" onclick="toggleFilesPanel()">
               <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round">
@@ -395,11 +396,11 @@
             <div class="version-menu annotated" id="versionMenu">
               <button class="version-trigger" onclick="toggleVersionMenu(event)">V2 ⌘</button>
               <div class="version-list">
-                <div class="version-item"><span>V3</span><button class="source-icon" title="查看来源对话" onclick="showSourceHint(event)">☰</button></div>
-                <div class="version-item"><span>V2</span><button class="source-icon" title="查看来源对话" onclick="showSourceHint(event)">☰</button></div>
-                <div class="version-item"><span>V1</span><button class="source-icon" title="查看来源对话" onclick="showSourceHint(event)">☰</button></div>
+                <div class="version-item"><span>V3</span><button class="source-icon" title="查看版本来源说明" onclick="showSourceHint(event)">☰</button></div>
+                <div class="version-item"><span>V2</span><button class="source-icon" title="查看版本来源说明" onclick="showSourceHint(event)">☰</button></div>
+                <div class="version-item"><span>V1</span><button class="source-icon" title="查看版本来源说明" onclick="showSourceHint(event)">☰</button></div>
               </div>
-              <span class="change-marker demo-control" data-change-tooltip="版本下拉展示资料的临时修改版本，并可查看来源对话。" data-change-placement="top">8</span>
+              <span class="change-marker demo-control" data-change-tooltip="版本下拉展示资料的临时修改版本；☰ 用于解释来源类型，↻ 用于打开来源对话。" data-change-placement="top">8</span>
             </div>
             <div class="source-popover" id="sourcePopover">
               <div class="source-label">讨论</div>
@@ -408,8 +409,8 @@
             <div class="preview-header-spacer"></div>
             <span class="owner">财务小助手：XXXXXXXX</span>
             <button class="draft-pill">暂存</button>
-            <button class="draft-pill save-copy-pill" onclick="saveDetailCopyToLibrary()">另存到资料库</button>
-            <button class="icon-btn" onclick="openSourceDialog()" title="查看来源对话：打开产生或引用此资料的会话">↻</button>
+            <button class="draft-pill save-copy-pill" id="detailSaveCopyBtn" onclick="saveDetailCopyToLibrary()">存入资料库</button>
+            <button class="icon-btn" onclick="openSourceConversationFromAsset('销售预测系统规则调整','销售预测系统.html')" title="查看来源对话：打开产生或引用此资料的会话">↻</button>
             <button class="icon-btn">⇩</button>
           </header>
           <div class="preview-content">
@@ -434,15 +435,19 @@
         <aside class="chat-pane" id="detailChat">
           <header class="chat-head">
             <span class="agent-avatar"></span>
-            <span class="chat-title">会话标题XXXXXX</span>
+            <span class="chat-title" id="detailChatTitle">会话标题XXXXXX</span>
             <button class="history-filter-btn" onclick="toggleAssetHistoryMode()">该文件历史会话</button>
             <button class="icon-btn annotated" onclick="collapseChat()" title="收起">收起<span class="change-marker demo-control tooltip-left" data-change-tooltip="资料详情中的右侧对话可收起，进入沉浸预览。">9</span></button>
           </header>
+          <div class="source-context-bar" id="sourceContextBar" hidden>
+            <span class="source-context-label">追溯中</span>
+            <span class="source-context-text" id="sourceContextText"></span>
+          </div>
           <div class="chat-body-detail">
             <div class="history-filter-panel" id="assetHistoryPanel">
               <div class="history-filter-title">仅展示 dora 中由此文件发起的会话</div>
-              <button onclick="openSourceConversationFromAsset()">销售预测系统规则调整 · 原始生成会话</button>
-              <button onclick="openSourceConversationFromAsset()">现金流预测复盘 · 引用该资料</button>
+              <button onclick="openSourceConversationFromAsset('销售预测系统规则调整','销售预测系统.html')">销售预测系统规则调整 · 原始生成会话</button>
+              <button onclick="openSourceConversationFromAsset('现金流预测复盘','销售预测系统.html')">现金流预测复盘 · 引用该资料</button>
             </div>
             <div class="msg user"><div class="bubble">帮我改一下这个页面里的预测规则吧</div></div>
             <div class="msg agent annotated">

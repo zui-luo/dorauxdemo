@@ -35,6 +35,8 @@ let currentPreviewImageRotation = 0;
 let currentPreviewPdfZoom = 100;
 let currentPreviewPdfFit = 'fit-width';
 let currentPreviewPdfOrientation = 'vertical';
+let currentSourceTrace = null;
+let preserveTraceTitle = false;
 
 const libraryFileState = {
   status: 'neverSaved',
@@ -103,8 +105,17 @@ const INITIAL_LIBRARY_ASSET = {
   typeClass: 'html'
 };
 
+const DETAIL_LIBRARY_ASSET = {
+  name: '销售预测系统.html',
+  source: '来自资料详情另存副本',
+  icon: 'HTML',
+  typeClass: 'html'
+};
+
 function getFileActions(source, type) {
-  return FILE_ACTIONS[source][type] || FILE_ACTIONS[source].normal;
+  const sourceActions = FILE_ACTIONS[source];
+  if (!sourceActions) return [];
+  return sourceActions[type] || sourceActions.normal || [];
 }
 
 function buildFileActionButton(action, file) {
@@ -124,7 +135,7 @@ function buildFileActionButton(action, file) {
     if (file.savedToLibrary) {
       return `<button class="library-state-btn is-compact is-saved" disabled onclick="event.stopPropagation()">已存入资料库</button>`;
     }
-    return `<button class="library-state-btn is-compact" onclick="event.stopPropagation(); handleOutputLibrarySave('${file.clickName}')">存到资料库</button>`;
+    return `<button class="library-state-btn is-compact" onclick="event.stopPropagation(); handleOutputLibrarySave('${file.clickName}')">存入资料库</button>`;
   }
   if (action === 'saveBackend') {
     return `<button class="library-state-btn is-compact" onclick="event.stopPropagation(); saveSkillToBackend('${file.clickName}')">另存到后台</button>`;
@@ -239,9 +250,14 @@ function renderPreviewModeTools(file, mode) {
 function renderPreviewBody(file, mode) {
   const slideList = $('slideList');
   const slideCanvas = $('slideCanvas');
+  const slideNotes = document.querySelector('.slide-notes');
   if (!slideList || !slideCanvas) return;
   slideList.innerHTML = '';
   slideCanvas.classList.remove('is-fading');
+  if (slideNotes) {
+    slideNotes.hidden = mode !== 'ppt';
+    slideNotes.textContent = mode === 'ppt' ? '点击添加演示者备注' : '';
+  }
   if (!file) {
     slideCanvas.innerHTML = `<div class="preview-empty-state"><div class="preview-empty-title">未选择文件</div><div class="preview-empty-copy">请选择一个会话文件来查看预览。</div></div>`;
     return;
@@ -301,17 +317,26 @@ function renderPreviewBody(file, mode) {
     slideCanvas.innerHTML = `
       <div class="pdf-reader-shell ${currentPreviewPdfOrientation}">
         <div class="pdf-reader-toolbar">
+          <span>目录 · 第 1 / 8 页</span>
           <span>缩放 ${currentPreviewPdfZoom}%</span>
-          <span>${currentPreviewPdfFit}</span>
+          <span>${currentPreviewPdfFit === 'fit-width' ? '适应宽度' : '适应页面'} · ${currentPreviewPdfOrientation === 'vertical' ? '纵向' : '横向'}</span>
         </div>
-        <div class="pdf-reader-page">PDF 预览页</div>
+        <div class="pdf-reader-page">
+          <div class="pdf-page-title">反馈分析报告</div>
+          <div class="pdf-page-line"></div>
+          <div class="pdf-page-line short"></div>
+          <div class="pdf-page-chart"></div>
+        </div>
       </div>`;
     return;
   }
+  const unsupportedCopy = file.source === 'output'
+    ? '该类型暂不支持预览，当前仅支持引用和下载。'
+    : '输入文件不支持存入资料库，可引用到对话；其他类文件还可下载。';
   slideCanvas.innerHTML = `
     <div class="preview-empty-state">
       <div class="preview-empty-title">暂不支持预览</div>
-      <div class="preview-empty-copy">该类型文件仅支持引用、下载，必要时可新窗口打开。</div>
+      <div class="preview-empty-copy">${unsupportedCopy}</div>
     </div>`;
 }
 
@@ -688,7 +713,7 @@ function applyConversationConfig(type, config, activeRailView) {
   $('conversationSideAgent').textContent = config.sideAgent;
   $('conversationTitle').textContent = config.title;
   $('conversationSubtitle').textContent = config.subtitle;
-  $('conversationHistoryTitle').textContent = config.history;
+  if (!currentSourceTrace) $('conversationHistoryTitle').textContent = config.history;
   $('conversationUserText').textContent = config.userText;
   $('conversationAgentName').textContent = config.agentName || config.sideAgent;
   $('conversationPage').classList.toggle('sidebar-collapsed', Boolean(config.sidebarCollapsed));
@@ -710,6 +735,8 @@ function applyConversationConfig(type, config, activeRailView) {
   if (activeRailView === 'dora') {
     moduleState.dora.page = 'conversation';
   }
+  syncConversationTracePill();
+  syncConversationHistoryTitle();
   setRailActive(activeRailView);
   showSurface('view-conversation');
 }
@@ -727,7 +754,7 @@ function startDoraConversationFlow() {
   selectConversationEntry('dora', 'history', doraHistory);
   applyConversationConfig('dora', config, 'dora');
   $('conversationPage').classList.remove('sidebar-collapsed');
-  $('conversationHistoryTitle').textContent = title;
+  if (!preserveTraceTitle && !currentSourceTrace) $('conversationHistoryTitle').textContent = title;
   selectConversationEntry('expert', 'history', $('conversationHistoryTitle'));
 }
 
@@ -898,11 +925,28 @@ function syncLibraryStateButtons() {
   });
   const savedAsset = $('savedFromSessionAsset');
   if (savedAsset) savedAsset.classList.toggle('visible', libraryFileState.status === 'savedClean' || libraryFileState.status === 'savedDirty');
+  syncDetailSaveCopyButton();
+}
+
+function syncDetailSaveCopyButton() {
+  const btn = $('detailSaveCopyBtn');
+  if (!btn) return;
+  const isSaved = libraryFileState.status === 'savedClean' || libraryFileState.status === 'savedDirty';
+  const isDirty = libraryFileState.status === 'savedDirty';
+  btn.textContent = isDirty ? '同步到资料库' : isSaved ? '已存入资料库' : '存入资料库';
+  btn.classList.toggle('is-saved', isSaved && !isDirty);
+  btn.classList.toggle('is-dirty', isDirty);
+  btn.disabled = isSaved && !isDirty;
+  btn.title = isDirty ? '当前资料有更新，点击同步最新副本' : isSaved ? '当前资料已存入资料库' : '将当前资料存入资料库';
 }
 
 function updateSavedAssetCard(asset) {
   const savedAsset = $('savedFromSessionAsset');
   if (!savedAsset) return;
+  if (!asset) {
+    savedAsset.classList.remove('visible');
+    return;
+  }
   const icon = savedAsset.querySelector('.asset-name .file-badge');
   const name = savedAsset.querySelector('.asset-name span:last-child');
   const source = savedAsset.querySelector('.asset-foot span:first-child');
@@ -913,6 +957,24 @@ function updateSavedAssetCard(asset) {
   if (name) name.textContent = asset.name;
   if (source) source.textContent = asset.source;
   savedAsset.classList.add('visible');
+}
+
+function setSavedLibraryAsset(asset) {
+  FILE_PANEL_STATE.savedAssets = [asset];
+  updateSavedAssetCard(asset);
+}
+
+function clearSavedLibraryAssets() {
+  FILE_PANEL_STATE.savedAssets = [];
+  FILE_PANEL_STATE.output.forEach(file => {
+    file.savedToLibrary = false;
+  });
+  updateSavedAssetCard(null);
+  renderFilePanel();
+  if (currentPreviewFile?.source === 'output') {
+    currentPreviewFile = getPreviewFile(currentPreviewFile.clickName || currentPreviewFile.name);
+    renderPreviewFrame(currentPreviewFile);
+  }
 }
 
 function handleLibraryStateButton(event) {
@@ -946,7 +1008,7 @@ function saveLibrarySnapshot(mode) {
   libraryFileState.hasDuplicateName = false;
   closeLibraryPopconfirm();
   syncLibraryStateButtons();
-  updateSavedAssetCard(INITIAL_LIBRARY_ASSET);
+  setSavedLibraryAsset(INITIAL_LIBRARY_ASSET);
   const copy = mode === 'sync' ? '已同步会话文件的最新快照到资料库' : mode === 'overwrite' ? '已覆盖存入资料库快照' : '已另存新文件到资料库';
   showToast(copy);
 }
@@ -969,12 +1031,23 @@ function markSessionFileDirty() {
 function deleteLibrarySnapshot() {
   libraryFileState.status = 'neverSaved';
   libraryFileState.savedVersion = 0;
+  clearSavedLibraryAssets();
   syncLibraryStateButtons();
+  clearSourceTraceContext();
   showToast('资料库副本已删除，会话文件仍保留');
 }
 
 function showCitationSource(label) {
-  showToast(`引用来源：${label}`);
+  currentSourceTrace = {
+    type: 'citation',
+    label,
+    conversation: '客户反馈归因分析'
+  };
+  switchView('space');
+  openAssetDetail();
+  syncSourceTraceContext();
+  toggleAssetHistoryMode(true);
+  showToast(`已追溯引用来源：${label}`);
 }
 
 function citation(label, index) {
@@ -982,20 +1055,84 @@ function citation(label, index) {
 }
 
 function saveDetailCopyToLibrary() {
-  showToast('已将当前资料版本另存为资料库副本');
+  libraryFileState.status = 'savedClean';
+  libraryFileState.savedVersion = libraryFileState.sessionVersion;
+  libraryFileState.hasDuplicateName = false;
+  setSavedLibraryAsset(DETAIL_LIBRARY_ASSET);
+  syncLibraryStateButtons();
+  showToast('已将当前资料版本存入资料库');
 }
 
-function toggleAssetHistoryMode() {
+function syncSourceTraceContext() {
+  const bar = $('sourceContextBar');
+  const text = $('sourceContextText');
+  const detailTitle = $('detailChatTitle');
+  if (!bar || !text) return;
+  if (!currentSourceTrace) {
+    bar.hidden = true;
+    text.textContent = '';
+    if (detailTitle) detailTitle.textContent = '会话标题XXXXXX';
+    return;
+  }
+  bar.hidden = false;
+  text.textContent = currentSourceTrace.type === 'citation'
+    ? `引用来源：${currentSourceTrace.label} · ${currentSourceTrace.conversation}`
+    : `来源会话：${currentSourceTrace.conversation} · ${currentSourceTrace.label}`;
+  if (detailTitle) detailTitle.textContent = currentSourceTrace.conversation;
+  syncConversationTracePill();
+}
+
+function clearSourceTraceContext() {
+  currentSourceTrace = null;
+  syncSourceTraceContext();
+  syncConversationTracePill();
+  const config = conversationConfigs[currentConversationType] || conversationConfigs.dora;
+  const title = $('conversationHistoryTitle');
+  if (title) title.textContent = config.history;
+}
+
+function syncConversationTracePill() {
+  const pill = $('conversationTracePill');
+  if (!pill) return;
+  if (!currentSourceTrace) {
+    pill.hidden = true;
+    pill.textContent = '';
+    return;
+  }
+  pill.hidden = false;
+  pill.textContent = currentSourceTrace.type === 'citation'
+    ? `来源：${currentSourceTrace.label}`
+    : `来源会话：${currentSourceTrace.conversation}`;
+}
+
+function toggleAssetHistoryMode(forceOpen) {
   const panel = $('assetHistoryPanel');
   const btn = document.querySelector('.history-filter-btn');
   if (!panel) return;
-  panel.classList.toggle('open');
+  panel.classList.toggle('open', typeof forceOpen === 'boolean' ? forceOpen : !panel.classList.contains('open'));
   if (btn) btn.classList.toggle('is-active', panel.classList.contains('open'));
 }
 
-function openSourceConversationFromAsset() {
-  showToast('已切换到由此文件发起的历史会话');
+function openSourceConversationFromAsset(conversation = '销售预测系统规则调整', label = '销售预测系统.html') {
+  currentSourceTrace = {
+    type: 'conversation',
+    label,
+    conversation
+  };
+  preserveTraceTitle = true;
+  syncSourceTraceContext();
+  syncConversationHistoryTitle();
+  showToast(`已切换到来源会话：${conversation}`);
   openConversation('dora');
+  preserveTraceTitle = false;
+}
+
+function syncConversationHistoryTitle() {
+  const title = $('conversationHistoryTitle');
+  if (!title || !currentSourceTrace) return;
+  title.textContent = currentSourceTrace.type === 'citation'
+    ? `来源引用：${currentSourceTrace.label}`
+    : currentSourceTrace.conversation;
 }
 
 function addFileToConversation(fileName) {
@@ -1020,19 +1157,18 @@ function handleOutputLibrarySave(fileName) {
   const file = FILE_PANEL_STATE.output.find(item => item.clickName === fileName || item.name === fileName);
   if (!file) return;
   file.savedToLibrary = true;
-  FILE_PANEL_STATE.savedAssets = [{
+  setSavedLibraryAsset({
     name: file.name,
     source: '来自会话输出',
     icon: file.ext,
     typeClass: file.iconClass === 'pptx' ? 'ppt' : file.iconClass
-  }];
-  updateSavedAssetCard(FILE_PANEL_STATE.savedAssets[0]);
+  });
   renderFilePanel();
   if (currentPreviewFile && (currentPreviewFile.clickName === file.clickName || currentPreviewFile.name === file.name)) {
     currentPreviewFile = file;
     renderPreviewFrame(file);
   }
-  showToast(`已将 ${file.name} 存到资料库`);
+  showToast(`已将 ${file.name} 存入资料库`);
 }
 
 function saveSkillToBackend(fileName) {
