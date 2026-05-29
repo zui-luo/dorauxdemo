@@ -13,10 +13,12 @@ function $(id) { return document.getElementById(id); }
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 let currentVariant = 'menu';        // A 的 Sender 方案
-let currentBVariant = 'default';     // B 的对话方案
+let currentBVariant = 'product-live';     // B 的对话方案
 let activeSenderContext = 'hero';
 let pendingAssetType = 'bi';
 let pendingAssetLabel = '';
+let activeAssetPreviewId = '';
+let selectedAssetIds = [];
 let conversationReturnView = 'dora';
 let currentConversationType = 'smart-data';
 let currentModuleView = 'dora';
@@ -29,6 +31,7 @@ let carouselIntervalId = null;
 let actionCount = 0;
 let nodeCounter = 0;
 let currentPreviewFile = null;
+let currentPreviewTab = 'input';
 let currentPreviewHtmlMode = 'desktop';
 let currentPreviewImageScale = 1;
 let currentPreviewImageRotation = 0;
@@ -37,6 +40,59 @@ let currentPreviewPdfFit = 'fit-width';
 let currentPreviewPdfOrientation = 'vertical';
 let currentSourceTrace = null;
 let preserveTraceTitle = false;
+let currentAssetMock = 'html';
+let liveOutputProgressShown = false;
+
+const avatarSources = {
+  dora: 'dora-agent',
+  smartData: 'smart-data-agent',
+  report: 'report-agent',
+  analysis: 'analysis-agent',
+  modeling: 'modeling-agent',
+  finance: 'finance-agent',
+  marketing: 'marketing-agent'
+};
+
+const AVATAR_PROFILES = {
+  'dora-agent': { initial: 'D', tone: 'dora' },
+  'dora-side': { initial: 'D', tone: 'dora' },
+  'dora-session': { initial: 'D', tone: 'dora' },
+  'dora-floating': { initial: 'D', tone: 'dora' },
+  'dora-rail': { initial: 'D', tone: 'dora' },
+  'smart-data-agent': { initial: '问', tone: 'blue' },
+  'report-agent': { initial: '报', tone: 'orange' },
+  'analysis-agent': { initial: '析', tone: 'teal' },
+  'modeling-agent': { initial: '模', tone: 'violet' },
+  'finance-agent': { initial: '财', tone: 'green' },
+  'marketing-agent': { initial: '营', tone: 'rose' },
+  'product-agent': { initial: '产', tone: 'orange' },
+  'design-agent': { initial: '设', tone: 'violet' }
+};
+
+function getAvatarSeedFromUrl(src = '') {
+  const match = src.match(/[?&]seed=([^&]+)/);
+  return match ? decodeURIComponent(match[1]) : '';
+}
+
+function getAvatarProfile(seed, alt = '') {
+  if (AVATAR_PROFILES[seed]) return AVATAR_PROFILES[seed];
+  const firstChar = (alt || seed || 'A').trim().charAt(0).toUpperCase();
+  return { initial: firstChar, tone: 'blue' };
+}
+
+function avatarImg(seed, alt) {
+  const profile = getAvatarProfile(seed, alt);
+  return `<span class="avatar-letter" data-avatar-tone="${profile.tone}" aria-label="${alt}">${profile.initial}</span>`;
+}
+
+function hydrateLetterAvatars(root = document) {
+  root.querySelectorAll('img.avatar-image').forEach(img => {
+    const parent = img.parentElement;
+    if (!parent) return;
+    const seed = getAvatarSeedFromUrl(img.getAttribute('src') || '');
+    parent.innerHTML = avatarImg(seed, img.getAttribute('alt') || '');
+  });
+}
 
 const libraryFileState = {
   status: 'neverSaved',
@@ -54,16 +110,30 @@ const FILE_ACTIONS = {
   },
   output: {
     normal: ['quote', 'saveLibrary', 'share', 'open', 'download'],
-    skill: ['quote', 'saveBackend', 'share', 'open'],
+    skill: ['quote', 'saveBackend', 'share', 'open', 'download'],
     ppt: ['quote', 'saveLibrary', 'share', 'open', 'download'],
     html: ['quote', 'saveLibrary', 'share', 'open', 'download'],
     md: ['quote', 'saveLibrary', 'share', 'open', 'download'],
     image: ['quote', 'saveLibrary', 'share', 'open', 'download'],
     pdf: ['quote', 'saveLibrary', 'share', 'open', 'download'],
-    docx: ['quote', 'download'],
-    source: ['quote', 'download']
+    docx: ['quote', 'saveLibrary', 'share', 'open', 'download'],
+    dataset: ['quote', 'saveLibrary', 'share', 'open', 'download'],
+    source: ['quote', 'saveLibrary', 'share', 'open', 'download']
   }
 };
+
+const OUTPUT_CATEGORIES = [
+  { id: 'all', label: '全部' },
+  { id: 'presentation', label: 'PPT' },
+  { id: 'web', label: '网页' },
+  { id: 'report', label: '报告' },
+  { id: 'image', label: '图像' },
+  { id: 'pdf', label: 'PDF' },
+  { id: 'skill', label: '技能' },
+  { id: 'dataset', label: '数据表' },
+  { id: 'document', label: '文档' },
+  { id: 'source', label: '源码/其他' }
+];
 
 const FILE_LABELS = {
   input: '输入',
@@ -84,8 +154,8 @@ const FILE_DEFS = {
     { id: 'output-pdf', source: 'output', type: 'pdf', ext: 'PDF', name: '反馈分析报告.pdf', meta: '480 KB · 归档版 · Agent 产出', icon: 'PDF', iconClass: 'pdf', clickKind: 'pdf', clickName: '反馈分析报告.pdf' },
     { id: 'output-md', source: 'output', type: 'md', ext: 'MD', name: '反馈分析报告.md', meta: '12 KB · Agent 产出', icon: 'MD', iconClass: 'md', clickKind: 'md', clickName: '反馈分析报告.md' },
     { id: 'output-html', source: 'output', type: 'html', ext: 'HTML', name: '反馈分布看板.html', meta: '24 KB · 可交互 · Agent 产出', icon: 'HTML', iconClass: 'html', clickKind: 'html', clickName: '反馈分布看板.html' },
-    { id: 'output-xlsx', source: 'output', type: 'source', ext: 'XLSX', name: '反馈分类结果.xlsx', meta: '186 KB · 清洗后数据 · Agent 产出', icon: 'XLSX', iconClass: 'xlsx', clickKind: 'xlsx', clickName: '反馈分类结果.xlsx' },
-    { id: 'output-csv', source: 'output', type: 'source', ext: 'CSV', name: '反馈分类明细.csv', meta: '142 KB · 1,247 行 · Agent 产出', icon: 'CSV', iconClass: 'csv', clickKind: 'csv', clickName: '反馈分类明细.csv' },
+    { id: 'output-xlsx', source: 'output', type: 'dataset', ext: 'XLSX', name: '反馈分类结果.xlsx', meta: '186 KB · 清洗后数据 · Agent 产出', icon: 'XLSX', iconClass: 'xlsx', clickKind: 'xlsx', clickName: '反馈分类结果.xlsx' },
+    { id: 'output-csv', source: 'output', type: 'dataset', ext: 'CSV', name: '反馈分类明细.csv', meta: '142 KB · 1,247 行 · Agent 产出', icon: 'CSV', iconClass: 'csv', clickKind: 'csv', clickName: '反馈分类明细.csv' },
     { id: 'output-json', source: 'output', type: 'source', ext: 'JSON', name: 'analysis_result.json', meta: '38 KB · 结构化结果 · Agent 产出', icon: 'JSON', iconClass: 'json', clickKind: 'json', clickName: 'analysis_result.json' },
     { id: 'output-img', source: 'output', type: 'image', ext: 'PNG', name: '反馈分布图组（3 张）', meta: '1.8 MB · Agent 产出', icon: 'PNG', iconClass: 'imgs', clickKind: 'imgs', clickName: '反馈分布图组' },
     { id: 'output-zip', source: 'output', type: 'source', ext: 'ZIP', name: '完整交付包.zip', meta: '5.2 MB · 包含全部产物 · Agent 产出', icon: 'ZIP', iconClass: 'zip', clickKind: 'zip', clickName: '完整交付包.zip' }
@@ -97,6 +167,297 @@ const FILE_PANEL_STATE = {
   output: FILE_DEFS.output.map(item => ({ ...item })),
   savedAssets: []
 };
+
+const ASSET_PICKER_DEFS = {
+  bi: {
+    title: '添加 FineBI 资产',
+    kind: 'BI',
+    tone: 'blue',
+    defaultSelected: ['bi-dashboard', 'bi-topic-sales'],
+    items: [
+      { id: 'bi-dashboard', label: '门店经营仪表板', group: '仪表板', enabled: true, preview: '核心指标：销售额、客单价、门店排名，可用于经营看板分析。' },
+      { id: 'bi-topic-sales', label: 'BI demo_门店销售表', group: '分析主题', enabled: true, preview: '字段：门店、城市、品类、销售额、利润率、订单数。' },
+      { id: 'bi-topic-member', label: '会员复购分析主题', group: '文件夹1', enabled: true, preview: '字段：会员等级、复购周期、优惠券使用、生命周期价值。' },
+      { id: 'bi-offline-node', label: '节点名称2', group: '文件夹1', enabled: false, preview: '该节点未发布，暂不可选择。' }
+    ]
+  },
+  fr: {
+    title: '添加 FineReport 资产',
+    kind: 'FR',
+    tone: 'purple',
+    defaultSelected: ['fr-region', 'fr-store'],
+    items: [
+      { id: 'fr-region', label: 'FR demo_地区经营看板', group: '报表', enabled: true, preview: '按地区展示收入、费用、利润和预算完成率。' },
+      { id: 'fr-store', label: '门店日报填报表', group: '填报', enabled: true, preview: '门店每日填报客流、库存、缺货和活动执行情况。' },
+      { id: 'fr-finance', label: '财务月结分析报表', group: '文件夹1', enabled: true, preview: '月结、应收应付、费用科目和异常波动追踪。' },
+      { id: 'fr-archive', label: '历史归档报表', group: '文件夹3', enabled: false, preview: '归档报表仅可在平台侧打开，当前暂不可引用。' }
+    ]
+  }
+};
+
+const ASSET_LIBRARY_DEFS = {
+  html: {
+    id: 'asset-html',
+    typeClass: 'html',
+    fileBadge: 'HTML',
+    title: '销售预测系统.html',
+    owner: '财务小助手',
+    source: '来源会话：销售预测系统规则调整',
+    recentThumb: '图表与预测规则',
+    cardPreviewClass: 'dashboard',
+    cardPreviewHtml: `
+      <div class="kpi">已存入</div><div class="kpi">$510.854 亿</div><div class="kpi red">V2</div><div class="line-chart"></div>
+    `,
+    cardTitle: '销售预测系统.html',
+    cardSubTitle: '图表与预测规则',
+    headerOwner: '财务小助手：Nina',
+    version: 'V2',
+    versionLabel: 'V2 · 规则优化版',
+    sourceConversation: '销售预测系统规则调整',
+    sourceDesc: '本次版本基于销售预测系统规则调整而来，包含资金余额预测、规则配置与趋势图。',
+    historyTitle: '仅展示 dora 中由此文件发起的会话',
+    historyItems: [
+      { title: '销售预测系统规则调整', desc: '原始生成会话' },
+      { title: '现金流预测复盘', desc: '引用该资料' }
+    ],
+    preview: `
+      <div class="report-card">
+        <h3>Data Agent 看板摘要</h3>
+        <div class="detail-kpi-grid">
+          <div class="detail-kpi"><span>本月净流入</span><strong>+$28.854 亿</strong><em>较上月 +12%</em></div>
+          <div class="detail-kpi"><span>Q2 预测余额</span><strong>$510.854 亿</strong><em>预测置信度 89%</em></div>
+          <div class="detail-kpi"><span>风险预警</span><strong>2 条</strong><em>中风险 / 低风险</em></div>
+        </div>
+      </div>
+      <div class="report-card">
+        <h3>规则配置</h3>
+        <div style="font-size:13px;color:var(--ink-9);margin-bottom:12px;">📊 已加载 1153 行 · 12 个月 (2025-04~2026-03) · 8 个 BU</div>
+        <div class="rule-row" style="background:#F8F8F9;border-top:none;font-weight:600;color:var(--ink-9);"><span>科目</span><span>方法</span><span>参数</span><span>来源</span><span></span></div>
+        <div class="rule-row"><span>员工薪酬</span><span>avg</span><span>{\"window\":3}</span><span>🤖 薪资按前 3 个月平均滚动</span><button class=\"outline-btn\">删除</button></div>
+      </div>
+      <div class="chart-block"><h3>6 个月资金余额预测(USD 亿)</h3><div class="chart-grid"></div><div class="chart-line"></div></div>
+      <div class="report-card"><h3>逐月明细 · 点击单元格查看血缘 · 数值三舍五入调整</h3><div class="rule-row" style="grid-template-columns: repeat(7, 1fr);"><span>科目</span><span>04月</span><span>05月</span><span>06月</span><span>07月</span><span>08月</span><span>09月</span></div></div>
+    `
+  },
+  ppt: {
+    id: 'asset-ppt',
+    typeClass: 'ppt',
+    fileBadge: 'PPT',
+    title: '2025年9月生产经营分析会.pptx',
+    owner: '经营助手',
+    source: '来源会话：经营分析PPT生成',
+    recentThumb: '2025年9月生产经营分析会',
+    cardPreviewClass: 'ppt',
+    cardPreviewHtml: '2025年9月生产经营分析会',
+    cardTitle: '2025年9月生产经营分析会',
+    cardSubTitle: '经营汇报 · 12 页',
+    headerOwner: '经营助手：Nina',
+    version: 'V3',
+    versionLabel: 'V3 · 汇报定稿',
+    sourceConversation: '经营分析PPT生成',
+    sourceDesc: '本次版本适用于经营汇报，包含趋势页、问题页、行动项和附录页。',
+    historyTitle: '仅展示 dora 中由此文件发起的会话',
+    historyItems: [
+      { title: '经营分析PPT生成', desc: '原始生成会话' },
+      { title: '经营会预演彩排', desc: '引用该资料' }
+    ],
+    preview: `
+      <div class="report-card">
+        <h3>汇报结构</h3>
+        <div class="ppt-outline">
+          <div><strong>01</strong><span>封面与结论摘要</span></div>
+          <div><strong>02</strong><span>经营指标趋势</span></div>
+          <div><strong>03</strong><span>风险与机会</span></div>
+          <div><strong>04</strong><span>行动建议与排期</span></div>
+        </div>
+      </div>
+      <div class="metric-grid">
+        <div class="metric-card"><div class="metric-label">本期收入</div><div class="metric-value">$539.709 亿</div><div class="metric-label">同比 +9.6%</div></div>
+        <div class="metric-card green"><div class="metric-label">毛利率</div><div class="metric-value">31.8%</div><div class="metric-label">较上期 +1.2pt</div></div>
+        <div class="metric-card red"><div class="metric-label">风险项</div><div class="metric-value">3 条</div><div class="metric-label">供应链 / 价格 / 人效</div></div>
+        <div class="metric-card blue"><div class="metric-label">建议动作</div><div class="metric-value">4 项</div><div class="metric-label">已按优先级排序</div></div>
+      </div>
+      <div class="chart-block"><h3>9 月经营趋势</h3><div class="chart-grid"></div><div class="chart-line"></div></div>
+      <div class="report-card">
+        <h3>行动项</h3>
+        <div class="ppt-actions">
+          <div><span>01</span><p>供应链侧启动补货策略评估。</p></div>
+          <div><span>02</span><p>重点区域做价格敏感性复盘。</p></div>
+          <div><span>03</span><p>业务线下发下月经营目标。</p></div>
+        </div>
+      </div>
+    `
+  },
+  dashboard: {
+    id: 'asset-dashboard',
+    typeClass: 'html',
+    fileBadge: 'HTML',
+    title: '客户分群洞察看板.html',
+    owner: '增长分析助手',
+    source: '来源会话：高价值客户分群洞察',
+    recentThumb: '客户分群与转化洞察',
+    cardPreviewClass: 'dashboard',
+    cardPreviewHtml: `
+      <div class="kpi">高价值 18%</div><div class="kpi">$2.31 亿</div><div class="kpi red">流失 7.4%</div><div class="line-chart"></div>
+    `,
+    cardTitle: '客户分群洞察看板.html',
+    cardSubTitle: '客户分层 · 转化路径 · 流失预警',
+    headerOwner: '增长分析助手：Nina',
+    version: 'V1',
+    versionLabel: 'V1 · 洞察初版',
+    sourceConversation: '高价值客户分群洞察',
+    sourceDesc: '本资料由 Data Agent 基于客户交易、活跃行为与服务反馈生成，沉淀了客户分层、转化路径和流失风险看板。',
+    historyTitle: '仅展示 dora 中由此文件发起的会话',
+    historyItems: [
+      { title: '高价值客户分群洞察', desc: '原始生成会话' },
+      { title: '会员运营策略复盘', desc: '引用该资料' }
+    ],
+    preview: `
+      <div class="report-card">
+        <h3>客户分群摘要</h3>
+        <div class="detail-kpi-grid">
+          <div class="detail-kpi"><span>高价值客户</span><strong>18%</strong><em>贡献收入 52%</em></div>
+          <div class="detail-kpi"><span>潜力成长客群</span><strong>31%</strong><em>近 30 天活跃 +16%</em></div>
+          <div class="detail-kpi"><span>流失风险客户</span><strong>7.4%</strong><em>需 7 日内触达</em></div>
+        </div>
+      </div>
+      <div class="chart-block"><h3>客户价值与活跃度趋势</h3><div class="chart-grid"></div><div class="chart-line"></div></div>
+      <div class="report-card">
+        <h3>Agent 推荐动作</h3>
+        <div class="ppt-actions">
+          <div><span>01</span><p>对高价值低活跃客户推送专属权益，优先覆盖 TOP 12 城市。</p></div>
+          <div><span>02</span><p>对潜力成长客群进行二次转化实验，按首购品类拆分策略。</p></div>
+          <div><span>03</span><p>对流失风险客户建立 7 日召回任务，持续追踪回访结果。</p></div>
+        </div>
+      </div>
+    `
+  },
+  churnReport: {
+    id: 'asset-churn-report',
+    typeClass: 'bi',
+    fileBadge: 'PDF',
+    title: 'Q2 客户流失归因报告.pdf',
+    owner: '经营分析助手',
+    source: '来源会话：Q2 客户流失归因分析',
+    recentThumb: '流失归因与挽回策略',
+    cardPreviewClass: 'article',
+    cardPreviewHtml: 'Q2 客户流失归因报告',
+    cardTitle: 'Q2 客户流失归因报告.pdf',
+    cardSubTitle: '归因分析 · 策略建议 · 16 页',
+    headerOwner: '经营分析助手：Nina',
+    version: 'V2',
+    versionLabel: 'V2 · 管理层摘要版',
+    sourceConversation: 'Q2 客户流失归因分析',
+    sourceDesc: '本报告汇总了 Q2 客户流失样本、关键归因、影响规模和挽回动作，用于经营例会与复盘追踪。',
+    historyTitle: '仅展示 dora 中由此文件发起的会话',
+    historyItems: [
+      { title: 'Q2 客户流失归因分析', desc: '原始生成会话' },
+      { title: '流失客户召回策略', desc: '引用该资料' }
+    ],
+    preview: `
+      <div class="report-card">
+        <h3>报告结论</h3>
+        <div class="metric-grid">
+          <div class="metric-card red"><div class="metric-label">Q2 流失率</div><div class="metric-value">8.7%</div><div class="metric-label">环比 +1.9pt</div></div>
+          <div class="metric-card"><div class="metric-label">主要归因</div><div class="metric-value">物流</div><div class="metric-label">占流失样本 36%</div></div>
+          <div class="metric-card green"><div class="metric-label">可挽回规模</div><div class="metric-value">24k</div><div class="metric-label">中高价值客户</div></div>
+        </div>
+      </div>
+      <div class="report-card">
+        <h3>归因链路</h3>
+        <div class="rule-row" style="grid-template-columns: 140px 1fr 140px 140px;"><span>归因</span><span>典型信号</span><span>影响占比</span><span>建议动作</span></div>
+        <div class="rule-row" style="grid-template-columns: 140px 1fr 140px 140px;"><span>物流延迟</span><span>延迟超过 48h 后投诉率显著升高</span><span>36%</span><span>优先赔付</span></div>
+        <div class="rule-row" style="grid-template-columns: 140px 1fr 140px 140px;"><span>客服响应</span><span>首次响应超过 10min 的会话复购下降</span><span>24%</span><span>排班优化</span></div>
+      </div>
+      <div class="chart-block"><h3>流失风险趋势</h3><div class="chart-grid"></div><div class="chart-line"></div></div>
+    `
+  },
+  metricModel: {
+    id: 'asset-metric-model',
+    typeClass: 'bi',
+    fileBadge: 'BI',
+    title: '指标口径治理台.html',
+    owner: '数据治理助手',
+    source: '来源会话：经营指标口径校准',
+    recentThumb: '指标血缘与口径规则',
+    cardPreviewClass: 'bi',
+    cardPreviewHtml: '<div class="panel"></div><div class="side"></div>',
+    cardTitle: '指标口径治理台.html',
+    cardSubTitle: '指标血缘 · 口径差异 · 规则审计',
+    headerOwner: '数据治理助手：Nina',
+    version: 'V4',
+    versionLabel: 'V4 · 口径校准版',
+    sourceConversation: '经营指标口径校准',
+    sourceDesc: '本资料记录 Data Agent 对核心经营指标的口径比对、异常追踪和血缘说明，方便后续问数时统一引用。',
+    historyTitle: '仅展示 dora 中由此文件发起的会话',
+    historyItems: [
+      { title: '经营指标口径校准', desc: '原始生成会话' },
+      { title: '收入指标差异排查', desc: '引用该资料' }
+    ],
+    preview: `
+      <div class="report-card">
+        <h3>治理概览</h3>
+        <div class="detail-kpi-grid">
+          <div class="detail-kpi"><span>已校准指标</span><strong>42</strong><em>覆盖经营核心域</em></div>
+          <div class="detail-kpi"><span>口径冲突</span><strong>6</strong><em>待业务确认</em></div>
+          <div class="detail-kpi"><span>血缘节点</span><strong>128</strong><em>已生成追溯链路</em></div>
+        </div>
+      </div>
+      <div class="report-card">
+        <h3>重点指标</h3>
+        <div class="rule-row" style="background:#F8F8F9;border-top:none;font-weight:600;color:var(--ink-9);"><span>指标</span><span>当前口径</span><span>差异说明</span><span>状态</span><span></span></div>
+        <div class="rule-row"><span>有效收入</span><span>订单实收</span><span>退款时点与财务口径存在差异</span><span>待确认</span><button class="outline-btn">查看</button></div>
+        <div class="rule-row"><span>活跃客户</span><span>30 天登录</span><span>建议改为登录或交易任一行为</span><span>已建议</span><button class="outline-btn">查看</button></div>
+      </div>
+      <div class="chart-block"><h3>指标血缘覆盖趋势</h3><div class="chart-grid"></div><div class="chart-line"></div></div>
+    `
+  },
+  conversionDataset: {
+    id: 'asset-conversion-dataset',
+    typeClass: 'html',
+    fileBadge: 'XLSX',
+    title: '营销活动转化明细.xlsx',
+    owner: '营销分析助手',
+    source: '来源会话：618 活动转化复盘',
+    recentThumb: '活动触达与转化明细',
+    cardPreviewClass: 'dashboard',
+    cardPreviewHtml: `
+      <div class="kpi">触达 186k</div><div class="kpi">转化 12.8%</div><div class="kpi red">CAC ¥31</div><div class="line-chart"></div>
+    `,
+    cardTitle: '营销活动转化明细.xlsx',
+    cardSubTitle: '触达明细 · 渠道转化 · 成本拆解',
+    headerOwner: '营销分析助手：Nina',
+    version: 'V1',
+    versionLabel: 'V1 · 清洗明细版',
+    sourceConversation: '618 活动转化复盘',
+    sourceDesc: '本数据集由活动触达、渠道点击、转化订单和成本数据清洗而来，可供 Agent 继续引用分析。',
+    historyTitle: '仅展示 dora 中由此文件发起的会话',
+    historyItems: [
+      { title: '618 活动转化复盘', desc: '原始生成会话' },
+      { title: '渠道预算再分配建议', desc: '引用该资料' }
+    ],
+    preview: `
+      <div class="report-card">
+        <h3>数据集摘要</h3>
+        <div class="detail-kpi-grid">
+          <div class="detail-kpi"><span>记录数</span><strong>186,420</strong><em>覆盖 9 个渠道</em></div>
+          <div class="detail-kpi"><span>平均转化率</span><strong>12.8%</strong><em>搜索渠道最高</em></div>
+          <div class="detail-kpi"><span>获客成本</span><strong>¥31</strong><em>较计划 -8%</em></div>
+        </div>
+      </div>
+      <div class="report-card">
+        <h3>字段预览</h3>
+        <div class="rule-row" style="grid-template-columns: repeat(5, 1fr);background:#F8F8F9;border-top:none;font-weight:600;color:var(--ink-9);"><span>日期</span><span>渠道</span><span>触达</span><span>转化</span><span>CAC</span></div>
+        <div class="rule-row" style="grid-template-columns: repeat(5, 1fr);"><span>06-18</span><span>搜索</span><span>42,183</span><span>7,216</span><span>¥24</span></div>
+        <div class="rule-row" style="grid-template-columns: repeat(5, 1fr);"><span>06-18</span><span>私域</span><span>31,902</span><span>5,048</span><span>¥18</span></div>
+      </div>
+      <div class="chart-block"><h3>渠道转化趋势</h3><div class="chart-grid"></div><div class="chart-line"></div></div>
+    `
+  }
+};
+
+let currentOutputCategory = 'all';
+let currentOutputSearch = '';
 
 const INITIAL_LIBRARY_ASSET = {
   name: '销售预测系统.html',
@@ -112,6 +473,37 @@ const DETAIL_LIBRARY_ASSET = {
   typeClass: 'html'
 };
 
+function getOutputCategory(file) {
+  if (!file) return 'other';
+  if (file.type === 'skill') return 'skill';
+  if (file.type === 'image') return 'image';
+  if (file.type === 'html') return 'web';
+  if (file.type === 'ppt' || file.type === 'pptx') return 'presentation';
+  if (file.type === 'md') return 'report';
+  if (file.type === 'pdf') return 'pdf';
+  if (file.type === 'docx') return 'document';
+  if (file.type === 'dataset' || file.ext === 'XLSX' || file.ext === 'CSV') return 'dataset';
+  return 'source';
+}
+
+function getOutputCategoryLabel(category) {
+  return OUTPUT_CATEGORIES.find(item => item.id === category)?.label || '其他';
+}
+
+function normalizeQuery(text) {
+  return (text || '').trim().toLowerCase();
+}
+
+function matchesOutputFilter(file) {
+  if (!file) return false;
+  if (currentOutputCategory !== 'all' && getOutputCategory(file) !== currentOutputCategory) return false;
+  const query = normalizeQuery(currentOutputSearch);
+  if (!query) return true;
+  return [file.name, file.meta, file.ext, getOutputCategoryLabel(getOutputCategory(file))]
+    .filter(Boolean)
+    .some(value => String(value).toLowerCase().includes(query));
+}
+
 function getFileActions(source, type) {
   const sourceActions = FILE_ACTIONS[source];
   if (!sourceActions) return [];
@@ -120,16 +512,13 @@ function getFileActions(source, type) {
 
 function buildFileActionButton(action, file) {
   if (action === 'quote') {
-    return `<button class="btn-attach" onclick="event.stopPropagation(); addFileToConversation('${file.clickName}')">引用</button>`;
+    return `<button class="btn-attach" onclick="event.stopPropagation(); addFileToConversation('${file.clickName}')">@引用</button>`;
   }
   if (action === 'open') {
     return `<button class="file-icon-action" title="新窗口打开" onclick="event.stopPropagation(); openFileInNewWindow('${file.clickKind}', '${file.clickName}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h7v7"/><path d="M13 3L7 9"/><path d="M4 5H3v8h8v-1"/></svg></button>`;
   }
   if (action === 'download') {
     return `<button class="file-icon-action" title="下载" onclick="event.stopPropagation(); downloadFile('${file.clickName}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button>`;
-  }
-  if (action === 'share') {
-    return `<button class="file-icon-action" title="分享" onclick="event.stopPropagation(); shareFile('${file.clickName}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 4.5L6.7 6.3"/><path d="M10.5 11.5L6.7 9.7"/><path d="M4.5 9.5a1.5 1.5 0 1 0 0-3"/><path d="M11.5 4.5a1.5 1.5 0 1 0 0 3"/><path d="M11.5 11.5a1.5 1.5 0 1 0 0-3"/></svg></button>`;
   }
   if (action === 'saveLibrary') {
     if (file.savedToLibrary) {
@@ -138,12 +527,24 @@ function buildFileActionButton(action, file) {
     return `<button class="library-state-btn is-compact" onclick="event.stopPropagation(); handleOutputLibrarySave('${file.clickName}')">存入资料库</button>`;
   }
   if (action === 'saveBackend') {
+    if (file.savedToBackend) {
+      return `<button class="library-state-btn is-compact is-saved" disabled onclick="event.stopPropagation()">已另存后台</button>`;
+    }
     return `<button class="library-state-btn is-compact" onclick="event.stopPropagation(); saveSkillToBackend('${file.clickName}')">另存到后台</button>`;
+  }
+  if (action === 'share') {
+    return `<button class="file-icon-action" title="分享" onclick="event.stopPropagation(); shareFile('${file.clickName}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v2.5a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V10"/><path d="M8 3v8"/><path d="M5 6l3-3 3 3"/></svg></button>`;
+  }
+  if (action === 'refresh') {
+    return `<button class="file-icon-action" title="重新生成" onclick="event.stopPropagation(); refreshOutputFile('${file.clickName}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.2 8.3A5.5 5.5 0 1 1 10.9 3.8"/><path d="M10.7 2.3H14v3.3"/></svg></button>`;
+  }
+  if (action === 'delete') {
+    return `<button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation(); deleteOutputFile('${file.clickName}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.8 4h10.4"/><path d="M6.1 2.6h3.8"/><path d="M5.2 4v8.3a1 1 0 0 0 1 1h3.6a1 1 0 0 0 1-1V4"/><path d="M6.8 6.4v3.8"/><path d="M9.2 6.4v3.8"/></svg></button>`;
   }
   return '';
 }
 
-function renderFileRow(file) {
+function renderInputFileRow(file) {
   const actions = getFileActions(file.source, file.type);
   const actionHtml = actions.map(action => buildFileActionButton(action, file)).join('');
   const openAttr = `onclick="handleFileRowClick('${file.id}')"`;
@@ -158,29 +559,88 @@ function renderFileRow(file) {
     </div>`;
 }
 
+function renderOutputFileRow(file) {
+  const actions = getFileActions(file.source, file.type);
+  const actionHtml = actions.map(action => buildFileActionButton(action, file)).join('');
+  const category = getOutputCategory(file);
+  const categoryLabel = getOutputCategoryLabel(category);
+  return `
+    <div class="output-row" data-category="${category}" data-filetype="${file.type}" onclick="handleFileRowClick('${file.id}')">
+      <div class="output-preview-icon ${file.iconClass}">${file.icon}</div>
+      <div class="output-row-main">
+        <div class="output-row-title">
+          <span class="output-row-name">${file.name}</span>
+          <span class="output-row-badge">${categoryLabel}</span>
+        </div>
+        <div class="output-row-meta">${file.meta}</div>
+      </div>
+      <div class="output-row-actions">${actionHtml}</div>
+    </div>`;
+}
+
 function findFileById(fileId) {
   return [...FILE_PANEL_STATE.input, ...FILE_PANEL_STATE.output].find(file => file.id === fileId);
+}
+
+function getDefaultPreviewFile(tab) {
+  return tab === 'output' ? FILE_PANEL_STATE.output[0] || null : FILE_PANEL_STATE.input[0] || null;
 }
 
 function handleFileRowClick(fileId) {
   const file = findFileById(fileId);
   if (!file) return;
   if (file.source === 'input') {
+    currentPreviewTab = 'input';
     openFileInNewWindow(file.clickKind, file.clickName);
     return;
   }
+  currentPreviewTab = 'output';
   openPreview(file.clickKind, file.clickName);
 }
 
 function renderFilePanel() {
   const inputList = $('filesListMaterials');
   const outputList = $('filesListOutputs');
-  if (inputList) inputList.innerHTML = FILE_PANEL_STATE.input.map(renderFileRow).join('');
-  if (outputList) outputList.innerHTML = FILE_PANEL_STATE.output.map(renderFileRow).join('');
+  if (inputList) inputList.innerHTML = FILE_PANEL_STATE.input.map(renderInputFileRow).join('');
+  if (outputList) outputList.innerHTML = renderOutputPanel();
   const materialsCount = $('materialsCount');
   if (materialsCount) materialsCount.textContent = String(FILE_PANEL_STATE.input.length);
   const outputsCount = $('outputsCount');
   if (outputsCount) outputsCount.textContent = String(FILE_PANEL_STATE.output.length);
+}
+
+function renderOutputPanel() {
+  const visibleFiles = FILE_PANEL_STATE.output.filter(matchesOutputFilter);
+  const countByCategory = OUTPUT_CATEGORIES.reduce((acc, item) => {
+    acc[item.id] = item.id === 'all'
+      ? FILE_PANEL_STATE.output.length
+      : FILE_PANEL_STATE.output.filter(file => getOutputCategory(file) === item.id).length;
+    return acc;
+  }, {});
+  const tabs = OUTPUT_CATEGORIES.map(item => {
+    const isActive = item.id === currentOutputCategory ? ' is-active' : '';
+    const count = countByCategory[item.id] || 0;
+    return `<button class="output-filter-tab${isActive}" data-output-category="${item.id}" onclick="setOutputCategory('${item.id}')">${item.label}<span class="output-filter-count">${count}</span></button>`;
+  }).join('');
+  const rows = visibleFiles.length
+    ? visibleFiles.map(renderOutputFileRow).join('')
+    : `<div class="output-empty-state">没有匹配的产物</div>`;
+  return `
+    <div class="output-filter-bar">
+      <div class="output-filter-tabs">${tabs}</div>
+    </div>
+    <div class="output-row-list">${rows}</div>
+  `;
+}
+
+function setOutputCategory(category) {
+  currentOutputCategory = category;
+  renderFilePanel();
+}
+
+function setOutputSearch(value) {
+  currentOutputSearch = value || '';
+  renderFilePanel();
 }
 
 function getPreviewFile(fileName) {
@@ -270,8 +730,7 @@ function renderPreviewBody(file, mode) {
     slideCanvas.innerHTML = `
       <div class="preview-empty-state">
         <div class="preview-empty-title">技能文件</div>
-        <div class="preview-empty-copy">${file.savedToBackend ? '已另存到后台，可继续回填提示词到 sender。' : '可选择另存到后台，并回填提示词到 sender。'}</div>
-        <button class="preview-empty-action" onclick="fillSkillPromptToSender()">回填提示词到 sender</button>
+        <div class="preview-empty-copy">${file.savedToBackend ? '已另存到后台，可继续 @引用 到后续对话。' : '技能产物可另存到后台，也可 @引用 到后续对话继续使用。'}</div>
       </div>`;
     return;
   }
@@ -331,7 +790,7 @@ function renderPreviewBody(file, mode) {
     return;
   }
   const unsupportedCopy = file.source === 'output'
-    ? '该类型暂不支持预览，当前仅支持引用和下载。'
+    ? '该类型暂不支持预览，当前仅支持 @引用、新窗口打开、分享和下载。'
     : '输入文件不支持存入资料库，可引用到对话；其他类文件还可下载。';
   slideCanvas.innerHTML = `
     <div class="preview-empty-state">
@@ -477,12 +936,12 @@ const conversationConfigs = {
 };
 
 const agentSwitchOptions = [
-  { type: 'smart-data', logo: 'S', name: '智能问数', desc: '指标归因与经营分析' },
-  { type: 'report', logo: 'R', name: '智能报告', desc: '报告、PPT 与结构化结论' },
-  { type: 'analysis', logo: 'A', name: '经营分析助手', desc: '经营表现诊断与风险识别' },
-  { type: 'modeling', logo: 'D', name: '数据建模顾问', desc: '指标、维度、口径和模型设计' },
-  { type: 'finance', logo: 'F', name: '财务小助手', desc: '预算、费用结构与异常波动' },
-  { type: 'marketing', logo: 'M', name: '营销策略助手', desc: '客户分层与活动复盘' }
+  { type: 'smart-data', logo: avatarSources.smartData, name: '智能问数', desc: '指标归因与经营分析' },
+  { type: 'report', logo: avatarSources.report, name: '智能报告', desc: '报告、PPT 与结构化结论' },
+  { type: 'analysis', logo: avatarSources.analysis, name: '经营分析助手', desc: '经营表现诊断与风险识别' },
+  { type: 'modeling', logo: avatarSources.modeling, name: '数据建模顾问', desc: '指标、维度、口径和模型设计' },
+  { type: 'finance', logo: avatarSources.finance, name: '财务小助手', desc: '预算、费用结构与异常波动' },
+  { type: 'marketing', logo: avatarSources.marketing, name: '营销策略助手', desc: '客户分层与活动复盘' }
 ];
 
 
@@ -557,15 +1016,18 @@ function openLocalUpload(context) {
 
 function openAssetModal(type) {
   pendingAssetType = type;
-  pendingAssetLabel = type === 'bi' ? 'BI demo_门店销售表' : 'FR demo_地区看板';
+  const config = ASSET_PICKER_DEFS[type] || ASSET_PICKER_DEFS.bi;
+  pendingAssetLabel = config.title;
+  activeAssetPreviewId = config.defaultSelected[0] || '';
+  selectedAssetIds = [...config.defaultSelected];
   const mask = $('assetModal');
   if (!mask) return;
   const modal = mask.querySelector('.modal');
   modal.dataset.source = type;
-  $('assetModalTitle').textContent = type === 'bi' ? '添加 FineBI 资产' : '添加 FineReport 资产';
-  $('assetModalTagText').textContent = pendingAssetLabel;
+  $('assetModalTitle').textContent = config.title;
   mask.classList.add('open');
   closeSenderMenus();
+  renderAssetPicker(type);
 }
 // 保留旧名作为别名, 既有 HTML 上的 onclick="openAssetPicker(...)" 全部走新逻辑
 function openAssetPicker(type) { openAssetModal(type); }
@@ -573,24 +1035,133 @@ function openAssetPicker(type) { openAssetModal(type); }
 function closeAssetModal() {
   const mask = $('assetModal');
   if (mask) mask.classList.remove('open');
+  activeAssetPreviewId = '';
+  selectedAssetIds = [];
 }
 function closeAssetPicker() { closeAssetModal(); }
+
+function renderAssetPicker(type) {
+  const config = ASSET_PICKER_DEFS[type] || ASSET_PICKER_DEFS.bi;
+  const tree = $('assetTreeList');
+  const preview = $('assetModalPreview');
+  const tagText = $('assetModalTagText');
+  const count = $('assetSelectedCount');
+  if (tagText) tagText.textContent = activeAssetPreviewId
+    ? (config.items.find(item => item.id === activeAssetPreviewId)?.label || config.title)
+    : config.title;
+  if (tree) {
+    tree.innerHTML = config.items.map(item => {
+      const checked = selectedAssetIds.includes(item.id) ? ' checked' : '';
+      const active = item.id === activeAssetPreviewId ? ' active' : '';
+      const disabled = item.enabled ? '' : ' disabled';
+      const indentClass = item.group === '文件夹1' || item.group === '文件夹3' ? ' tree-indent' : '';
+      return `
+        <div class="tree-node${indentClass}${active}${item.enabled ? '' : ' is-disabled'}" data-asset-id="${item.id}" onclick="selectAssetItem('${type}','${item.id}')">
+          <input type="checkbox"${checked}${disabled} onclick="event.stopPropagation(); toggleAssetItem('${type}','${item.id}')"/>
+          <span class="src-dot">${config.kind === 'BI' ? 'D' : 'R'}</span>
+          ${item.label}
+        </div>`;
+    }).join('');
+  }
+  if (preview) {
+    const current = config.items.find(item => item.id === activeAssetPreviewId) || config.items[0];
+    preview.textContent = current?.preview || '(资产预览占位 — 此原型不复刻弹窗细节)';
+  }
+  if (count) count.textContent = `${selectedAssetIds.length}个`;
+  if (tagText) {
+    const current = config.items.find(item => item.id === activeAssetPreviewId) || config.items[0];
+    tagText.textContent = current ? current.label : config.title;
+  }
+}
+
+function selectAssetItem(type, assetId) {
+  const config = ASSET_PICKER_DEFS[type] || ASSET_PICKER_DEFS.bi;
+  const item = config.items.find(entry => entry.id === assetId);
+  if (!item || !item.enabled) return;
+  activeAssetPreviewId = assetId;
+  if (!selectedAssetIds.includes(assetId)) selectedAssetIds.push(assetId);
+  renderAssetPicker(type);
+}
+
+function toggleAssetItem(type, assetId) {
+  const config = ASSET_PICKER_DEFS[type] || ASSET_PICKER_DEFS.bi;
+  const item = config.items.find(entry => entry.id === assetId);
+  if (!item || !item.enabled) return;
+  const index = selectedAssetIds.indexOf(assetId);
+  if (index >= 0) selectedAssetIds.splice(index, 1);
+  else selectedAssetIds.push(assetId);
+  activeAssetPreviewId = assetId;
+  renderAssetPicker(type);
+}
 
 function addSenderFileChip(context, kind, label, tone) {
   const row = $(context + 'SenderFiles');
   if (!row) return;
   const chip = document.createElement('div');
   chip.className = 'sender-file-chip';
-  chip.innerHTML = `<span class="sender-file-icon" style="background:${tone === 'purple' ? '#7C5CFF' : tone === 'teal' ? '#1DB6A0' : '#6D94FF'}">${kind}</span><span>${label}</span>`;
+  chip.innerHTML = `<span class="sender-file-icon" style="background:${tone === 'purple' ? '#7C5CFF' : tone === 'teal' ? '#1DB6A0' : '#6D94FF'}">${kind}</span><span class="sender-file-label">${label}</span>`;
   row.appendChild(chip);
   row.classList.add('has-file');
 }
 
+function getSenderInput(context) {
+  if (context === 'conversation') return $('conversationInput');
+  if (context === 'hero') return $('heroInput') || document.querySelector('.hero-input textarea');
+  const row = $(context + 'SenderFiles');
+  const box = row?.closest('.hero-input, .conversation-input, .chat-input-box');
+  return box?.querySelector('textarea') || null;
+}
+
+function syncConversationSendState() {
+  const input = $('conversationInput');
+  const hasText = Boolean(input?.value.trim());
+  const hasRef = Boolean($('conversationSenderFiles')?.querySelector('.sender-ref-token'));
+  const btn = $('conversationSendBtn');
+  if (btn) btn.classList.toggle('is-active', hasText || hasRef);
+}
+
+function insertSenderReference(context, file) {
+  const row = $(context + 'SenderFiles');
+  if (!row || !file) return;
+  const existing = row.querySelector(`[data-ref-name="${file.clickName || file.name}"]`);
+  if (existing) {
+    existing.classList.add('is-pulsing');
+    setTimeout(() => existing.classList.remove('is-pulsing'), 420);
+  } else {
+    const token = document.createElement('button');
+    token.type = 'button';
+    token.className = 'sender-ref-token';
+    token.dataset.refName = file.clickName || file.name;
+    token.dataset.refKind = file.clickKind || file.type || 'file';
+    token.innerHTML = `<span>@</span>${file.name || file.clickName}<span class="sender-ref-remove" aria-hidden="true">×</span>`;
+    token.addEventListener('click', event => {
+      if (event.target.closest('.sender-ref-remove')) {
+        token.remove();
+        row.classList.toggle('has-file', Boolean(row.children.length));
+        syncConversationSendState();
+        return;
+      }
+      openPreview(token.dataset.refKind, token.dataset.refName);
+    });
+    row.appendChild(token);
+  }
+  row.classList.add('has-file');
+  const input = getSenderInput(context);
+  if (context === 'conversation') syncConversationSendState();
+  input?.focus();
+}
+
+function insertConversationReference(file) {
+  insertSenderReference('conversation', file);
+}
+
 function confirmAssetModal() {
   const context = activeSenderContext || 'hero';
-  addSenderFileChip(context, pendingAssetType === 'bi' ? 'BI' : 'FR', pendingAssetLabel, pendingAssetType === 'bi' ? 'blue' : 'purple');
+  const config = ASSET_PICKER_DEFS[pendingAssetType] || ASSET_PICKER_DEFS.bi;
+  const selectedItems = config.items.filter(item => selectedAssetIds.includes(item.id) && item.enabled);
+  selectedItems.forEach(item => addSenderFileChip(context, config.kind, item.label, config.tone));
   closeAssetModal();
-  showToast(`已添加 ${pendingAssetType === 'bi' ? 'FineBI' : 'FineReport'} 资产`);
+  showToast(`已添加 ${selectedItems.length} 个${pendingAssetType === 'bi' ? 'FineBI' : 'FineReport'}资产`);
 }
 function confirmAssetPicker() { confirmAssetModal(); }
 
@@ -651,13 +1222,45 @@ function openUnreadExpert(type) {
   applyConversationConfig(type, config, 'experts');
   moduleState.experts.page = 'conversation';
   moduleState.experts.conversationType = type;
+  markExpertConversationRead(type);
   selectConversationEntry('expert', 'new', $('expertNewConversation'));
+}
+
+function getExpertUnreadCount(type) {
+  const item = expertUnreadItems.find(entry => entry.type === type);
+  return item ? item.count : 0;
 }
 
 function clearExpertUnread(type) {
   const item = expertUnreadItems.find(entry => entry.type === type);
   if (item) item.count = 0;
   refreshExpertUnreadState();
+}
+
+function markExpertConversationRead(type) {
+  if (!type || type === 'dora') return;
+  clearExpertUnread(type);
+}
+
+function syncExpertCardUnreadState() {
+  document.querySelectorAll('.agent-card[data-agent-type]').forEach(card => {
+    const count = getExpertUnreadCount(card.dataset.agentType);
+    card.classList.toggle('has-unread', count > 0);
+    card.dataset.unread = count > 0 ? String(count) : '';
+  });
+}
+
+function syncConversationUnreadState(type = currentConversationType) {
+  const title = $('conversationHistoryTitle');
+  if (!title) return;
+  if (type === 'dora') {
+    title.classList.remove('has-unread');
+    title.dataset.unread = '';
+    return;
+  }
+  const count = getExpertUnreadCount(type);
+  title.classList.toggle('has-unread', count > 0);
+  title.dataset.unread = count > 0 ? String(count) : '';
 }
 
 function refreshExpertUnreadState() {
@@ -688,6 +1291,8 @@ function refreshExpertUnreadState() {
       `).join('');
     }
   }
+  syncExpertCardUnreadState();
+  syncConversationUnreadState();
 }
 
 
@@ -703,6 +1308,7 @@ function openConversation(type) {
   applyConversationConfig(type, config, config.returnView);
   moduleState.experts.page = 'conversation';
   moduleState.experts.conversationType = type;
+  markExpertConversationRead(type);
   selectConversationEntry('expert', 'new', $('expertNewConversation'));
 }
 
@@ -737,6 +1343,7 @@ function applyConversationConfig(type, config, activeRailView) {
   }
   syncConversationTracePill();
   syncConversationHistoryTitle();
+  syncConversationUnreadState(currentConversationType);
   setRailActive(activeRailView);
   showSurface('view-conversation');
 }
@@ -806,7 +1413,7 @@ function renderAgentSwitchList(keyword) {
   });
   list.innerHTML = matchedOptions.map(option => `
     <button class="agent-switch-item ${option.type === currentConversationType ? 'active' : ''}" onclick="selectAgentFromSwitch('${option.type}')">
-      <span class="agent-logo">${option.logo}</span>
+      <span class="agent-logo">${avatarImg(option.logo, option.name)}</span>
       <span class="agent-switch-copy">
         <span class="agent-switch-name">${option.name}</span>
         <span class="agent-switch-desc">${option.desc}</span>
@@ -864,6 +1471,7 @@ function toggleFilesPanel() {
 function openAssetDetail() {
   switchView('space');
   moduleState.space.page = 'detail';
+  syncAssetDetailPage(currentAssetMock);
   $('spaceHome').style.display = 'none';
   $('assetDetail').classList.add('active');
   expandChat();
@@ -889,6 +1497,36 @@ function showSourceHint(event) {
 
 function openSourceDialog() { $('sourcePopover').classList.add('open'); }
 function closeSourcePopover() { if ($('sourcePopover')) $('sourcePopover').classList.remove('open'); }
+
+function saveAssetChanges() {
+  showToast('已保存变更');
+}
+
+function refreshAssetPreview() {
+  syncAssetDetailPage(currentAssetMock);
+  showToast('预览已刷新');
+}
+
+function navigateAssetPreview(direction) {
+  showToast(direction === 'back' ? '已后退一步' : '已前进一步');
+}
+
+function toggleAssetDevicePreview() {
+  showToast('已切换预览设备');
+}
+
+function startAssetDetailNewChat() {
+  showToast('已开启新对话');
+}
+
+function refreshAssetDetailChat() {
+  showToast('会话已刷新');
+}
+
+function openDetailFileBucket() {
+  toggleAssetHistoryMode(true);
+  showToast('已打开会话文件');
+}
 
 function collapseChat() {
   $('detailChat').classList.add('collapsed');
@@ -957,6 +1595,90 @@ function updateSavedAssetCard(asset) {
   if (name) name.textContent = asset.name;
   if (source) source.textContent = asset.source;
   savedAsset.classList.add('visible');
+}
+
+function getAssetMock(assetType = 'html') {
+  return ASSET_LIBRARY_DEFS[assetType] || ASSET_LIBRARY_DEFS.html;
+}
+
+function buildAssetCard(type) {
+  const asset = getAssetMock(type);
+  return `
+    <div class="asset-card annotated" data-asset-type="${type}" onclick="openAssetDetailByType('${type}')">
+      <div class="asset-preview ${asset.cardPreviewClass}">${asset.cardPreviewHtml}</div>
+      <div class="asset-info">
+        <div class="asset-name"><span class="file-badge ${asset.typeClass}">${asset.fileBadge}</span>${asset.cardTitle}</div>
+        <div class="asset-foot"><span>${asset.owner}：XXXXXXXX</span><span class="avatar">${avatarImg(asset.typeClass === 'ppt' ? 'report-agent' : 'finance-agent', asset.owner)}</span></div>
+      </div>
+      <span class="change-marker demo-control" data-change-tooltip="点击资源库资料进入资料详情页。" data-change-placement="top">${asset.typeClass === 'html' ? '7' : '8'}</span>
+    </div>`;
+}
+
+function renderAssetLibrary() {
+  const home = $('spaceHome');
+  if (!home) return;
+  const recentRow = home.querySelector('.recent-row');
+  const assetGrid = home.querySelector('.asset-grid');
+  if (recentRow) {
+    recentRow.innerHTML = `
+      <div class="mini-asset" onclick="openAssetDetailByType('html')"><div class="mini-thumb"><div>销售预测系统.html</div><br><div>图表与预测规则</div></div><div class="mini-info"><span>财务小助手</span><span class="avatar">${avatarImg('finance-agent', '财务小助手')}</span></div></div>
+      <div class="mini-asset" onclick="openAssetDetailByType('ppt')"><div class="mini-thumb ppt">2025年9月生产经营分析会</div><div class="mini-info"><span>经营助手</span><span class="avatar">${avatarImg('report-agent', '经营助手')}</span></div></div>
+    `;
+  }
+  if (assetGrid) {
+    assetGrid.innerHTML = `
+      <div class="asset-card space-asset-hidden" id="savedFromSessionAsset" onclick="openAssetDetailByType('html')">
+        <div class="asset-preview dashboard"><div class="kpi">已存入</div><div class="kpi">$510.854 亿</div><div class="kpi red">V2</div><div class="line-chart"></div></div>
+        <div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>销售预测系统.html</div><div class="asset-foot"><span>来自会话文件快照</span><span class="avatar">${avatarImg('dora-session', 'Dora')}</span></div></div>
+      </div>
+      ${buildAssetCard('html')}
+      ${buildAssetCard('ppt')}
+      ${buildAssetCard('dashboard')}
+      ${buildAssetCard('churnReport')}
+      ${buildAssetCard('metricModel')}
+      ${buildAssetCard('conversionDataset')}
+    `;
+  }
+}
+
+function syncAssetDetailPage(assetType = 'html') {
+  const asset = getAssetMock(assetType);
+  currentAssetMock = assetType;
+  const badgeNodes = document.querySelectorAll('.asset-title .file-badge');
+  badgeNodes.forEach(node => {
+    node.className = `file-badge ${asset.typeClass}`;
+    node.textContent = asset.fileBadge;
+  });
+  const titleNode = document.querySelector('.asset-title span:last-child');
+  if (titleNode) titleNode.textContent = asset.title;
+  const ownerNode = document.querySelector('.preview-header .owner');
+  if (ownerNode) ownerNode.textContent = asset.headerOwner;
+  const versionTrigger = $('versionMenu')?.querySelector('.version-trigger');
+  if (versionTrigger) versionTrigger.textContent = asset.version;
+  const sourcePopover = $('sourcePopover');
+  if (sourcePopover) {
+    sourcePopover.querySelector('.source-label').textContent = asset.typeClass === 'ppt' ? '汇报' : '讨论';
+    const p = sourcePopover.querySelector('p');
+    if (p) p.textContent = asset.sourceDesc;
+  }
+  const detailTitle = $('detailChatTitle');
+  if (detailTitle) detailTitle.textContent = asset.sourceConversation;
+  const historyTitle = $('conversationHistoryTitle');
+  if (historyTitle && historyTitle.classList.contains('has-unread')) historyTitle.textContent = asset.sourceConversation;
+  const historyPanel = $('assetHistoryPanel');
+  if (historyPanel) {
+    historyPanel.innerHTML = `
+      <div class="history-filter-title">${asset.historyTitle}</div>
+      ${asset.historyItems.map(item => `<button onclick="openSourceConversationFromAsset('${item.title}','${asset.title}')">${item.title} · ${item.desc}</button>`).join('')}
+    `;
+  }
+  const previewContent = document.querySelector('.preview-content');
+  if (previewContent) previewContent.innerHTML = asset.preview;
+}
+
+function openAssetDetailByType(assetType) {
+  syncAssetDetailPage(assetType);
+  openAssetDetail();
 }
 
 function setSavedLibraryAsset(asset) {
@@ -1136,7 +1858,8 @@ function syncConversationHistoryTitle() {
 }
 
 function addFileToConversation(fileName) {
-  addSenderFileChip('conversation', 'REF', fileName, 'blue');
+  const file = getPreviewFile(fileName) || FILE_PANEL_STATE.input.find(item => item.clickName === fileName || item.name === fileName) || null;
+  insertConversationReference(file || { name: fileName, clickName: fileName, clickKind: 'source' });
   showToast(`已引用 ${fileName}`);
 }
 
@@ -1182,15 +1905,31 @@ function saveSkillToBackend(fileName) {
   showToast(`已将 ${fileName} 另存到后台`);
 }
 
-function fillSkillPromptToSender() {
-  const input = $('conversationInput');
-  if (!input) return;
-  input.value = '使用「客户反馈分析技能」分析新的客户反馈文件，并输出分类结果和汇报建议。';
-  $('conversationSendBtn').classList.add('is-active');
-  input.focus();
-  showToast('已回填技能提示词到输入框');
+function refreshOutputFile(fileName) {
+  const file = FILE_PANEL_STATE.output.find(item => item.clickName === fileName || item.name === fileName);
+  if (!file) return;
+  if (currentPreviewFile && (currentPreviewFile.clickName === file.clickName || currentPreviewFile.name === file.name)) {
+    currentPreviewFile = file;
+    renderPreviewFrame(file);
+  }
+  if (file.type === 'html') {
+    refreshHtmlPreview();
+    return;
+  }
+  showToast(`已重新生成 ${file.name}`);
 }
 
+function deleteOutputFile(fileName) {
+  const idx = FILE_PANEL_STATE.output.findIndex(item => item.clickName === fileName || item.name === fileName);
+  if (idx < 0) return;
+  const [removed] = FILE_PANEL_STATE.output.splice(idx, 1);
+  if (currentPreviewFile && (currentPreviewFile.clickName === removed.clickName || currentPreviewFile.name === removed.name)) {
+    currentPreviewFile = null;
+    closePreview();
+  }
+  renderFilePanel();
+  showToast(`已删除 ${removed.name}`);
+}
 
 /* =========================================================================
    7. Toast
@@ -1209,9 +1948,7 @@ function showToast(text) {
    8. 演示标注 (1-17) tooltip
    ========================================================================= */
 function toggleDemoMode(el) {
-  document.body.classList.toggle('demo-mode');
-  el.classList.toggle('active');
-  if (!document.body.classList.contains('demo-mode')) hideChangeTooltip();
+  openScenarioGuide();
 }
 
 let activeChangeMarker = null;
@@ -1272,6 +2009,77 @@ function showChangeTooltip(marker) {
   bubble.textContent = text;
   layer.classList.add('open');
   syncChangeTooltipPosition();
+}
+
+const SCENARIO_STEPS = [
+  { id: 'intent', time: 800, label: '理解任务意图', desc: '识别为「数据分析 + 报告生成」复合任务，进入任务规划。' },
+  { id: 'plan', time: 2200, label: '拆解执行计划', desc: '整理为读取数据、字段抽取、编写分类器、执行分析、综合报告。' },
+  { id: 'read', time: 4000, label: '读取并解析输入数据', desc: '载入客户反馈明细与 schema，提取字段并校验结构。' },
+  { id: 'code', time: 6200, label: '编写分类器代码', desc: '生成关键词词典与情感倾向双通道逻辑。' },
+  { id: 'run', time: 10000, label: '执行分类计算', desc: '运行 Python REPL 对 1,247 条反馈进行分类与统计。' },
+  { id: 'chart', time: 27500, label: '生成可视化图表', desc: '输出 Top 客户与分布图，辅助后续汇报。' },
+  { id: 'ppt', time: 34400, label: '撰写汇报 PPT', desc: '组织封面、概览、问题拆解与行动项。' },
+  { id: 'archive', time: 72800, label: '导出多格式归档', desc: '生成 Word、PDF、XLSX、CSV、JSON 与 ZIP 交付包。' }
+];
+
+let scenarioGuideOpen = false;
+let scenarioGuidePanel = null;
+
+function ensureScenarioGuidePanel() {
+  let panel = $('scenarioGuidePanel');
+  if (panel) return panel;
+  panel = document.createElement('div');
+  panel.id = 'scenarioGuidePanel';
+  panel.className = 'scenario-guide-panel';
+  panel.innerHTML = `
+    <div class="scenario-guide-card">
+      <div class="scenario-guide-head">
+        <div>
+          <div class="scenario-guide-title">客户反馈剧本</div>
+          <div class="scenario-guide-sub">点击节点可直接跳到对应环节</div>
+        </div>
+        <button class="scenario-guide-close" type="button" onclick="closeScenarioGuide()">×</button>
+      </div>
+      <div class="scenario-guide-list" id="scenarioGuideList"></div>
+    </div>`;
+  document.body.appendChild(panel);
+  scenarioGuidePanel = panel;
+  return panel;
+}
+
+function renderScenarioGuide() {
+  const list = $('scenarioGuideList');
+  if (!list) return;
+  list.innerHTML = SCENARIO_STEPS.map(step => `
+    <button class="scenario-guide-item" onclick="jumpToScenarioStep('${step.id}')">
+      <span class="scenario-guide-time">${Math.floor(step.time / 1000)}s</span>
+      <span class="scenario-guide-copy">
+        <span class="scenario-guide-label">${step.label}</span>
+        <span class="scenario-guide-desc">${step.desc}</span>
+      </span>
+    </button>
+  `).join('');
+}
+
+function openScenarioGuide() {
+  ensureScenarioGuidePanel();
+  renderScenarioGuide();
+  scenarioGuideOpen = true;
+  scenarioGuidePanel?.classList.add('open');
+  document.querySelector('.v-demo-toggle')?.classList.add('is-open');
+}
+
+function closeScenarioGuide() {
+  scenarioGuideOpen = false;
+  scenarioGuidePanel?.classList.remove('open');
+  document.querySelector('.v-demo-toggle')?.classList.remove('is-open');
+}
+
+function jumpToScenarioStep(stepId) {
+  const step = SCENARIO_STEPS.find(item => item.id === stepId);
+  if (!step) return;
+  closeScenarioGuide();
+  playScenario(step.time);
 }
 
 
@@ -1379,7 +2187,7 @@ function scrollExecToBottom() {
   if (body) body.scrollTop = body.scrollHeight;
 }
 
-const CAROUSEL_MSGS = ['正在深度分析数据...','即将得出关键结论...','已为您加速处理中...','Agent 仍在持续工作中...'];
+const CAROUSEL_MSGS = ['正在深度分析数据...','即将得出关键结论...','已为您加速处理中...','Agent 仍在持续工作中...','正在排版演示文稿...','幻灯片生成中，请稍候...'];
 
 function showWaitLine() {
   const el = $('waitLine');
@@ -1407,23 +2215,30 @@ function setWaitText(text) {
   $('waitCarousel').hidden = true;
   if (carouselIntervalId) { clearInterval(carouselIntervalId); carouselIntervalId = null; }
 }
-function setWaitCarousel() {
+function setWaitCarousel(messages = CAROUSEL_MSGS) {
   $('waitText').hidden = true;
   const carousel = $('waitCarousel'), track = $('waitCarouselTrack');
-  track.innerHTML = CAROUSEL_MSGS.concat(CAROUSEL_MSGS[0]).map(m => `<span>${m}</span>`).join('');
+  const sourceMessages = Array.isArray(messages) && messages.length ? messages : CAROUSEL_MSGS;
+  track.innerHTML = sourceMessages.concat(sourceMessages[0]).map(m => `<span>${m}</span>`).join('');
   carousel.hidden = false;
   let idx = 0; track.style.transform = 'translateY(0)';
   if (carouselIntervalId) clearInterval(carouselIntervalId);
   carouselIntervalId = setInterval(() => {
     idx += 1;
     track.style.transform = `translateY(-${idx * 18}px)`;
-    if (idx >= CAROUSEL_MSGS.length) {
+    if (idx >= sourceMessages.length) {
       setTimeout(() => {
         track.style.transition = 'none'; track.style.transform = 'translateY(0)'; idx = 0;
         requestAnimationFrame(() => track.style.transition = '');
       }, 380);
     }
   }, 2200);
+}
+
+function markPanelAsLiveProgress() {
+  if (liveOutputProgressShown) return;
+  liveOutputProgressShown = true;
+  setExecTitle(`已完成 ${actionCount} 个动作 · 产物生成中`);
 }
 
 function togglePanel() { $('execPanel').classList.toggle('is-collapsed'); }
@@ -1650,15 +2465,32 @@ function buildPreviewContent(it) {
 
 function buildOutputCard(it) {
   const card = document.createElement('div');
-  card.className = 'output-card' + (it.loading ? ' is-loading' : '');
+  const matchedFile = getPreviewFile(it.name);
+  const fallbackFile = {
+    source: 'output',
+    type: it.type === 'skill' ? 'skill' : it.type === 'html' ? 'html' : it.type === 'images' ? 'image' : it.type === 'pptx' ? 'ppt' : it.type === 'docx' ? 'docx' : it.type === 'pdf' ? 'pdf' : it.type === 'md' ? 'md' : it.type === 'xlsx' || it.type === 'csv' ? 'dataset' : 'source',
+    ext: (it.type || 'FILE').toUpperCase(),
+    name: it.name,
+    clickName: it.name,
+    clickKind: it.type === 'images' ? 'imgs' : it.type,
+    icon: (it.type || 'FILE').toUpperCase(),
+    iconClass: it.type === 'images' ? 'imgs' : it.type
+  };
+  const file = matchedFile || fallbackFile;
+  const category = getOutputCategory(file);
+  card.className = 'output-card output-list-card' + (it.loading ? ' is-loading' : '');
   if (it.onClick) card.onclick = it.onClick;
   const titleAttr = it.desc ? `title="${it.name} — ${it.desc}"` : `title="${it.name}"`;
   card.innerHTML = `
     <div class="output-preview ${it.type}${it.loading ? ' loading' : ''}">${buildPreviewContent(it)}</div>
     <div class="output-meta">
-      <div class="output-name" ${titleAttr}>${it.name}</div>
+      <div class="output-name" ${titleAttr}>${it.name}<span class="output-category-pill">${getOutputCategoryLabel(category)}</span></div>
       <div class="output-sub${it.loading ? ' loading-note' : ''}">${it.sub || ''}</div>
-    </div>`;
+    </div>
+    ${it.loading ? '' : `<div class="output-card-actions">
+      <button onclick="event.stopPropagation(); addFileToConversation('${file.clickName}')">@引用</button>
+      <button onclick="event.stopPropagation(); openPreview('${file.clickKind}', '${file.clickName}')">预览</button>
+    </div>`}`;
   return card;
 }
 
@@ -1723,7 +2555,9 @@ function openPreview(kind, filename, opts = {}) {
   if (!pane) return;
   const mode = getPreviewMode(kind);
   currentPreviewFile = getPreviewFile(filename);
+  currentPreviewTab = currentPreviewFile?.source || currentPreviewTab || 'output';
   pane.classList.add('is-preview-mode');
+  pane.dataset.activeTab = currentPreviewTab;
   $('previewIcon').className = `file-icon ${kind}`;
   $('previewIcon').textContent = (kind || 'FILE').toUpperCase();
   $('previewFilename').textContent = filename;
@@ -1795,7 +2629,7 @@ function getLiveOutputStage(stage) {
   if (stage === 'ppt-start') {
     return [
       { type: 'images', name: '反馈分布图组', sub: '图表已生成 · 共 3 张', count: 3, onClick: () => openPreview('imgs', '反馈分布图组') },
-      { type: 'pptx', name: '客户反馈分析汇报.pptx', sub: '正在生成演示文稿...', loading: true, loadingLabel: '正在生成 PPT' }
+      { type: 'pptx', name: '客户反馈分析汇报.pptx', sub: '正在生成演示文稿... 预计 1 分钟', loading: true, loadingLabel: '正在生成 PPT' }
     ];
   }
   if (stage === 'ppt-ready') {
@@ -1826,13 +2660,13 @@ async function renderLiveOutputsStage(stage) {
   });
 }
 
-
 /* =========================================================================
    15. 剧本驱动
    ========================================================================= */
 function resetScenario() {
   clearScenario();
   actionCount = 0; nodeCounter = 0;
+  liveOutputProgressShown = false;
   $('execTimeline').innerHTML = '';
   $('execTitle').textContent = '准备中....';
   $('execPanel').classList.remove('is-collapsed');
@@ -1846,35 +2680,51 @@ function resetScenario() {
   const os = $('outputsSection'); os.classList.remove('is-visible'); os.hidden = true; os.innerHTML = '';
   $('finalActions').classList.add('is-hidden');
   document.querySelectorAll('.conv-chat .lead-pill').forEach(el => el.remove());
-  $('outputsCount').textContent = '0';
   $('extraReplies').innerHTML = '';
   closePreview(); resetPptPreview();
 }
 
-function playScenario() {
+function playScenario(startAt = 0) {
   resetScenario();
   scenarioStartedAt = Date.now();
   const isProductLiveScenario = isLiveOutputVariant();
+  const PPT_START = 34400;
+  const PPT_DONE = 64400;
+  const GENUI_START = PPT_DONE + 800;
+  const GENUI_RENDER = GENUI_START + 1200;
+  const SUMMARY_START = GENUI_START + 4200;
+  const ARCHIVE_HINT = SUMMARY_START + 3000;
+  const ARCHIVE_START = ARCHIVE_HINT + 400;
+  const ARCHIVE_DONE = ARCHIVE_START + 2200;
+  const FINAL_OUTPUTS = ARCHIVE_DONE + 3400;
+  const SCENARIO_DONE = FINAL_OUTPUTS + 4200;
+  if (startAt > 0) {
+    scenarioStartedAt = Date.now() - startAt;
+  }
 
-  at(300, () => { showWaitLine(); setExecTitle('正在理解任务需求....'); });
-  at(600, () => setResult('正在分析您的请求...'));
+  const schedule = (ms, fn) => {
+    scenarioTimers.push(setTimeout(fn, Math.max(0, ms - startAt)));
+  };
+
+  schedule(300, () => { showWaitLine(); setExecTitle('正在理解任务需求....'); });
+  schedule(600, () => setResult('正在分析您的请求...'));
 
   let n1;
-  at(800, () => { n1 = addActionNode({ stage: { cls: 'coordinator', label: '意图识别' }, title: '理解任务意图', detail: '识别为「数据分析 + 报告生成」复合任务，路由至任务规划' }); });
+  schedule(800, () => { n1 = addActionNode({ stage: { cls: 'coordinator', label: '意图识别' }, title: '理解任务意图', detail: '识别为「数据分析 + 报告生成」复合任务，路由至任务规划' }); });
 
   let n2;
-  at(2000, () => { completeNode(n1); setExecTitle('正在规划执行路径....'); });
-  at(2200, () => { n2 = addActionNode({ stage: { cls: 'planner', label: '任务规划' }, title: '拆解为 5 步执行计划', detail: '步骤：读取数据 → 字段抽取 → 编写分类器 → 执行分析 → 综合报告', files: [{ name: 'plan.md', kind: 'code' }] }); });
+  schedule(2000, () => { completeNode(n1); setExecTitle('正在规划执行路径....'); });
+  schedule(2200, () => { n2 = addActionNode({ stage: { cls: 'planner', label: '任务规划' }, title: '拆解为 5 步执行计划', detail: '步骤：读取数据 → 字段抽取 → 编写分类器 → 执行分析 → 综合报告', files: [{ name: 'plan.md', kind: 'code' }] }); });
 
   let n3;
-  at(3800, () => { completeNode(n2); setExecTitle('正在读取数据源....'); });
-  at(4000, () => { n3 = addActionNode({ stage: { cls: 'researcher', label: '数据分析' }, title: '读取并解析输入数据', detail: '工作表 3 · 总行数 1,247', files: [{ name: '客户反馈明细.xlsx', kind: 'data', role: 'input' }, { name: 'schema.json', kind: 'data' }] }); });
-  at(5500, () => completeNode(n3));
-  at(5700, () => setResult('已识别 <strong>7 个字段</strong>：客户名称、反馈类型、满意度、问题描述、日期、渠道、处理状态。'));
+  schedule(3800, () => { completeNode(n2); setExecTitle('正在读取数据源....'); });
+  schedule(4000, () => { n3 = addActionNode({ stage: { cls: 'researcher', label: '数据分析' }, title: '读取并解析输入数据', detail: '工作表 3 · 总行数 1,247', files: [{ name: '客户反馈明细.xlsx', kind: 'data', role: 'input' }, { name: 'schema.json', kind: 'data' }] }); });
+  schedule(5500, () => completeNode(n3));
+  schedule(5700, () => setResult('已识别 <strong>7 个字段</strong>：客户名称、反馈类型、满意度、问题描述、日期、渠道、处理状态。'));
 
   let n4;
-  at(6200, () => { setExecTitle('正在编写分类器....'); n4 = addActionNode({ stage: { cls: 'coder', label: '代码执行' }, title: '编写分类器代码', files: [{ name: 'classifier.py', kind: 'code' }], code: '' }); });
-  at(6400, () => appendCode(n4, [
+  schedule(6200, () => { setExecTitle('正在编写分类器....'); n4 = addActionNode({ stage: { cls: 'coder', label: '代码执行' }, title: '编写分类器代码', files: [{ name: 'classifier.py', kind: 'code' }], code: '' }); });
+  schedule(6400, () => appendCode(n4, [
     '# 关键词词典 + 情感倾向 双通道',
     "kw = load_keywords('物流|客服|质量|价格')",
     "def classify(text):",
@@ -1886,17 +2736,17 @@ function playScenario() {
   ], 320));
 
   let n5;
-  at(9800, () => completeNode(n4));
-  at(10000, () => { setExecTitle('正在执行分类计算....'); n5 = addActionNode({ stage: { cls: 'coder', label: '代码执行' }, title: '执行分类计算 · 1,247 条', detail: '运行 Python REPL · 估算耗时较长', files: [{ name: 'classification_result.csv', kind: 'data' }] }); });
+  schedule(9800, () => completeNode(n4));
+  schedule(10000, () => { setExecTitle('正在执行分类计算....'); n5 = addActionNode({ stage: { cls: 'coder', label: '代码执行' }, title: '执行分类计算 · 1,247 条', detail: '运行 Python REPL · 估算耗时较长', files: [{ name: 'classification_result.csv', kind: 'data' }] }); });
 
-  at(13000, () => setWaitText('Agent 正在持续工作中...'));
-  at(18000, () => setWaitText('数据量较大，请您耐心等待...'));
-  at(25000, () => setWaitCarousel());
+  schedule(13000, () => setWaitText('Agent 正在持续工作中...'));
+  schedule(18000, () => setWaitText('数据量较大，请您耐心等待...'));
+  schedule(25000, () => setWaitCarousel());
 
-  at(27000, () => { clearWaitText(); setResult('已发现 <strong>3 类</strong>主要问题：物流配送（42%）、客户服务（28%）、产品质量（18%）。'); completeNode(n5); });
+  schedule(27000, () => { clearWaitText(); setResult('已发现 <strong>3 类</strong>主要问题：物流配送（42%）、客户服务（28%）、产品质量（18%）。'); completeNode(n5); });
 
   let n5b;
-  at(27500, () => {
+  schedule(27500, () => {
     setExecTitle('正在查询 Top 反馈客户....');
     n5b = addActionNode({
       stage: { cls: 'researcher', label: '数据分析' },
@@ -1905,21 +2755,26 @@ function playScenario() {
       files: [{ name: '反馈数_2025Q2.json', kind: 'data' }]
     });
   });
-  at(28100, () => renderChart(n5b));
-  at(31600, () => completeNode(n5b));
+  schedule(28100, () => renderChart(n5b));
+  schedule(31600, () => completeNode(n5b));
 
   let n6;
-  at(32000, () => {
+  schedule(32000, () => {
     collapseChart(n5b);
     setExecTitle('正在生成可视化图表....');
     n6 = addActionNode({ stage: { cls: 'reporter', label: '报告生成' }, title: '生成可视化图表', files: [{ name: '分类分布.png', kind: 'img', role: 'deliver' }, { name: '满意度趋势.png', kind: 'img', role: 'deliver' }, { name: 'Top 客户.png', kind: 'img', role: 'deliver' }] });
   });
-  at(34000, () => completeNode(n6));
+  schedule(34000, () => completeNode(n6));
 
   let n7;
-  at(34400, () => { setExecTitle('正在撰写汇报 PPT....'); n7 = addActionNode({ stage: { cls: 'reporter', label: '报告生成' }, title: '撰写汇报 PPT', detail: '组织封面 / 概览 / 三类问题 / 趋势 / Top 客户 / 行动项', files: [{ name: 'ppt_generator.py', kind: 'code' }, { name: '客户反馈分析汇报.pptx', role: 'deliver' }], code: '' }); });
-  at(34450, () => { if (isProductLiveScenario) renderLiveOutputsStage('ppt-start'); });
-  at(34600, () => appendCode(n7, [
+  schedule(PPT_START, () => { setExecTitle('正在撰写汇报 PPT....'); n7 = addActionNode({ stage: { cls: 'reporter', label: '报告生成' }, title: '撰写汇报 PPT', detail: '组织封面 / 概览 / 三类问题 / 趋势 / Top 客户 / 行动项', files: [{ name: 'ppt_generator.py', kind: 'code' }, { name: '客户反馈分析汇报.pptx', role: 'deliver' }], code: '' }); });
+  schedule(PPT_START + 50, () => {
+    if (isProductLiveScenario) {
+      markPanelAsLiveProgress();
+      renderLiveOutputsStage('ppt-start');
+    }
+  });
+  schedule(PPT_START + 200, () => appendCode(n7, [
     "from pptx import Presentation",
     "prs = Presentation('templates/dora.pptx')",
     "for slide_data in slides:",
@@ -1928,16 +2783,20 @@ function playScenario() {
     "上传文件中......"
   ], 380));
 
-  at(34700, () => openPreview('pptx', '客户反馈分析汇报.pptx', { progressive: true }));
-  PPT_SLIDES.forEach((s, i) => { at(35200 + i * (isProductLiveScenario ? 1500 : 700), () => appendPptSlideProgressive()); });
+  schedule(PPT_START + 300, () => openPreview('pptx', '客户反馈分析汇报.pptx', { progressive: true }));
+  PPT_SLIDES.forEach((s, i) => { schedule(PPT_START + 800 + i * (isProductLiveScenario ? 3500 : 700), () => appendPptSlideProgressive()); });
+  schedule(PPT_START + 1600, () => { if (isProductLiveScenario) setWaitText('正在排版幻灯片，预计还需 50s...'); });
+  schedule(PPT_START + 9600, () => { if (isProductLiveScenario) setWaitText('PPT 内容较多，请您稍候...'); });
+  schedule(PPT_START + 17600, () => { if (isProductLiveScenario) setWaitCarousel(['正在排版演示文稿...','正在生成关键结论页...','正在整理图表与备注...','幻灯片生成中，请稍候...']); });
 
-  at(40200, () => {
+  schedule(PPT_DONE, () => {
     completeNode(n7);
     if (isProductLiveScenario) renderLiveOutputsStage('ppt-ready');
   });
 
   let n8;
-  at(40500, () => {
+  schedule(ARCHIVE_HINT, () => { if (isProductLiveScenario) setWaitText('正在归档多格式产物...'); });
+  schedule(ARCHIVE_START, () => {
     setExecTitle('正在导出多格式归档....');
     n8 = addActionNode({
       stage: { cls: 'reporter', label: '报告生成' },
@@ -1953,9 +2812,9 @@ function playScenario() {
       ]
     });
   });
-  at(42700, () => completeNode(n8));
+  schedule(ARCHIVE_DONE, () => completeNode(n8));
 
-  at(43200, () => {
+  schedule(SUMMARY_START, () => {
     if (isProductLiveScenario) return;
     hideWaitLine();
     setResult(`
@@ -1972,11 +2831,11 @@ function playScenario() {
     `, { isFinal: true });
   });
 
-  at(45200, () => { if (!isProductLiveScenario) showLeadPill('正在为您渲染可交互看板', 1200); });
-  at(46400, () => { if (!isProductLiveScenario) renderInScenarioGenUI(); });
+  schedule(GENUI_START, () => { if (!isProductLiveScenario) showLeadPill('正在为您渲染可交互看板', 1200); });
+  schedule(GENUI_RENDER, () => { if (!isProductLiveScenario) renderInScenarioGenUI(); });
 
-  at(49200, () => { if (!isProductLiveScenario) showLeadPill('正在归集本次会话产出', 1100); });
-  at(50300, () => {
+  schedule(FINAL_OUTPUTS - 1100, () => { if (!isProductLiveScenario) showLeadPill('正在归集本次会话产出', 1100); });
+  schedule(FINAL_OUTPUTS, () => {
     if (!isProductLiveScenario) {
       renderOutputs([
         { type: 'skill', name: '客户反馈分析技能', sub: '自动生成', desc: '基于本次客户反馈明细自动生成。输入新的反馈表即可复用此分析流程。' },
@@ -1995,9 +2854,9 @@ function playScenario() {
   });
 
   if (isProductLiveScenario) {
-    at(41400, () => showLeadPill('正在为您渲染可交互看板', 1200));
-    at(42600, () => renderInScenarioGenUI());
-    at(46800, () => {
+    schedule(GENUI_START, () => showLeadPill('正在为您渲染可交互看板', 1200));
+    schedule(GENUI_RENDER, () => renderInScenarioGenUI());
+    schedule(SUMMARY_START, () => {
       hideWaitLine();
       setResult(`
         <p>本季度客户反馈共 <strong>1,247</strong> 条，主要集中在 <strong>3 类问题</strong>。整体满意度均值为 3.6（满分 5），低于上季度的 3.9${citation('客户反馈明细.xlsx · 原始反馈表', 1)}。</p>
@@ -2005,8 +2864,8 @@ function playScenario() {
         <div class="inline-img" data-caption="图 1 · 反馈类型分布">📊 反馈类型分布饼图</div>
       `, { isFinal: true });
     });
-    at(54000, () => renderLiveOutputsStage('archive-start'));
-    at(59600, () => renderOutputs([
+    schedule(ARCHIVE_START, () => renderLiveOutputsStage('archive-start'));
+    schedule(FINAL_OUTPUTS, () => renderOutputs([
       { type: 'images', name: '反馈分布图组', count: 3, sub: '图表已生成 · 共 3 张', onClick: () => openPreview('imgs', '反馈分布图组') },
       { type: 'pptx', name: '客户反馈分析汇报.pptx', sub: '2.4 MB · 8 页', onClick: () => openPreview('pptx', '客户反馈分析汇报.pptx') },
       { type: 'docx', name: '反馈分析报告.docx', sub: '320 KB · 给管理层', onClick: () => openPreview('docx', '反馈分析报告.docx') },
@@ -2025,22 +2884,12 @@ function playScenario() {
     }));
   }
 
-  at(55700, () => {
-    if (isProductLiveScenario) return;
+  schedule(SCENARIO_DONE, () => {
     foldPanelWithSummary(55);
     $('finalActions').classList.remove('is-hidden');
-    $('outputsCount').textContent = '11';
+    renderFilePanel();
     scrollToBottom();
   });
-
-  if (isProductLiveScenario) {
-    at(64000, () => {
-      foldPanelWithSummary(55);
-      $('finalActions').classList.remove('is-hidden');
-      $('outputsCount').textContent = '11';
-      scrollToBottom();
-    });
-  }
 }
 
 
@@ -2054,7 +2903,7 @@ function appendGenUIReply(userText) {
     <div class="msg-user"><div class="bubble">${userText}</div></div>
     <div class="agent-reply">
       <div class="agent-row">
-        <span class="agent-avatar"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5C8 1.5 3.5 6.5 3.5 10.2a4.5 4.5 0 009 0C12.5 6.5 8 1.5 8 1.5z"/></svg></span>
+        <span class="agent-avatar">${avatarImg('smart-data-agent', '智能问数')}</span>
         <span class="agent-name">${conversationConfigs[currentConversationType]?.agentName || 'Dora'}</span>
       </div>
       <div style="font-size:14px;color:var(--neutral-11);">根据上轮分析结果，为您渲染交互式分布卡片：</div>
@@ -2073,18 +2922,29 @@ function appendGenUIReply(userText) {
 function handleSend() {
   const input = $('conversationInput');
   const text = input.value.trim();
-  if (!text) return;
+  const refRow = $('conversationSenderFiles');
+  const references = Array.from(refRow?.querySelectorAll('.sender-ref-token') || []).map(token => token.dataset.refName || token.textContent.trim());
+  const hasReference = references.length > 0;
+  if (!text && !hasReference) return;
+  const messageText = text || '请帮我分析引用的文件';
   input.value = '';
+  if (refRow) {
+    refRow.innerHTML = '';
+    refRow.classList.remove('has-file');
+  }
   $('conversationSendBtn').classList.remove('is-active');
-  if (/genui/i.test(text)) {
-    appendGenUIReply(text);
+  if (/genui/i.test(messageText)) {
+    appendGenUIReply(messageText);
   } else {
     const wrap = document.createElement('div');
     wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;margin-top:8px;';
+    const refHtml = references.length
+      ? `<div class="sent-ref-row">${references.map(name => `<span class="sent-ref-token">@${name}</span>`).join('')}</div>`
+      : '';
     wrap.innerHTML = `
-      <div class="msg-user"><div class="bubble">${text}</div></div>
+      <div class="msg-user">${refHtml}<div class="bubble">${messageText}</div></div>
       <div class="agent-row" style="margin-top:8px;">
-        <span class="agent-avatar"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5C8 1.5 3.5 6.5 3.5 10.2a4.5 4.5 0 009 0C12.5 6.5 8 1.5 8 1.5z"/></svg></span>
+        <span class="agent-avatar">${avatarImg(currentConversationType === 'dora' ? 'dora-session' : `${currentConversationType}-agent`, conversationConfigs[currentConversationType]?.agentName || 'Dora')}</span>
         <span class="agent-name">${conversationConfigs[currentConversationType]?.agentName || 'Dora'}</span>
       </div>
       <div style="font-size:14px;color:var(--neutral-11);">（演示原型，仅支持 <strong>「重播剧本」</strong> 与 <strong>「genui」</strong> 触发；正式对话需接入后端）</div>`;
@@ -2103,8 +2963,31 @@ function bindFilesTabClicks() {
       document.querySelectorAll('.conv-files .files-tab').forEach(t => t.classList.remove('is-active'));
       tab.classList.add('is-active');
       const target = tab.dataset.tab;
-      $('filesListMaterials').hidden = (target !== 'input');
-      $('filesListOutputs').hidden = (target !== 'output');
+      const pane = $('paneFiles');
+      if (pane) pane.dataset.activeTab = target;
+      currentPreviewTab = target;
+      const inputList = $('filesListMaterials');
+      const outputList = $('filesListOutputs');
+      if (inputList) inputList.hidden = (target !== 'input');
+      if (outputList) outputList.hidden = (target !== 'output');
+      const toolbarInput = document.querySelector('.conv-files .input-toolbar-group');
+      const toolbarOutput = document.querySelector('.conv-files .output-toolbar-group');
+      const uploadBtn = document.querySelector('.conv-files .input-toolbar-action');
+      if (toolbarInput) toolbarInput.hidden = target !== 'input';
+      if (toolbarOutput) toolbarOutput.hidden = target !== 'output';
+      if (uploadBtn) uploadBtn.hidden = target !== 'input';
+      if (currentPreviewFile && currentPreviewFile.source === target) {
+        renderPreviewFrame(currentPreviewFile);
+        $('paneFiles').classList.add('is-preview-mode');
+        return;
+      }
+      const nextFile = getDefaultPreviewFile(target);
+      if (nextFile) {
+        currentPreviewFile = nextFile;
+        openPreview(nextFile.clickKind, nextFile.clickName);
+        return;
+      }
+      closePreview();
     });
   });
   // 资料面板顶部的"上传文件 / 平台数据"切换
@@ -2182,6 +3065,7 @@ document.addEventListener('pointerdown', event => {
   if (!event.target.closest('.modal') && !event.target.closest('[onclick*="openAssetModal"]') && !event.target.closest('[onclick*="openAssetPicker"]')) closeAssetModal();
   if (!event.target.closest('.library-popconfirm') && !event.target.closest('.library-state-btn')) closeLibraryPopconfirm();
   if (!event.target.closest('.rail-tab-wrap') && $('expertUnreadPopover')) $('expertUnreadPopover').classList.remove('open');
+  if (scenarioGuideOpen && !event.target.closest('.scenario-guide-panel') && !event.target.closest('.v-demo-toggle')) closeScenarioGuide();
 });
 
 document.addEventListener('pointerover', event => {
@@ -2207,9 +3091,17 @@ document.addEventListener('click', event => {
 const conversationInputEl = $('conversationInput');
 if (conversationInputEl) {
   conversationInputEl.addEventListener('input', e => {
-    $('conversationSendBtn').classList.toggle('is-active', e.target.value.trim().length > 0);
+    syncConversationSendState();
   });
   conversationInputEl.addEventListener('keydown', e => {
+    const row = $('conversationSenderFiles');
+    if ((e.key === 'Backspace' || e.key === 'Delete') && !e.target.value && row?.lastElementChild?.classList.contains('sender-ref-token')) {
+      row.lastElementChild.remove();
+      row.classList.toggle('has-file', Boolean(row.children.length));
+      syncConversationSendState();
+      e.preventDefault();
+      return;
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -2234,6 +3126,11 @@ function init() {
 
   // 初始化未读
   refreshExpertUnreadState();
+
+  // 初始化资源库 mock 资产
+  renderAssetLibrary();
+  syncAssetDetailPage('html');
+  hydrateLetterAvatars();
 
   // 渲染文件列表
   renderFilePanel();
