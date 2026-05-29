@@ -28,6 +28,13 @@ let waitTimerId = null;
 let carouselIntervalId = null;
 let actionCount = 0;
 let nodeCounter = 0;
+let currentPreviewFile = null;
+let currentPreviewHtmlMode = 'desktop';
+let currentPreviewImageScale = 1;
+let currentPreviewImageRotation = 0;
+let currentPreviewPdfZoom = 100;
+let currentPreviewPdfFit = 'fit-width';
+let currentPreviewPdfOrientation = 'vertical';
 
 const libraryFileState = {
   status: 'neverSaved',
@@ -35,6 +42,324 @@ const libraryFileState = {
   savedVersion: 0,
   sessionVersion: 1
 };
+
+const FILE_ACTIONS = {
+  input: {
+    frbiDashboard: ['quote', 'open'],
+    frbiFvs: ['quote', 'open'],
+    excel: ['quote', 'open', 'download'],
+    source: ['quote', 'open', 'download']
+  },
+  output: {
+    normal: ['quote', 'saveLibrary', 'share', 'open', 'download'],
+    skill: ['quote', 'saveBackend', 'share', 'open'],
+    ppt: ['quote', 'saveLibrary', 'share', 'open', 'download'],
+    html: ['quote', 'saveLibrary', 'share', 'open', 'download'],
+    md: ['quote', 'saveLibrary', 'share', 'open', 'download'],
+    image: ['quote', 'saveLibrary', 'share', 'open', 'download'],
+    pdf: ['quote', 'saveLibrary', 'share', 'open', 'download'],
+    docx: ['quote', 'download'],
+    source: ['quote', 'download']
+  }
+};
+
+const FILE_LABELS = {
+  input: '输入',
+  output: '输出'
+};
+
+const FILE_DEFS = {
+  input: [
+    { id: 'input-frbi-dashboard', source: 'input', type: 'frbiDashboard', ext: 'BI', name: '客户仪表板', meta: 'FRBI · 仪表板 · 只读引用', icon: 'BI', iconClass: 'bi', clickKind: 'html', clickName: '客户仪表板' },
+    { id: 'input-frbi-fvs', source: 'input', type: 'frbiFvs', ext: 'FVS', name: '分析主题.fvs', meta: 'FRBI · 模型指标集 · 不支持存资料库', icon: 'FVS', iconClass: 'skill', clickKind: 'json', clickName: '分析主题.fvs' },
+    { id: 'input-source-doc', source: 'input', type: 'source', ext: 'TXT', name: '销售预测规则说明.txt', meta: '24 KB · 其他类输入', icon: 'TXT', iconClass: 'md', clickKind: 'source', clickName: '销售预测规则说明.txt' },
+    { id: 'input-excel', source: 'input', type: 'excel', ext: 'XLSX', name: '客户反馈明细.xlsx', meta: '161.17 KB · 用户上传', icon: 'XLSX', iconClass: 'xlsx', clickKind: 'xlsx', clickName: '客户反馈明细.xlsx' }
+  ],
+  output: [
+    { id: 'output-skill', source: 'output', type: 'skill', ext: 'SKILL', name: '客户反馈分析技能', meta: '技能 · Agent 自动生成', icon: 'SKILL', iconClass: 'skill', clickKind: 'skill', clickName: '客户反馈分析技能' },
+    { id: 'output-ppt', source: 'output', type: 'ppt', ext: 'PPTX', name: '客户反馈分析汇报.pptx', meta: '2.4 MB · Agent 产出', icon: 'PPTX', iconClass: 'pptx', clickKind: 'pptx', clickName: '客户反馈分析汇报.pptx' },
+    { id: 'output-docx', source: 'output', type: 'docx', ext: 'DOCX', name: '反馈分析报告.docx', meta: '320 KB · 给管理层 · Agent 产出', icon: 'DOCX', iconClass: 'docx', clickKind: 'docx', clickName: '反馈分析报告.docx' },
+    { id: 'output-pdf', source: 'output', type: 'pdf', ext: 'PDF', name: '反馈分析报告.pdf', meta: '480 KB · 归档版 · Agent 产出', icon: 'PDF', iconClass: 'pdf', clickKind: 'pdf', clickName: '反馈分析报告.pdf' },
+    { id: 'output-md', source: 'output', type: 'md', ext: 'MD', name: '反馈分析报告.md', meta: '12 KB · Agent 产出', icon: 'MD', iconClass: 'md', clickKind: 'md', clickName: '反馈分析报告.md' },
+    { id: 'output-html', source: 'output', type: 'html', ext: 'HTML', name: '反馈分布看板.html', meta: '24 KB · 可交互 · Agent 产出', icon: 'HTML', iconClass: 'html', clickKind: 'html', clickName: '反馈分布看板.html' },
+    { id: 'output-xlsx', source: 'output', type: 'source', ext: 'XLSX', name: '反馈分类结果.xlsx', meta: '186 KB · 清洗后数据 · Agent 产出', icon: 'XLSX', iconClass: 'xlsx', clickKind: 'xlsx', clickName: '反馈分类结果.xlsx' },
+    { id: 'output-csv', source: 'output', type: 'source', ext: 'CSV', name: '反馈分类明细.csv', meta: '142 KB · 1,247 行 · Agent 产出', icon: 'CSV', iconClass: 'csv', clickKind: 'csv', clickName: '反馈分类明细.csv' },
+    { id: 'output-json', source: 'output', type: 'source', ext: 'JSON', name: 'analysis_result.json', meta: '38 KB · 结构化结果 · Agent 产出', icon: 'JSON', iconClass: 'json', clickKind: 'json', clickName: 'analysis_result.json' },
+    { id: 'output-img', source: 'output', type: 'image', ext: 'PNG', name: '反馈分布图组（3 张）', meta: '1.8 MB · Agent 产出', icon: 'PNG', iconClass: 'imgs', clickKind: 'imgs', clickName: '反馈分布图组' },
+    { id: 'output-zip', source: 'output', type: 'source', ext: 'ZIP', name: '完整交付包.zip', meta: '5.2 MB · 包含全部产物 · Agent 产出', icon: 'ZIP', iconClass: 'zip', clickKind: 'zip', clickName: '完整交付包.zip' }
+  ]
+};
+
+const FILE_PANEL_STATE = {
+  input: FILE_DEFS.input.map(item => ({ ...item })),
+  output: FILE_DEFS.output.map(item => ({ ...item })),
+  savedAssets: []
+};
+
+const INITIAL_LIBRARY_ASSET = {
+  name: '销售预测系统.html',
+  source: '来自会话文件快照',
+  icon: 'HTML',
+  typeClass: 'html'
+};
+
+function getFileActions(source, type) {
+  return FILE_ACTIONS[source][type] || FILE_ACTIONS[source].normal;
+}
+
+function buildFileActionButton(action, file) {
+  if (action === 'quote') {
+    return `<button class="btn-attach" onclick="event.stopPropagation(); addFileToConversation('${file.clickName}')">引用</button>`;
+  }
+  if (action === 'open') {
+    return `<button class="file-icon-action" title="新窗口打开" onclick="event.stopPropagation(); openFileInNewWindow('${file.clickKind}', '${file.clickName}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h7v7"/><path d="M13 3L7 9"/><path d="M4 5H3v8h8v-1"/></svg></button>`;
+  }
+  if (action === 'download') {
+    return `<button class="file-icon-action" title="下载" onclick="event.stopPropagation(); downloadFile('${file.clickName}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button>`;
+  }
+  if (action === 'share') {
+    return `<button class="file-icon-action" title="分享" onclick="event.stopPropagation(); shareFile('${file.clickName}')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 4.5L6.7 6.3"/><path d="M10.5 11.5L6.7 9.7"/><path d="M4.5 9.5a1.5 1.5 0 1 0 0-3"/><path d="M11.5 4.5a1.5 1.5 0 1 0 0 3"/><path d="M11.5 11.5a1.5 1.5 0 1 0 0-3"/></svg></button>`;
+  }
+  if (action === 'saveLibrary') {
+    if (file.savedToLibrary) {
+      return `<button class="library-state-btn is-compact is-saved" disabled onclick="event.stopPropagation()">已存入资料库</button>`;
+    }
+    return `<button class="library-state-btn is-compact" onclick="event.stopPropagation(); handleOutputLibrarySave('${file.clickName}')">存到资料库</button>`;
+  }
+  if (action === 'saveBackend') {
+    return `<button class="library-state-btn is-compact" onclick="event.stopPropagation(); saveSkillToBackend('${file.clickName}')">另存到后台</button>`;
+  }
+  return '';
+}
+
+function renderFileRow(file) {
+  const actions = getFileActions(file.source, file.type);
+  const actionHtml = actions.map(action => buildFileActionButton(action, file)).join('');
+  const openAttr = `onclick="handleFileRowClick('${file.id}')"`;
+  return `
+    <div class="file-row" data-source="${file.source}" data-filetype="${file.type}" ${openAttr}>
+      <div class="file-icon ${file.iconClass}">${file.icon}</div>
+      <div class="file-info">
+        <div class="file-name">${file.name}</div>
+        <div class="file-size">${file.meta}</div>
+      </div>
+      <div class="file-actions">${actionHtml}</div>
+    </div>`;
+}
+
+function findFileById(fileId) {
+  return [...FILE_PANEL_STATE.input, ...FILE_PANEL_STATE.output].find(file => file.id === fileId);
+}
+
+function handleFileRowClick(fileId) {
+  const file = findFileById(fileId);
+  if (!file) return;
+  if (file.source === 'input') {
+    openFileInNewWindow(file.clickKind, file.clickName);
+    return;
+  }
+  openPreview(file.clickKind, file.clickName);
+}
+
+function renderFilePanel() {
+  const inputList = $('filesListMaterials');
+  const outputList = $('filesListOutputs');
+  if (inputList) inputList.innerHTML = FILE_PANEL_STATE.input.map(renderFileRow).join('');
+  if (outputList) outputList.innerHTML = FILE_PANEL_STATE.output.map(renderFileRow).join('');
+  const materialsCount = $('materialsCount');
+  if (materialsCount) materialsCount.textContent = String(FILE_PANEL_STATE.input.length);
+  const outputsCount = $('outputsCount');
+  if (outputsCount) outputsCount.textContent = String(FILE_PANEL_STATE.output.length);
+}
+
+function getPreviewFile(fileName) {
+  return [...FILE_PANEL_STATE.input, ...FILE_PANEL_STATE.output].find(file => file.clickName === fileName || file.name === fileName) || null;
+}
+
+function renderPreviewToolbarActions(file) {
+  const actionWrap = $('previewActions');
+  if (!actionWrap) return;
+  if (!file) {
+    actionWrap.innerHTML = '';
+    return;
+  }
+  actionWrap.innerHTML = getFileActions(file.source, file.type).map(action => buildFileActionButton(action, file)).join('');
+}
+
+function renderPreviewModeTools(file, mode) {
+  const tools = $('previewModeTools');
+  if (!tools) return;
+  if (!file) {
+    tools.innerHTML = '';
+    return;
+  }
+  if (mode === 'ppt') {
+    tools.innerHTML = `
+      <button class="preview-tool-btn">风格</button>
+      <button class="preview-tool-btn">演示者备注</button>
+    `;
+    return;
+  }
+  if (mode === 'html') {
+    tools.innerHTML = `
+      <div class="preview-tool-group">
+        <button class="preview-tool-btn is-active" data-html-mode="desktop" onclick="setHtmlPreviewMode('desktop')">电脑</button>
+        <button class="preview-tool-btn" data-html-mode="mobile" onclick="setHtmlPreviewMode('mobile')">手机</button>
+      </div>
+      <button class="preview-tool-btn" onclick="refreshHtmlPreview()">刷新</button>
+    `;
+    return;
+  }
+  if (mode === 'md') {
+    tools.innerHTML = `<button class="preview-tool-btn">风格</button>`;
+    return;
+  }
+  if (mode === 'image') {
+    tools.innerHTML = `
+      <button class="preview-tool-btn" onclick="zoomPreviewImage(1.15)">放大</button>
+      <button class="preview-tool-btn" onclick="zoomPreviewImage(0.87)">缩小</button>
+      <button class="preview-tool-btn" onclick="rotatePreviewImage()">旋转</button>
+    `;
+    return;
+  }
+  if (mode === 'pdf') {
+    tools.innerHTML = `
+      <button class="preview-tool-btn">目录</button>
+      <button class="preview-tool-btn">跳页</button>
+      <button class="preview-tool-btn" onclick="zoomPreviewPdf(10)">放大</button>
+      <button class="preview-tool-btn" onclick="zoomPreviewPdf(-10)">缩小</button>
+      <button class="preview-tool-btn" onclick="togglePdfFitMode()">适应</button>
+      <button class="preview-tool-btn" onclick="togglePdfOrientation()">方向</button>
+    `;
+    return;
+  }
+  tools.innerHTML = '';
+}
+
+function renderPreviewBody(file, mode) {
+  const slideList = $('slideList');
+  const slideCanvas = $('slideCanvas');
+  if (!slideList || !slideCanvas) return;
+  slideList.innerHTML = '';
+  slideCanvas.classList.remove('is-fading');
+  if (!file) {
+    slideCanvas.innerHTML = `<div class="preview-empty-state"><div class="preview-empty-title">未选择文件</div><div class="preview-empty-copy">请选择一个会话文件来查看预览。</div></div>`;
+    return;
+  }
+  if (mode === 'ppt') {
+    renderAllSlides();
+    return;
+  }
+  if (mode === 'skill') {
+    slideCanvas.innerHTML = `
+      <div class="preview-empty-state">
+        <div class="preview-empty-title">技能文件</div>
+        <div class="preview-empty-copy">${file.savedToBackend ? '已另存到后台，可继续回填提示词到 sender。' : '可选择另存到后台，并回填提示词到 sender。'}</div>
+        <button class="preview-empty-action" onclick="fillSkillPromptToSender()">回填提示词到 sender</button>
+      </div>`;
+    return;
+  }
+  if (mode === 'html') {
+    slideCanvas.innerHTML = `
+      <div class="html-preview-frame ${currentPreviewHtmlMode}">
+        <div class="html-preview-device">
+          <div class="html-preview-address">https://preview.local/${file.clickName}</div>
+          <div class="html-preview-content">
+            <div class="html-preview-kpi">反馈总量 1,247</div>
+            <div class="html-preview-chart"></div>
+            <div class="html-preview-grid">
+              <div class="html-preview-card">物流配送 42%</div>
+              <div class="html-preview-card">客户服务 28%</div>
+              <div class="html-preview-card">产品质量 18%</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    return;
+  }
+  if (mode === 'md') {
+    slideCanvas.innerHTML = `
+      <div class="md-preview">
+        <div class="md-preview-title">${file.name}</div>
+        <div class="md-preview-body">
+          <p>本报告仅支持风格切换，不支持正文编辑。</p>
+          <p>适合快速浏览、引用和继续沉淀到资料库。</p>
+        </div>
+      </div>`;
+    return;
+  }
+  if (mode === 'image') {
+    slideCanvas.innerHTML = `
+      <div class="image-preview-shell">
+        <div class="image-preview-canvas" style="transform: scale(${currentPreviewImageScale}) rotate(${currentPreviewImageRotation}deg);">
+          <div class="image-preview-placeholder">图片组预览</div>
+        </div>
+      </div>`;
+    return;
+  }
+  if (mode === 'pdf') {
+    slideCanvas.innerHTML = `
+      <div class="pdf-reader-shell ${currentPreviewPdfOrientation}">
+        <div class="pdf-reader-toolbar">
+          <span>缩放 ${currentPreviewPdfZoom}%</span>
+          <span>${currentPreviewPdfFit}</span>
+        </div>
+        <div class="pdf-reader-page">PDF 预览页</div>
+      </div>`;
+    return;
+  }
+  slideCanvas.innerHTML = `
+    <div class="preview-empty-state">
+      <div class="preview-empty-title">暂不支持预览</div>
+      <div class="preview-empty-copy">该类型文件仅支持引用、下载，必要时可新窗口打开。</div>
+    </div>`;
+}
+
+function renderPreviewFrame(file) {
+  const mode = getPreviewMode(file?.clickKind);
+  renderPreviewToolbarActions(file);
+  renderPreviewModeTools(file, mode);
+  renderPreviewBody(file, mode);
+}
+
+function setHtmlPreviewMode(mode) {
+  currentPreviewHtmlMode = mode;
+  const file = currentPreviewFile;
+  if (!file) return;
+  renderPreviewFrame(file);
+}
+
+function refreshHtmlPreview() {
+  const file = currentPreviewFile;
+  if (!file) return;
+  renderPreviewFrame(file);
+  showToast('HTML 预览已刷新');
+}
+
+function zoomPreviewImage(multiplier) {
+  currentPreviewImageScale = Math.max(0.5, Math.min(2.4, Math.round((currentPreviewImageScale * multiplier) * 100) / 100));
+  if (currentPreviewFile) renderPreviewFrame(currentPreviewFile);
+}
+
+function rotatePreviewImage() {
+  currentPreviewImageRotation = (currentPreviewImageRotation + 90) % 360;
+  if (currentPreviewFile) renderPreviewFrame(currentPreviewFile);
+}
+
+function zoomPreviewPdf(delta) {
+  currentPreviewPdfZoom = Math.max(50, Math.min(180, currentPreviewPdfZoom + delta));
+  if (currentPreviewFile) renderPreviewFrame(currentPreviewFile);
+}
+
+function togglePdfFitMode() {
+  currentPreviewPdfFit = currentPreviewPdfFit === 'fit-width' ? 'fit-page' : 'fit-width';
+  if (currentPreviewFile) renderPreviewFrame(currentPreviewFile);
+}
+
+function togglePdfOrientation() {
+  currentPreviewPdfOrientation = currentPreviewPdfOrientation === 'vertical' ? 'horizontal' : 'vertical';
+  if (currentPreviewFile) renderPreviewFrame(currentPreviewFile);
+}
 
 // chatBody 是 B 对话区的滚动容器
 const chatBody = $('chatBody');
@@ -575,6 +900,21 @@ function syncLibraryStateButtons() {
   if (savedAsset) savedAsset.classList.toggle('visible', libraryFileState.status === 'savedClean' || libraryFileState.status === 'savedDirty');
 }
 
+function updateSavedAssetCard(asset) {
+  const savedAsset = $('savedFromSessionAsset');
+  if (!savedAsset) return;
+  const icon = savedAsset.querySelector('.asset-name .file-badge');
+  const name = savedAsset.querySelector('.asset-name span:last-child');
+  const source = savedAsset.querySelector('.asset-foot span:first-child');
+  if (icon) {
+    icon.className = `file-badge ${asset.typeClass || 'html'}`;
+    icon.textContent = asset.icon || 'FILE';
+  }
+  if (name) name.textContent = asset.name;
+  if (source) source.textContent = asset.source;
+  savedAsset.classList.add('visible');
+}
+
 function handleLibraryStateButton(event) {
   event.stopPropagation();
   if (libraryFileState.status === 'savedClean') return;
@@ -606,6 +946,7 @@ function saveLibrarySnapshot(mode) {
   libraryFileState.hasDuplicateName = false;
   closeLibraryPopconfirm();
   syncLibraryStateButtons();
+  updateSavedAssetCard(INITIAL_LIBRARY_ASSET);
   const copy = mode === 'sync' ? '已同步会话文件的最新快照到资料库' : mode === 'overwrite' ? '已覆盖存入资料库快照' : '已另存新文件到资料库';
   showToast(copy);
 }
@@ -655,6 +996,63 @@ function toggleAssetHistoryMode() {
 function openSourceConversationFromAsset() {
   showToast('已切换到由此文件发起的历史会话');
   openConversation('dora');
+}
+
+function addFileToConversation(fileName) {
+  addSenderFileChip('conversation', 'REF', fileName, 'blue');
+  showToast(`已引用 ${fileName}`);
+}
+
+function openFileInNewWindow(kind, fileName) {
+  openPreview(kind, fileName);
+  showToast(`已在新窗口打开 ${fileName}`);
+}
+
+function downloadFile(fileName) {
+  showToast(`开始下载 ${fileName}`);
+}
+
+function shareFile(fileName) {
+  showToast(`已生成 ${fileName} 的分享链接`);
+}
+
+function handleOutputLibrarySave(fileName) {
+  const file = FILE_PANEL_STATE.output.find(item => item.clickName === fileName || item.name === fileName);
+  if (!file) return;
+  file.savedToLibrary = true;
+  FILE_PANEL_STATE.savedAssets = [{
+    name: file.name,
+    source: '来自会话输出',
+    icon: file.ext,
+    typeClass: file.iconClass === 'pptx' ? 'ppt' : file.iconClass
+  }];
+  updateSavedAssetCard(FILE_PANEL_STATE.savedAssets[0]);
+  renderFilePanel();
+  if (currentPreviewFile && (currentPreviewFile.clickName === file.clickName || currentPreviewFile.name === file.name)) {
+    currentPreviewFile = file;
+    renderPreviewFrame(file);
+  }
+  showToast(`已将 ${file.name} 存到资料库`);
+}
+
+function saveSkillToBackend(fileName) {
+  const file = FILE_PANEL_STATE.output.find(item => item.clickName === fileName || item.name === fileName);
+  if (file) file.savedToBackend = true;
+  renderFilePanel();
+  if (file && currentPreviewFile && (currentPreviewFile.clickName === file.clickName || currentPreviewFile.name === file.name)) {
+    currentPreviewFile = file;
+    renderPreviewFrame(file);
+  }
+  showToast(`已将 ${fileName} 另存到后台`);
+}
+
+function fillSkillPromptToSender() {
+  const input = $('conversationInput');
+  if (!input) return;
+  input.value = '使用「客户反馈分析技能」分析新的客户反馈文件，并输出分类结果和汇报建议。';
+  $('conversationSendBtn').classList.add('is-active');
+  input.focus();
+  showToast('已回填技能提示词到输入框');
 }
 
 
@@ -1128,6 +1526,16 @@ function buildOutputCard(it) {
   return card;
 }
 
+function getPreviewMode(kind) {
+  if (kind === 'pptx') return 'ppt';
+  if (kind === 'html') return 'html';
+  if (kind === 'md') return 'md';
+  if (kind === 'imgs') return 'image';
+  if (kind === 'pdf') return 'pdf';
+  if (kind === 'skill') return 'skill';
+  return 'generic';
+}
+
 async function renderOutputs(items, opts = {}) {
   const {
     titleText = `本次为您准备了 <span class="count">${items.length}</span> 个产物`,
@@ -1177,24 +1585,24 @@ let currentSlideIdx = 0, pptSlidesAdded = 0;
 function openPreview(kind, filename, opts = {}) {
   const pane = $('paneFiles');
   if (!pane) return;
-  if (kind !== 'pptx') {
-    pane.classList.add('is-preview-mode');
-    $('previewIcon').className = 'file-icon ' + kind;
-    $('previewIcon').textContent = (kind || 'FILE').toUpperCase();
-    $('previewFilename').textContent = filename;
-    $('slideList').innerHTML = '';
-    $('slideCanvas').innerHTML = `<div style="text-align:center;color:rgba(255,255,255,0.6);margin-top:32%;">该文件类型的预览（demo 占位）</div>`;
-    return;
-  }
+  const mode = getPreviewMode(kind);
+  currentPreviewFile = getPreviewFile(filename);
   pane.classList.add('is-preview-mode');
-  $('previewIcon').className = 'file-icon pptx';
-  $('previewIcon').textContent = 'PPTX';
+  $('previewIcon').className = `file-icon ${kind}`;
+  $('previewIcon').textContent = (kind || 'FILE').toUpperCase();
   $('previewFilename').textContent = filename;
-  if (opts.progressive) {
-    resetPptPreview();
+  if (mode === 'ppt') {
+    if (opts.progressive) {
+      renderPreviewToolbarActions(currentPreviewFile || { clickKind: kind, clickName: filename, name: filename, source: 'output', type: 'ppt' });
+      renderPreviewModeTools(currentPreviewFile || { clickKind: kind, clickName: filename, name: filename, source: 'output', type: 'ppt' }, mode);
+      resetPptPreview();
+      return;
+    }
+    renderPreviewFrame(currentPreviewFile || { clickKind: kind, clickName: filename, name: filename, source: 'output', type: 'ppt' });
+    renderAllSlides();
     return;
   }
-  renderAllSlides();
+  renderPreviewFrame(currentPreviewFile || { clickKind: kind, clickName: filename, name: filename, source: 'output', type: 'source' });
 }
 function closePreview() { $('paneFiles').classList.remove('is-preview-mode'); }
 function buildSlideThumb(slide, index) {
@@ -1302,7 +1710,6 @@ function resetScenario() {
   const os = $('outputsSection'); os.classList.remove('is-visible'); os.hidden = true; os.innerHTML = '';
   $('finalActions').classList.add('is-hidden');
   document.querySelectorAll('.conv-chat .lead-pill').forEach(el => el.remove());
-  ['outputSkillRow','outputPptRow','outputDocxRow','outputPdfRow','outputMdRow','outputHtmlRow','outputXlsxRow','outputCsvRow','outputJsonRow','outputImgRow','outputZipRow'].forEach(id => { const el = $(id); if (el) el.style.display = 'none'; });
   $('outputsCount').textContent = '0';
   $('extraReplies').innerHTML = '';
   closePreview(); resetPptPreview();
@@ -1486,8 +1893,6 @@ function playScenario() {
     if (isProductLiveScenario) return;
     foldPanelWithSummary(55);
     $('finalActions').classList.remove('is-hidden');
-    ['outputSkillRow','outputPptRow','outputDocxRow','outputPdfRow','outputMdRow','outputHtmlRow','outputXlsxRow','outputCsvRow','outputJsonRow','outputImgRow','outputZipRow']
-      .forEach(id => { const el = $(id); if (el) el.style.display = ''; });
     $('outputsCount').textContent = '11';
     scrollToBottom();
   });
@@ -1496,8 +1901,6 @@ function playScenario() {
     at(64000, () => {
       foldPanelWithSummary(55);
       $('finalActions').classList.remove('is-hidden');
-      ['outputSkillRow','outputPptRow','outputDocxRow','outputPdfRow','outputMdRow','outputHtmlRow','outputXlsxRow','outputCsvRow','outputJsonRow','outputImgRow','outputZipRow']
-        .forEach(id => { const el = $(id); if (el) el.style.display = ''; });
       $('outputsCount').textContent = '11';
       scrollToBottom();
     });
@@ -1564,8 +1967,8 @@ function bindFilesTabClicks() {
       document.querySelectorAll('.conv-files .files-tab').forEach(t => t.classList.remove('is-active'));
       tab.classList.add('is-active');
       const target = tab.dataset.tab;
-      $('filesListMaterials').hidden = (target !== 'materials');
-      $('filesListOutputs').hidden = (target !== 'outputs');
+      $('filesListMaterials').hidden = (target !== 'input');
+      $('filesListOutputs').hidden = (target !== 'output');
     });
   });
   // 资料面板顶部的"上传文件 / 平台数据"切换
@@ -1696,8 +2099,13 @@ function init() {
   // 初始化未读
   refreshExpertUnreadState();
 
+  // 渲染文件列表
+  renderFilePanel();
+
   // 绑定 B 的 Tab 切换
   bindFilesTabClicks();
+  const outputTab = document.querySelector('.conv-files .files-tab[data-tab="output"]');
+  if (outputTab) outputTab.click();
 
   // 初始化会话文件和资料库快照状态
   syncLibraryStateButtons();

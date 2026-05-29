@@ -219,7 +219,6 @@
                   <div class="file-meta-name">客户反馈明细.xlsx</div>
                   <div class="file-meta-size">161.17 KB</div>
                 </div>
-                <button class="library-state-btn" id="chatFileLibraryBtn" onclick="handleLibraryStateButton(event)">存入资料库</button>
               </div>
               <div class="bubble" id="conversationUserText">请帮我分析这份客户反馈 Excel，找出主要问题，并生成一份汇报 PPT。</div>
             </div>
@@ -307,106 +306,33 @@
         <aside class="conv-files" id="paneFiles">
           <header class="files-header">
             <div class="files-tabs">
-              <button class="files-tab is-active" data-tab="materials">资料<span class="tab-count" id="materialsCount">1</span></button>
-              <button class="files-tab" data-tab="outputs">产出<span class="tab-count" id="outputsCount">0</span></button>
+              <button class="files-tab is-active" data-tab="input">输入<span class="tab-count" id="materialsCount">0</span></button>
+              <button class="files-tab" data-tab="output">输出<span class="tab-count" id="outputsCount">0</span></button>
             </div>
             <button class="icon-btn files-close" title="关闭" onclick="toggleFilesPanel()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
           </header>
 
           <div class="files-toolbar">
             <div class="toolbar-group">
-              <button class="btn-pill is-primary">上传文件</button>
-              <button class="btn-pill">平台数据</button>
+              <button class="btn-pill is-primary">本地文件</button>
+              <button class="btn-pill">平台资产</button>
               <input class="search-input" placeholder="搜索名称" />
             </div>
             <button class="btn-upload"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="5" height="5" rx="0.6"/><rect x="9" y="2" width="5" height="5" rx="0.6"/><rect x="2" y="9" width="5" height="5" rx="0.6"/><rect x="9" y="9" width="5" height="5" rx="0.6"/></svg>上传</button>
           </div>
 
-          <div class="files-list" id="filesListMaterials">
-            <div class="file-row" onclick="openPreview('xlsx', '客户反馈明细.xlsx')">
-              <div class="file-icon xlsx">XLSX</div>
-              <div class="file-info">
-                <div class="file-name">客户反馈明细.xlsx</div>
-                <div class="file-size">161.17 KB · 用户上传</div>
-              </div>
-              <div class="file-actions">
-                <button class="library-state-btn is-compact" id="panelFileLibraryBtn" onclick="handleLibraryStateButton(event)">存入资料库</button>
-                <button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button>
-                <button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button>
-                <button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button>
-              </div>
-            </div>
-          </div>
+          <div class="files-list" id="filesListMaterials"></div>
 
-          <div class="files-list" id="filesListOutputs" hidden>
-            <div class="file-row" id="outputSkillRow" style="display:none">
-              <div class="file-icon skill"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v5l-2 2"/><path d="M9 5l4 4-2.5 2.5L7 8"/><path d="M5.5 10.5L4 12l2 2 1.5-1.5"/></svg></div>
-              <div class="file-info"><div class="file-name">客户反馈分析技能</div><div class="file-size">技能 · Agent 自动生成</div></div>
-              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
-            </div>
-            <div class="file-row" id="outputPptRow" style="display:none" onclick="openPreview('pptx', '客户反馈分析汇报.pptx')">
-              <div class="file-icon pptx">PPTX</div>
-              <div class="file-info"><div class="file-name">客户反馈分析汇报.pptx</div><div class="file-size">2.4 MB · Agent 产出</div></div>
-              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
-            </div>
-            <div class="file-row" id="outputDocxRow" style="display:none" onclick="openPreview('docx', '反馈分析报告.docx')">
-              <div class="file-icon docx">DOCX</div>
-              <div class="file-info"><div class="file-name">反馈分析报告.docx</div><div class="file-size">320 KB · 给管理层 · Agent 产出</div></div>
-              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
-            </div>
-            <div class="file-row" id="outputPdfRow" style="display:none" onclick="openPreview('pdf', '反馈分析报告.pdf')">
-              <div class="file-icon pdf">PDF</div>
-              <div class="file-info"><div class="file-name">反馈分析报告.pdf</div><div class="file-size">480 KB · 归档版 · Agent 产出</div></div>
-              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
-            </div>
-            <div class="file-row" id="outputMdRow" style="display:none" onclick="openPreview('md', '反馈分析报告.md')">
-              <div class="file-icon md">MD</div>
-              <div class="file-info"><div class="file-name">反馈分析报告.md</div><div class="file-size">12 KB · Agent 产出</div></div>
-              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
-            </div>
-            <div class="file-row" id="outputHtmlRow" style="display:none" onclick="openPreview('html', '反馈分布看板.html')">
-              <div class="file-icon html">HTML</div>
-              <div class="file-info"><div class="file-name">反馈分布看板.html</div><div class="file-size">24 KB · 可交互 · Agent 产出</div></div>
-              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
-            </div>
-            <div class="file-row" id="outputXlsxRow" style="display:none" onclick="openPreview('xlsx', '反馈分类结果.xlsx')">
-              <div class="file-icon xlsx">XLSX</div>
-              <div class="file-info"><div class="file-name">反馈分类结果.xlsx</div><div class="file-size">186 KB · 清洗后数据 · Agent 产出</div></div>
-              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
-            </div>
-            <div class="file-row" id="outputCsvRow" style="display:none" onclick="openPreview('csv', '反馈分类明细.csv')">
-              <div class="file-icon csv">CSV</div>
-              <div class="file-info"><div class="file-name">反馈分类明细.csv</div><div class="file-size">142 KB · 1,247 行 · Agent 产出</div></div>
-              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
-            </div>
-            <div class="file-row" id="outputJsonRow" style="display:none" onclick="openPreview('json', 'analysis_result.json')">
-              <div class="file-icon json">JSON</div>
-              <div class="file-info"><div class="file-name">analysis_result.json</div><div class="file-size">38 KB · 结构化结果 · Agent 产出</div></div>
-              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
-            </div>
-            <div class="file-row" id="outputImgRow" style="display:none" onclick="openPreview('imgs', '反馈分布图组')">
-              <div class="file-icon imgs">PNG</div>
-              <div class="file-info"><div class="file-name">反馈分布图组（3 张）</div><div class="file-size">1.8 MB · Agent 产出</div></div>
-              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
-            </div>
-            <div class="file-row" id="outputZipRow" style="display:none" onclick="openPreview('zip', '完整交付包.zip')">
-              <div class="file-icon zip">ZIP</div>
-              <div class="file-info"><div class="file-name">完整交付包.zip</div><div class="file-size">5.2 MB · 包含全部产物 · Agent 产出</div></div>
-              <div class="file-actions"><button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button><button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button><button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button></div>
-            </div>
-          </div>
+          <div class="files-list" id="filesListOutputs" hidden></div>
 
           <div class="files-preview" id="filesPreview">
             <div class="preview-toolbar">
               <button class="preview-back" title="返回" onclick="closePreview()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3L5 8l5 5"/></svg></button>
               <div class="file-icon pptx" id="previewIcon">PPTX</div>
               <span class="preview-filename" id="previewFilename">客户反馈分析汇报.pptx</span>
-              <div class="preview-actions">
-                <button class="btn-attach">@到对话</button>
-                <button class="icon-btn" title="分享"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v3a1 1 0 001 1h10a1 1 0 001-1v-3"/><path d="M10 4v9"/><path d="M6.5 7.5L10 4l3.5 3.5"/></svg></button>
-                <button class="icon-btn" title="下载"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4v10"/><path d="M6 10l4 4 4-4"/><path d="M4 17h12"/></svg></button>
-              </div>
+              <div class="preview-actions" id="previewActions"></div>
             </div>
+            <div class="preview-mode-tools" id="previewModeTools"></div>
             <div class="preview-body">
               <div class="slide-list" id="slideList"></div>
               <div class="slide-main">
