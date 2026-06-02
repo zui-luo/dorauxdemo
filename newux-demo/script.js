@@ -232,11 +232,6 @@ const ASSET_LIBRARY_DEFS = {
     versionLabel: 'V2 · 规则优化版',
     sourceConversation: '销售预测系统规则调整',
     sourceDesc: '本次版本基于销售预测系统规则调整而来，包含资金余额预测、规则配置与趋势图。',
-    historyTitle: '仅展示 dora 中由此文件发起的会话',
-    historyItems: [
-      { title: '销售预测系统规则调整', desc: '原始生成会话' },
-      { title: '现金流预测复盘', desc: '引用该资料' }
-    ],
     preview: `
       <div class="report-card">
         <h3>Data Agent 看板摘要</h3>
@@ -273,11 +268,6 @@ const ASSET_LIBRARY_DEFS = {
     versionLabel: 'V3 · 汇报定稿',
     sourceConversation: '经营分析PPT生成',
     sourceDesc: '本次版本适用于经营汇报，包含趋势页、问题页、行动项和附录页。',
-    historyTitle: '仅展示 dora 中由此文件发起的会话',
-    historyItems: [
-      { title: '经营分析PPT生成', desc: '原始生成会话' },
-      { title: '经营会预演彩排', desc: '引用该资料' }
-    ],
     preview: `
       <div class="report-card">
         <h3>汇报结构</h3>
@@ -324,11 +314,6 @@ const ASSET_LIBRARY_DEFS = {
     versionLabel: 'V1 · 洞察初版',
     sourceConversation: '高价值客户分群洞察',
     sourceDesc: '本资料由 Data Agent 基于客户交易、活跃行为与服务反馈生成，沉淀了客户分层、转化路径和流失风险看板。',
-    historyTitle: '仅展示 dora 中由此文件发起的会话',
-    historyItems: [
-      { title: '高价值客户分群洞察', desc: '原始生成会话' },
-      { title: '会员运营策略复盘', desc: '引用该资料' }
-    ],
     preview: `
       <div class="report-card">
         <h3>客户分群摘要</h3>
@@ -366,11 +351,6 @@ const ASSET_LIBRARY_DEFS = {
     versionLabel: 'V2 · 管理层摘要版',
     sourceConversation: 'Q2 客户流失归因分析',
     sourceDesc: '本报告汇总了 Q2 客户流失样本、关键归因、影响规模和挽回动作，用于经营例会与复盘追踪。',
-    historyTitle: '仅展示 dora 中由此文件发起的会话',
-    historyItems: [
-      { title: 'Q2 客户流失归因分析', desc: '原始生成会话' },
-      { title: '流失客户召回策略', desc: '引用该资料' }
-    ],
     preview: `
       <div class="report-card">
         <h3>报告结论</h3>
@@ -406,11 +386,6 @@ const ASSET_LIBRARY_DEFS = {
     versionLabel: 'V4 · 口径校准版',
     sourceConversation: '经营指标口径校准',
     sourceDesc: '本资料记录 Data Agent 对核心经营指标的口径比对、异常追踪和血缘说明，方便后续问数时统一引用。',
-    historyTitle: '仅展示 dora 中由此文件发起的会话',
-    historyItems: [
-      { title: '经营指标口径校准', desc: '原始生成会话' },
-      { title: '收入指标差异排查', desc: '引用该资料' }
-    ],
     preview: `
       <div class="report-card">
         <h3>治理概览</h3>
@@ -448,11 +423,6 @@ const ASSET_LIBRARY_DEFS = {
     versionLabel: 'V1 · 清洗明细版',
     sourceConversation: '618 活动转化复盘',
     sourceDesc: '本数据集由活动触达、渠道点击、转化订单和成本数据清洗而来，可供 Agent 继续引用分析。',
-    historyTitle: '仅展示 dora 中由此文件发起的会话',
-    historyItems: [
-      { title: '618 活动转化复盘', desc: '原始生成会话' },
-      { title: '渠道预算再分配建议', desc: '引用该资料' }
-    ],
     preview: `
       <div class="report-card">
         <h3>数据集摘要</h3>
@@ -1998,6 +1968,56 @@ function buildAssetCard(type) {
     </div>`;
 }
 
+function getSavedAssetPreview(asset) {
+  const typeClass = asset.typeClass || 'html';
+  if (typeClass === 'ppt') {
+    return {
+      cls: 'ppt',
+      html: escapeHtmlAttr(String(asset.name || '').replace(/\.(pptx?|PPTX?)$/, ''))
+    };
+  }
+  if (typeClass === 'html') {
+    return {
+      cls: 'dashboard',
+      html: '<div class="kpi">已存入</div><div class="kpi">$510.854 亿</div><div class="kpi red">V2</div><div class="line-chart"></div>'
+    };
+  }
+  if (typeClass === 'xlsx' || typeClass === 'csv') {
+    return {
+      cls: 'dashboard',
+      html: '<div class="kpi">已存入</div><div class="kpi">1,247 行</div><div class="kpi red">明细</div><div class="line-chart"></div>'
+    };
+  }
+  return {
+    cls: 'article',
+    html: escapeHtmlAttr(asset.name || '会话产物')
+  };
+}
+
+function getSavedAssetDetailType(asset) {
+  return asset.assetType || (asset.typeClass === 'ppt' ? 'ppt' : 'html');
+}
+
+function buildSavedAssetCard(asset, index) {
+  const preview = getSavedAssetPreview(asset);
+  const detailType = getSavedAssetDetailType(asset);
+  const badge = escapeHtmlAttr(asset.icon || 'FILE');
+  const typeClass = escapeHtmlAttr(asset.typeClass || 'html');
+  const name = escapeHtmlAttr(asset.name || '会话产物');
+  const source = escapeHtmlAttr(asset.source || '来自会话输出');
+  const newClass = asset.isNew ? ' is-new' : '';
+  const newBadge = asset.isNew ? '<span class="asset-new-badge">新存入</span>' : '';
+  return `
+    <div class="asset-card saved-library-card${newClass}" data-saved-asset-index="${index}" onclick="openSavedAssetDetail(${index})">
+      <div class="asset-preview ${preview.cls}">${newBadge}${preview.html}</div>
+      <div class="asset-info">
+        <div class="asset-name"><span class="file-badge ${typeClass}">${badge}</span>${name}</div>
+        <div class="asset-foot"><span>${source}</span><span class="avatar">${avatarImg('dora-session', 'Dora')}</span></div>
+      </div>
+      <button class="asset-experience-btn" onclick="event.stopPropagation(); openSavedAssetDetail(${index})">体验</button>
+    </div>`;
+}
+
 function renderAssetLibrary() {
   const home = $('spaceHome');
   if (!home) return;
@@ -2010,12 +2030,9 @@ function renderAssetLibrary() {
     `;
   }
   if (assetGrid) {
+    const savedCards = FILE_PANEL_STATE.savedAssets.map(buildSavedAssetCard).join('');
     assetGrid.innerHTML = `
-      <div class="asset-card space-asset-hidden" id="savedFromSessionAsset" onclick="openAssetDetailByType('html')">
-        <div class="asset-preview dashboard"><div class="kpi">已存入</div><div class="kpi">$510.854 亿</div><div class="kpi red">V2</div><div class="line-chart"></div></div>
-        <div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>销售预测系统.html</div><div class="asset-foot"><span>来自会话文件快照</span><span class="avatar">${avatarImg('dora-session', 'Dora')}</span></div></div>
-        <button class="asset-experience-btn" onclick="event.stopPropagation(); openAssetDetailByType('html')">体验</button>
-      </div>
+      ${savedCards}
       ${buildAssetCard('html')}
       ${buildAssetCard('ppt')}
       ${buildAssetCard('dashboard')}
@@ -2053,8 +2070,9 @@ function syncAssetDetailPage(assetType = 'html') {
   const historyPanel = $('assetHistoryPanel');
   if (historyPanel) {
     historyPanel.innerHTML = `
-      <div class="history-filter-title">${asset.historyTitle}</div>
-      ${asset.historyItems.map(item => `<button onclick="openSourceConversationFromAsset('${item.title}','${asset.title}')">${item.title} · ${item.desc}</button>`).join('')}
+      <div class="history-filter-title">选择当前文件的处理方式</div>
+      <button onclick="runAssetSidebarScenario('answer')">根据文件回答</button>
+      <button onclick="runAssetSidebarScenario('edit')">对文件进行修改</button>
     `;
   }
   const previewContent = document.querySelector('.preview-content');
@@ -2066,9 +2084,25 @@ function openAssetDetailByType(assetType) {
   openAssetDetail();
 }
 
+function openSavedAssetDetail(index) {
+  const asset = FILE_PANEL_STATE.savedAssets[index];
+  if (!asset) return;
+  if (asset.isNew) {
+    asset.isNew = false;
+    renderAssetLibrary();
+  }
+  openAssetDetailByType(getSavedAssetDetailType(asset));
+}
+
 function setSavedLibraryAsset(asset) {
-  FILE_PANEL_STATE.savedAssets = [asset];
-  updateSavedAssetCard(asset);
+  const existingIndex = FILE_PANEL_STATE.savedAssets.findIndex(item => item.name === asset.name);
+  const nextAsset = { ...asset, isNew: true };
+  if (existingIndex >= 0) {
+    FILE_PANEL_STATE.savedAssets[existingIndex] = nextAsset;
+  } else {
+    FILE_PANEL_STATE.savedAssets.unshift(nextAsset);
+  }
+  renderAssetLibrary();
 }
 
 function clearSavedLibraryAssets() {
@@ -2078,6 +2112,7 @@ function clearSavedLibraryAssets() {
     file.libraryDirty = false;
   });
   updateSavedAssetCard(null);
+  renderAssetLibrary();
   renderFilePanel();
   if (currentPreviewFile?.source === 'output') {
     currentPreviewFile = getPreviewFile(currentPreviewFile.clickName || currentPreviewFile.name);
@@ -2269,18 +2304,36 @@ function toggleAssetHistoryMode(forceOpen) {
   if (btn) btn.classList.toggle('is-active', panel.classList.contains('open'));
 }
 
+function runAssetSidebarScenario(type) {
+  const panel = $('assetHistoryPanel');
+  const body = document.querySelector('.chat-body-detail');
+  const asset = getAssetMock(currentAssetMock);
+  if (!body || !asset) return;
+  if (panel) panel.classList.remove('open');
+  const isEdit = type === 'edit';
+  const userCopy = isEdit
+    ? `帮我直接修改这份《${asset.title}》里的关键内容`
+    : `根据《${asset.title}》回答我的问题`;
+  const agentCopy = isEdit
+    ? `我会在右侧栏内基于当前文件生成一个临时修改版本，不会跳到其它会话。您可以继续告诉我要调整标题、图表、指标口径或汇报风格。`
+    : `我会只围绕当前打开的文件回答问题，并把依据保留在这个侧边栏里，方便您边看文件边追问。`;
+  body.insertAdjacentHTML('beforeend', `
+    <div class="msg user"><div class="bubble">${escapeHtmlAttr(userCopy)}</div></div>
+    <div class="msg agent">
+      <span class="agent-avatar">${avatarImg('dora-session', 'Dora')}</span>
+      <div class="agent-text">
+        <div class="agent-name">Dora</div>
+        <div>${agentCopy}</div>
+        <div class="status-pill">› 已切换为${isEdit ? '文件修改' : '文件问答'}场景</div>
+      </div>
+    </div>
+  `);
+  body.scrollTop = body.scrollHeight;
+  showToast(isEdit ? '已切换为文件修改场景' : '已切换为文件问答场景');
+}
+
 function openSourceConversationFromAsset(conversation = '销售预测系统规则调整', label = '销售预测系统.html') {
-  currentSourceTrace = {
-    type: 'conversation',
-    label,
-    conversation
-  };
-  preserveTraceTitle = true;
-  syncSourceTraceContext();
-  syncConversationHistoryTitle();
-  showToast(`已切换到来源会话：${conversation}`);
-  openConversation('dora');
-  preserveTraceTitle = false;
+  runAssetSidebarScenario('answer');
 }
 
 function syncConversationHistoryTitle() {
@@ -2472,7 +2525,8 @@ function commitOutputLibrarySave(fileName, mode) {
     name: file.name,
     source: '来自会话输出',
     icon: file.ext,
-    typeClass: file.iconClass === 'pptx' ? 'ppt' : file.iconClass
+    typeClass: file.iconClass === 'pptx' ? 'ppt' : file.iconClass,
+    assetType: file.type === 'ppt' || file.clickKind === 'pptx' ? 'ppt' : 'html'
   });
   renderFilePanel();
   if (currentPreviewFile && (currentPreviewFile.clickName === file.clickName || currentPreviewFile.name === file.name)) {
