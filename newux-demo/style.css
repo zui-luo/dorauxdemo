@@ -3832,6 +3832,33 @@ body.demo-mode .conv-chat .demo-control-bar { display: none !important; }
 }
 .modal-mask[hidden] { display: none !important; }
 .modal-mask.open { display: flex !important; }
+#assetModal.asset-modal-mask {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw;
+  height: 100vh;
+  padding: 24px;
+  background: rgba(9,22,64,0.38);
+  z-index: 5000;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: auto;
+}
+#assetModal.asset-modal-mask.open {
+  display: flex !important;
+}
+#assetModal .asset-modal {
+  position: relative;
+  width: min(860px, calc(100vw - 48px));
+  height: min(600px, calc(100vh - 64px));
+  margin: auto;
+  transform: translateY(0);
+  animation: assetModalIn 160ms ease-out;
+}
+@keyframes assetModalIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
 .modal {
   width: min(820px, calc(100vw - 40px));
   height: min(560px, calc(100vh - 80px));

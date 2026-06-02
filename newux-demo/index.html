@@ -547,8 +547,8 @@
 </div>
 
 <!-- 资产选择弹窗 (BI/FR) — 复刻自 sender-data-source-entry -->
-<div class="modal-mask" id="assetModal" hidden>
-  <div class="modal" data-source="bi">
+<div class="modal-mask asset-modal-mask" id="assetModal" hidden role="dialog" aria-modal="true" aria-labelledby="assetModalTitle" onclick="if(event.target===this) closeAssetModal()">
+  <div class="modal asset-modal" data-source="bi">
     <div class="modal-head">
       <div class="modal-title" id="assetModalTitle">添加 FineBI 资产</div>
       <button class="modal-close" onclick="closeAssetModal()" aria-label="关闭">
