@@ -19,8 +19,9 @@
   <div id="variantGroupB" class="variant-group" style="display:none">
     <button class="v-tab v-tab-b" onclick="switchBVariant('default', this)">默认方案</button>
     <button class="v-tab v-tab-b" onclick="switchBVariant('process-top', this)">方案2：过程前置</button>
-    <button class="v-tab v-tab-b active" onclick="switchBVariant('product-live', this)">方案3：产物直出</button>
+    <button class="v-tab v-tab-b" onclick="switchBVariant('product-live', this)">方案3：产物直出</button>
     <button class="v-tab v-tab-b" onclick="switchBVariant('muted-process', this)">方案4：素色过程</button>
+    <button class="v-tab v-tab-b active" onclick="switchBVariant('ppt-only-live', this)">方案5：只出PPT</button>
   </div>
   <div style="flex:1;"></div>
   <button class="v-demo-toggle" onclick="openScenarioGuide()">交互说明</button>
@@ -147,14 +148,15 @@
             <div class="agent-card-head"><div class="agent-logo"><span class="avatar-letter" data-avatar-tone="blue">问</span></div><h3>智能问数</h3></div>
             <p>面向经营分析、指标归因和同比环比拆解的专家 Agent。</p>
             <div class="agent-meta">最近编辑：2026/02/12</div>
+            <button class="agent-ask-btn" onclick="event.stopPropagation(); openConversation('smart-data')">去提问</button>
             <span class="change-marker demo-control" data-change-tooltip="点击专家 Agent 可进入对应会话。" data-change-placement="top">5</span>
             <span class="unread-dot" aria-hidden="true"></span>
           </div>
-          <div class="agent-card annotated has-unread" data-agent-type="report" data-unread="1" onclick="openConversation('report')"><div class="agent-card-head"><div class="agent-logo"><span class="avatar-letter" data-avatar-tone="orange">报</span></div><h3>智能报告</h3></div><p>可生成报告、PPT、HTML 原型与结构化结论。</p><div class="agent-meta">最近编辑：2026/02/12</div><span class="unread-dot" aria-hidden="true"></span></div>
-          <div class="agent-card" data-agent-type="analysis" onclick="openConversation('analysis')"><div class="agent-card-head"><div class="agent-logo"><span class="avatar-letter" data-avatar-tone="teal">析</span></div><h3>经营分析助手</h3></div><p>围绕销售、客户、产品与区域展开分析。</p><div class="agent-meta">最近编辑：2026/02/10</div></div>
-          <div class="agent-card" data-agent-type="modeling" onclick="openConversation('modeling')"><div class="agent-card-head"><div class="agent-logo"><span class="avatar-letter" data-avatar-tone="violet">模</span></div><h3>数据建模顾问</h3></div><p>辅助定义指标、维度、口径和数据模型。</p><div class="agent-meta">最近编辑：2026/02/08</div></div>
-          <div class="agent-card" data-agent-type="finance" onclick="openConversation('finance')"><div class="agent-card-head"><div class="agent-logo"><span class="avatar-letter" data-avatar-tone="green">财</span></div><h3>财务小助手</h3></div><p>处理预算、预测、费用结构与异常波动。</p><div class="agent-meta">最近编辑：2026/02/07</div></div>
-          <div class="agent-card" data-agent-type="marketing" onclick="openConversation('marketing')"><div class="agent-card-head"><div class="agent-logo"><span class="avatar-letter" data-avatar-tone="rose">营</span></div><h3>营销策略助手</h3></div><p>输出营销策略、客户分层和活动复盘。</p><div class="agent-meta">最近编辑：2026/02/05</div></div>
+          <div class="agent-card annotated has-unread" data-agent-type="report" data-unread="1" onclick="openConversation('report')"><div class="agent-card-head"><div class="agent-logo"><span class="avatar-letter" data-avatar-tone="orange">报</span></div><h3>智能报告</h3></div><p>可生成报告、PPT、HTML 原型与结构化结论。</p><div class="agent-meta">最近编辑：2026/02/12</div><button class="agent-ask-btn" onclick="event.stopPropagation(); openConversation('report')">去提问</button><span class="unread-dot" aria-hidden="true"></span></div>
+          <div class="agent-card" data-agent-type="analysis" onclick="openConversation('analysis')"><div class="agent-card-head"><div class="agent-logo"><span class="avatar-letter" data-avatar-tone="teal">析</span></div><h3>经营分析助手</h3></div><p>围绕销售、客户、产品与区域展开分析。</p><div class="agent-meta">最近编辑：2026/02/10</div><button class="agent-ask-btn" onclick="event.stopPropagation(); openConversation('analysis')">去提问</button></div>
+          <div class="agent-card" data-agent-type="modeling" onclick="openConversation('modeling')"><div class="agent-card-head"><div class="agent-logo"><span class="avatar-letter" data-avatar-tone="violet">模</span></div><h3>数据建模顾问</h3></div><p>辅助定义指标、维度、口径和数据模型。</p><div class="agent-meta">最近编辑：2026/02/08</div><button class="agent-ask-btn" onclick="event.stopPropagation(); openConversation('modeling')">去提问</button></div>
+          <div class="agent-card" data-agent-type="finance" onclick="openConversation('finance')"><div class="agent-card-head"><div class="agent-logo"><span class="avatar-letter" data-avatar-tone="green">财</span></div><h3>财务小助手</h3></div><p>处理预算、预测、费用结构与异常波动。</p><div class="agent-meta">最近编辑：2026/02/07</div><button class="agent-ask-btn" onclick="event.stopPropagation(); openConversation('finance')">去提问</button></div>
+          <div class="agent-card" data-agent-type="marketing" onclick="openConversation('marketing')"><div class="agent-card-head"><div class="agent-logo"><span class="avatar-letter" data-avatar-tone="rose">营</span></div><h3>营销策略助手</h3></div><p>输出营销策略、客户分层和活动复盘。</p><div class="agent-meta">最近编辑：2026/02/05</div><button class="agent-ask-btn" onclick="event.stopPropagation(); openConversation('marketing')">去提问</button></div>
         </div>
       </div>
     </section>
@@ -202,12 +204,12 @@
             </div>
             <div class="conversation-trace-pill" id="conversationTracePill" hidden></div>
             <div class="conversation-header-spacer"></div>
-            <button class="icon-btn annotated" title="展开/收起资料面板" onclick="toggleFilesPanel()">
+            <button class="icon-btn annotated files-folder-trigger has-new-output" data-tooltip="会话文件" aria-label="会话文件" onclick="toggleFilesPanel()">
               <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round">
                 <path d="M2.8 6.2h5l1.6 2h7.8v7.1a1.4 1.4 0 0 1-1.4 1.4H4.2a1.4 1.4 0 0 1-1.4-1.4V6.2Z"/>
                 <path d="M2.8 6.2V4.7a1.4 1.4 0 0 1 1.4-1.4h3.6l1.6 1.9h6.4a1.4 1.4 0 0 1 1.4 1.4v1.6"/>
               </svg>
-              <span class="folder-count" id="filesFolderCount">3</span>
+              <span class="folder-count" id="filesFolderCount" aria-hidden="true"></span>
               <span class="change-marker demo-control tooltip-left" data-change-tooltip="会话拥有独立的资料面板，可在右侧常驻显示，也可点此收起。">15</span>
             </button>
           </header>
@@ -262,7 +264,7 @@
             <div class="demo-control demo-control-bar">
               <span>客户反馈剧本（DeerFlow 7 阶段 / ~43s）</span>
               <button onclick="playScenario()">▶ 重播剧本</button>
-              <button onclick="appendGenUIReply('给我 genui 看看分布')">💡 追加 GenUI 消息</button>
+              <button onclick="appendGenUIReply('帮我看一下反馈分布')">追加分析卡片</button>
               <button onclick="markSessionFileDirty()">模拟会话文件更新</button>
               <button onclick="deleteLibrarySnapshot()">模拟资料库删除</button>
             </div>
@@ -274,7 +276,7 @@
           <div class="chat-footer-wrap">
             <div class="conversation-input annotated">
               <div class="sender-added-row" id="conversationSenderFiles"></div>
-              <textarea id="conversationInput" placeholder="试试输入「给我 genui」回车追加一条 GenUI 消息 · 或输入 @ 引用会话文件"></textarea>
+              <textarea id="conversationInput" placeholder="试试输入一句需求，回车发送 · 或输入 @ 引用会话文件"></textarea>
               <div class="input-tools">
                 <div class="sender-left-tools">
                   <div class="sender-menu" id="conversationSenderMenu">
@@ -296,7 +298,7 @@
               </div>
               <span class="change-marker demo-control tooltip-left" data-change-tooltip="会话页输入区保留 Sender 三方案（菜单/平铺/堆叠），可继续引用资料或产出。">14</span>
             </div>
-            <div class="tiny-note">内容均由AI生成，仅供参考 · 试试输入「genui」追加交互卡片</div>
+            <div class="tiny-note">内容均由AI生成，仅供参考 · 试试输入一句需求开始对话</div>
           </div>
         </section>
 
@@ -307,22 +309,22 @@
         <aside class="conv-files" id="paneFiles">
           <header class="files-header">
             <div class="files-tabs">
-              <button class="files-tab is-active" data-tab="input">输入<span class="tab-count" id="materialsCount">0</span></button>
-              <button class="files-tab" data-tab="output">输出<span class="tab-count" id="outputsCount">0</span></button>
+              <button class="files-tab is-active" data-tab="input">来源<span class="tab-count" id="materialsCount">0</span></button>
+              <button class="files-tab" data-tab="output">产物<span class="tab-count" id="outputsCount">0</span></button>
             </div>
             <button class="icon-btn files-close" title="关闭" onclick="toggleFilesPanel()"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
           </header>
 
           <div class="files-toolbar">
             <div class="toolbar-group input-toolbar-group">
-              <button class="btn-pill is-primary">本地文件</button>
-              <button class="btn-pill">平台资产</button>
-              <input class="search-input" placeholder="搜索名称" />
+              <button class="btn-pill is-primary" data-input-source="local" onclick="setInputSourceFilter('local')">本地文件</button>
+              <button class="btn-pill" data-input-source="platform" onclick="setInputSourceFilter('platform')">平台资产</button>
+              <input class="search-input" placeholder="搜索名称" oninput="setInputSearch(this.value)" />
             </div>
             <div class="toolbar-group output-toolbar-group">
               <input class="search-input output-search-input" placeholder="搜索产物" oninput="setOutputSearch(this.value)" />
             </div>
-            <button class="btn-upload input-toolbar-action"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="5" height="5" rx="0.6"/><rect x="9" y="2" width="5" height="5" rx="0.6"/><rect x="2" y="9" width="5" height="5" rx="0.6"/><rect x="9" y="9" width="5" height="5" rx="0.6"/></svg>上传</button>
+            <button class="btn-upload input-toolbar-action" onclick="handleFilesPanelUpload()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="5" height="5" rx="0.6"/><rect x="9" y="2" width="5" height="5" rx="0.6"/><rect x="2" y="9" width="5" height="5" rx="0.6"/><rect x="9" y="9" width="5" height="5" rx="0.6"/></svg>上传</button>
           </div>
 
           <div class="files-list" id="filesListMaterials"></div>
@@ -377,16 +379,18 @@
           <div class="asset-card space-asset-hidden" id="savedFromSessionAsset" onclick="openAssetDetail()">
             <div class="asset-preview dashboard"><div class="kpi">已存入</div><div class="kpi">$510.854 亿</div><div class="kpi red">V2</div><div class="line-chart"></div></div>
             <div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>销售预测系统.html</div><div class="asset-foot"><span>来自会话文件快照</span><span class="avatar"><span class="avatar-letter" data-avatar-tone="dora">D</span></span></div></div>
+            <button class="asset-experience-btn" onclick="event.stopPropagation(); openAssetDetail()">体验</button>
           </div>
           <div class="asset-card annotated" onclick="openAssetDetail()">
             <div class="asset-preview dashboard"><div class="kpi">+$28.854 亿</div><div class="kpi">+$510.854 亿</div><div class="kpi red">$491.618 亿</div><div class="line-chart"></div></div>
             <div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>销售预测系统.html</div><div class="asset-foot"><span>财务小助手：XXXXXXXX</span><span class="avatar"><span class="avatar-letter" data-avatar-tone="green">财</span></span></div></div>
+            <button class="asset-experience-btn" onclick="event.stopPropagation(); openAssetDetail()">体验</button>
             <span class="change-marker demo-control" data-change-tooltip="点击资源库资料进入资料详情页。" data-change-placement="top">7</span>
           </div>
-          <div class="asset-card"><div class="asset-preview"><div style="font-size:22px;font-weight:700;margin-top:48px;text-align:center;">复杂市场环境下<br>自营风险管理</div></div><div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>风险营销助手.html</div><div class="asset-foot"><span>Dora：XXXXXXXX</span><span class="avatar"><span class="avatar-letter" data-avatar-tone="dora">D</span></span></div></div></div>
-          <div class="asset-card"><div class="asset-preview article">From Enterprise Data Services to a Trusted Data Agent Platform</div><div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>产品架构说明.html</div><div class="asset-foot"><span>产品小助手：XXXXXXXX</span><span class="avatar"><span class="avatar-letter" data-avatar-tone="orange">产</span></span></div></div></div>
-          <div class="asset-card"><div class="asset-preview bi"><div class="panel"></div><div class="side"></div></div><div class="asset-info"><div class="asset-name"><span class="file-badge bi">BI</span>BI仪表板</div><div class="asset-foot"><span>财务助手：XXXXXXXX</span><span class="avatar"><span class="avatar-letter" data-avatar-tone="green">财</span></span></div></div></div>
-          <div class="asset-card"><div class="asset-preview ppt" style="height:174px;font-size:24px;color:#2B7BD8;">2025年9月生产经营分析会</div><div class="asset-info"><div class="asset-name"><span class="file-badge ppt">PPT</span>XXXX.ppt</div><div class="asset-foot"><span>经营助手：XXXXXXXX</span><span class="avatar"><span class="avatar-letter" data-avatar-tone="orange">经</span></span></div></div></div>
+          <div class="asset-card"><div class="asset-preview"><div style="font-size:22px;font-weight:700;margin-top:48px;text-align:center;">复杂市场环境下<br>自营风险管理</div></div><div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>风险营销助手.html</div><div class="asset-foot"><span>Dora：XXXXXXXX</span><span class="avatar"><span class="avatar-letter" data-avatar-tone="dora">D</span></span></div></div><button class="asset-experience-btn" onclick="event.stopPropagation(); openAssetDetail()">体验</button></div>
+          <div class="asset-card"><div class="asset-preview article">From Enterprise Data Services to a Trusted Data Agent Platform</div><div class="asset-info"><div class="asset-name"><span class="file-badge html">HTML</span>产品架构说明.html</div><div class="asset-foot"><span>产品小助手：XXXXXXXX</span><span class="avatar"><span class="avatar-letter" data-avatar-tone="orange">产</span></span></div></div><button class="asset-experience-btn" onclick="event.stopPropagation(); openAssetDetail()">体验</button></div>
+          <div class="asset-card"><div class="asset-preview bi"><div class="panel"></div><div class="side"></div></div><div class="asset-info"><div class="asset-name"><span class="file-badge bi">BI</span>BI仪表板</div><div class="asset-foot"><span>财务助手：XXXXXXXX</span><span class="avatar"><span class="avatar-letter" data-avatar-tone="green">财</span></span></div></div><button class="asset-experience-btn" onclick="event.stopPropagation(); openAssetDetail()">体验</button></div>
+          <div class="asset-card"><div class="asset-preview ppt" style="height:174px;font-size:24px;color:#2B7BD8;">2025年9月生产经营分析会</div><div class="asset-info"><div class="asset-name"><span class="file-badge ppt">PPT</span>XXXX.ppt</div><div class="asset-foot"><span>经营助手：XXXXXXXX</span><span class="avatar"><span class="avatar-letter" data-avatar-tone="orange">经</span></span></div></div><button class="asset-experience-btn" onclick="event.stopPropagation(); openAssetDetail()">体验</button></div>
         </div>
       </div>
 
@@ -543,7 +547,7 @@
 </div>
 
 <!-- 资产选择弹窗 (BI/FR) — 复刻自 sender-data-source-entry -->
-<div class="modal-mask" id="assetModal">
+<div class="modal-mask" id="assetModal" hidden>
   <div class="modal" data-source="bi">
     <div class="modal-head">
       <div class="modal-title" id="assetModalTitle">添加 FineBI 资产</div>
