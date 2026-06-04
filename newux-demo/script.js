@@ -13,7 +13,7 @@ function $(id) { return document.getElementById(id); }
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 let currentVariant = 'menu';        // A 的 Sender 方案
-let currentBVariant = 'ppt-only-live';     // B 的对话方案
+let currentBVariant = 'thinking-framework';     // B 的对话方案
 let activeSenderContext = 'hero';
 let pendingAssetType = 'bi';
 let pendingAssetLabel = '';
