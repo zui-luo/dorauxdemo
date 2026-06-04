@@ -1,16 +1,19 @@
 <!-- ══════════════════════════════════════════
      方案切换栏模板 — 复制到 prototype.html 顶部使用
-     注意：切换栏固定在页面顶部，不属于业务区域
+     注意：切换栏是浮层，不属于业务区域，不得改变主页面布局
      ══════════════════════════════════════════ -->
 
 <!-- 1. 在 <head> 或文件顶部加入以下 CSS -->
 <style>
   /* ── 方案切换栏 ── */
   #variant-bar {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
-    height: 40px; background: #1a1a2e;
-    display: flex; align-items: center; gap: 4px; padding: 0 16px;
+    position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 9999;
+    height: 34px; background: rgba(26,26,46,0.96);
+    display: flex; align-items: center; gap: 4px; padding: 0 8px;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(9,30,64,0.16);
     font-family: -apple-system, sans-serif;
+    backdrop-filter: blur(8px);
   }
   #variant-bar .label { color: #888; font-size: 12px; margin-right: 8px; }
   .v-tab {
@@ -30,11 +33,17 @@
   /* 演示控件：默认隐藏，开启「交互说明」后显示 */
   .demo-control { display: none !important; }
   body.demo-mode .demo-control { display: block !important; }
+  .demo-popover {
+    position: fixed;
+    top: 52px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9998;
+  }
   /* 多方案时使用 */
   .variant { display: none; }
   .variant.active { display: contents; }
-  /* 为切换栏留出空间 */
-  body { padding-top: 40px; }
+  /* 禁止为切换栏留出空间：交互说明浮层不得改变业务页面布局 */
 </style>
 
 <!-- 2. 在 <body> 最顶部放切换栏 HTML（根据实际方案数增减 v-tab） -->
@@ -42,7 +51,6 @@
   <span class="label">方案对比：</span>
   <button class="v-tab active" onclick="switchVariant('a', this)">方案 A</button>
   <button class="v-tab" onclick="switchVariant('b', this)">方案 B</button>
-  <div style="flex:1;"></div>
   <button class="v-demo-toggle" onclick="toggleDemoMode(this)">交互说明</button>
 </div>
 

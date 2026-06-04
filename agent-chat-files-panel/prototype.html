@@ -151,6 +151,83 @@
   .rail-tab:hover { background: #EAF0FF; }
   .rail-tab.active { background: #DCE9FF; color: #08204B; }
   .rail-tab svg { width: 18px; height: 18px; }
+  .rail-tab-wrap { position: relative; }
+  .rail-tab-popover {
+    position: absolute;
+    left: 80px;
+    top: 0;
+    width: 244px;
+    border: 1px solid var(--ink-4);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: var(--shadow-pop);
+    padding: 10px 10px 8px;
+    display: none;
+    z-index: 1200;
+  }
+  .rail-tab-popover-hitbox {
+    position: absolute;
+    left: 64px;
+    top: 0;
+    width: 28px;
+    height: 100%;
+    display: none;
+  }
+  .rail-tab-popover::before {
+    content: "";
+    position: absolute;
+    left: -5px;
+    top: 18px;
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    border-left: 1px solid var(--ink-4);
+    border-bottom: 1px solid var(--ink-4);
+    transform: rotate(45deg);
+  }
+  .rail-tab-wrap.has-popover:hover .rail-tab-popover,
+  .rail-tab-wrap.has-popover:hover .rail-tab-popover-hitbox { display: block; }
+  .rail-tab-popover-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--ink-9);
+    margin-bottom: 8px;
+  }
+  .rail-tab-popover-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .rail-tab-popover-item {
+    position: relative;
+    min-height: 42px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: var(--ink-2);
+    padding: 8px 32px 8px 10px;
+    text-align: left;
+    color: var(--ink-11);
+  }
+  .rail-tab-popover-item:hover {
+    background: #F3F7FF;
+    border-color: rgba(0,71,253,0.12);
+  }
+  .rail-tab-popover-item strong {
+    display: block;
+    font-size: 13px;
+    line-height: 1.4;
+    margin-bottom: 2px;
+  }
+  .rail-tab-popover-item span {
+    font-size: 11px;
+    color: var(--ink-9);
+  }
+  .rail-tab-popover-item .unread-count {
+    top: 12px;
+    right: 10px;
+  }
   .rail-spacer { flex: 1; }
   .rail-search,
   .rail-avatar {
@@ -764,6 +841,76 @@
     text-align: center;
     font-weight: 700;
   }
+  .unread-count {
+    position: absolute;
+    top: -5px;
+    right: -6px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: #2E7DFF;
+    color: #fff;
+    font-size: 10px;
+    line-height: 16px;
+    text-align: center;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(46,125,255,0.28);
+  }
+  .unread-dot {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #2E7DFF;
+    box-shadow: 0 0 0 3px rgba(46,125,255,0.14);
+  }
+  .has-unread { position: relative; }
+  .agent-card.has-unread .agent-card-head { padding-right: 18px; }
+  .conversation-history button.has-unread,
+  .dora-side-history button.has-unread {
+    padding-right: 26px;
+  }
+  .conversation-history button.has-unread::after,
+  .dora-side-history button.has-unread::after {
+    content: attr(data-unread);
+    position: absolute;
+    right: 8px;
+    top: 7px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: #2E7DFF;
+    color: #fff;
+    font-size: 10px;
+    line-height: 16px;
+    text-align: center;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(46,125,255,0.28);
+  }
+  .rail-tab.has-unread {
+    position: relative;
+  }
+  .rail-tab.has-unread::after {
+    content: attr(data-unread);
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: #2E7DFF;
+    color: #fff;
+    font-size: 10px;
+    line-height: 16px;
+    text-align: center;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(46,125,255,0.28);
+  }
   .conversation-sidebar-toggle {
     width: 32px;
     height: 32px;
@@ -1244,16 +1391,16 @@
     position: fixed;
     inset: 40px 0 0;
     z-index: 2100;
-    background: rgba(20,32,54,0.24);
+    background: rgba(20,32,54,0.28);
     display: none;
     align-items: center;
     justify-content: center;
   }
   .asset-picker-mask.open { display: flex; }
   .asset-picker {
-    width: min(760px, calc(100vw - 120px));
-    max-height: min(560px, calc(100vh - 120px));
-    border-radius: 8px;
+    width: min(980px, calc(100vw - 72px));
+    max-height: min(660px, calc(100vh - 72px));
+    border-radius: 12px;
     background: #fff;
     box-shadow: var(--shadow-pop);
     overflow: hidden;
@@ -1261,28 +1408,146 @@
     flex-direction: column;
   }
   .asset-picker-head {
-    height: 48px;
+    min-height: 58px;
     border-bottom: 1px solid var(--ink-4);
     display: flex;
     align-items: center;
-    padding: 0 16px;
-    gap: 12px;
+    gap: 10px;
+    padding: 0 18px;
     font-weight: 700;
+    color: var(--ink-11);
   }
-  .asset-picker-body { display: grid; grid-template-columns: 210px 1fr; min-height: 380px; }
-  .asset-tree { border-right: 1px solid var(--ink-4); padding: 12px; color: var(--ink-10); }
-  .asset-tree-row {
-    height: 32px;
-    border-radius: 6px;
+  .asset-picker-subtitle {
+    font-size: 12px;
+    color: var(--ink-8);
+    font-weight: 400;
+    margin-left: 2px;
+  }
+  .asset-picker-search {
+    margin-left: auto;
+    width: 280px;
+    height: 34px;
+    border: 1px solid var(--ink-4);
+    border-radius: 17px;
+    padding: 0 12px;
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 0 8px;
+    background: #FAFBFD;
   }
-  .asset-tree-row.active { background: var(--brand-1); color: var(--brand-7); font-weight: 700; }
-  .asset-preview-panel { padding: 16px; background: #FAFBFD; }
+  .asset-picker-search input {
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    color: var(--ink-11);
+  }
+  .asset-picker-body {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: 480px;
+    background: #fff;
+  }
+  .asset-tree {
+    border-right: 1px solid var(--ink-4);
+    padding: 14px 12px;
+    color: var(--ink-10);
+    background: #FAFBFD;
+  }
+  .asset-tree-group {
+    font-size: 12px;
+    color: var(--ink-8);
+    padding: 6px 10px 8px;
+  }
+  .asset-tree-row {
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    margin-bottom: 4px;
+    font-size: 13px;
+  }
+  .asset-tree-row.active { background: #EAF0FF; color: var(--brand-7); font-weight: 700; }
+  .asset-tree-row:hover { background: #F3F7FF; }
+  .asset-preview-panel {
+    padding: 16px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .asset-preview-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .asset-preview-toolbar strong {
+    font-size: 14px;
+    color: var(--ink-11);
+  }
+  .asset-preview-toolbar span {
+    font-size: 12px;
+    color: var(--ink-8);
+  }
+  .asset-grid-view {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .asset-mini-card {
+    border: 1px solid var(--ink-4);
+    border-radius: 10px;
+    background: #fff;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 2px 10px rgba(9,30,64,0.04);
+  }
+  .asset-mini-card.active {
+    border-color: rgba(0,71,253,0.28);
+    background: #F3F7FF;
+  }
+  .asset-mini-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .asset-mini-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .asset-mini-title strong {
+    font-size: 13px;
+    color: var(--ink-11);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .asset-mini-desc {
+    font-size: 12px;
+    color: var(--ink-8);
+    line-height: 1.5;
+  }
+  .asset-mini-thumb {
+    height: 92px;
+    border-radius: 8px;
+    border: 1px solid var(--ink-4);
+    background: linear-gradient(180deg, #FAFBFD, #F2F5FB);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-8);
+    font-size: 12px;
+  }
   .asset-preview-table {
-    height: 300px;
+    height: 240px;
     border: 1px solid var(--ink-4);
     border-radius: 8px;
     background:
@@ -1292,7 +1557,7 @@
     background-size: 100% 34px, 25% 100%;
   }
   .asset-preview-report {
-    height: 300px;
+    height: 240px;
     border-radius: 8px;
     background:
       radial-gradient(circle at 68% 35%, rgba(45,202,255,0.48), transparent 22%),
@@ -1312,13 +1577,14 @@
     box-shadow: 0 -44px 0 rgba(59,226,255,0.38), 0 -88px 0 rgba(59,226,255,0.24);
   }
   .asset-picker-foot {
-    height: 54px;
+    min-height: 58px;
     border-top: 1px solid var(--ink-4);
     display: flex;
     justify-content: flex-end;
     align-items: center;
     gap: 10px;
-    padding: 0 16px;
+    padding: 0 18px;
+    background: #FAFBFD;
   }
 
   @media (max-width: 980px) {
@@ -1353,11 +1619,29 @@
       Dora
       <span class="change-marker demo-control" data-change-tooltip="Dora 是默认对话入口，用户从这里直接发起任务。" data-change-placement="right">1</span>
     </button>
-    <button class="rail-tab annotated" data-view="experts" onclick="switchView('experts')">
-      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="7" r="3"/><path d="M4 17c0-3 2.6-5 6-5s6 2 6 5"/></svg>
-      专家
-      <span class="change-marker demo-control" data-change-tooltip="专家视角用于查找和进入特定 Agent。" data-change-placement="right">2</span>
-    </button>
+    <div class="rail-tab-wrap has-popover" id="expertRailWrap">
+      <button class="rail-tab annotated has-unread" data-view="experts" data-unread="2" onclick="switchView('experts')">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="7" r="3"/><path d="M4 17c0-3 2.6-5 6-5s6 2 6 5"/></svg>
+        专家
+        <span class="change-marker demo-control" data-change-tooltip="专家视角用于查找和进入特定 Agent。" data-change-placement="right">2</span>
+      </button>
+      <div class="rail-tab-popover-hitbox" aria-hidden="true"></div>
+      <div class="rail-tab-popover" id="expertUnreadPopover">
+        <div class="rail-tab-popover-head"><span>专家有新消息</span><span class="unread-count">2</span></div>
+        <div class="rail-tab-popover-list">
+          <button class="rail-tab-popover-item" onclick="openUnreadExpert('smart-data')">
+            <strong>智能问数</strong>
+            <span>经营指标归因分析 · 2 条新消息</span>
+            <span class="unread-count">2</span>
+          </button>
+          <button class="rail-tab-popover-item" onclick="openUnreadExpert('report')">
+            <strong>智能报告</strong>
+            <span>报告生成任务已完成 · 1 条新消息</span>
+            <span class="unread-count">1</span>
+          </button>
+        </div>
+      </div>
+    </div>
     <button class="rail-tab annotated" data-view="space" onclick="switchView('space')">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6a2 2 0 012-2h3l1.5 2H15a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V6z"/></svg>
       资源库
@@ -1379,7 +1663,7 @@
           <button class="dora-side-action active" id="doraNewConversation" onclick="selectConversationEntry('dora', 'new', this)">✦ 新会话</button>
           <div class="section-title" style="margin:24px 10px 8px;color:var(--ink-8);font-size:12px;">最近会话</div>
           <div class="dora-side-history">
-            <button id="doraLatestHistory" onclick="selectConversationEntry('dora', 'history', this)">ROI 同比环比拆解</button>
+            <button id="doraLatestHistory" class="has-unread" data-unread="1" onclick="selectConversationEntry('dora', 'history', this)">ROI 同比环比拆解</button>
             <button onclick="selectConversationEntry('dora', 'history', this)">经营分析会材料整理</button>
             <button onclick="selectConversationEntry('dora', 'history', this)">销售预测系统规则调整</button>
             <button onclick="selectConversationEntry('dora', 'history', this)">客户反馈归因分析</button>
@@ -1441,11 +1725,12 @@
           <div class="search-box"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="#8C95B0" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input placeholder="搜索名称/描述" /></div>
         </div>
         <div class="agent-grid">
-          <div class="agent-card annotated" onclick="openConversation('smart-data')">
+          <div class="agent-card annotated has-unread" data-unread="2" onclick="openConversation('smart-data')">
             <div class="agent-card-head"><div class="agent-logo">S</div><h3>智能问数</h3></div>
             <p>面向经营分析、指标归因和同比环比拆解的专家 Agent。</p>
             <div class="agent-meta">最近编辑：2026/02/12</div>
             <span class="change-marker demo-control" data-change-tooltip="点击专家 Agent 可进入对应会话。" data-change-placement="top">5</span>
+            <span class="unread-dot" aria-hidden="true"></span>
           </div>
           <div class="agent-card" onclick="openConversation('report')"><div class="agent-card-head"><div class="agent-logo">R</div><h3>智能报告</h3></div><p>可生成报告、PPT、HTML 原型与结构化结论。</p><div class="agent-meta">最近编辑：2026/02/12</div></div>
           <div class="agent-card" onclick="openConversation('analysis')"><div class="agent-card-head"><div class="agent-logo">A</div><h3>经营分析助手</h3></div><p>围绕销售、客户、产品与区域展开分析。</p><div class="agent-meta">最近编辑：2026/02/10</div></div>
@@ -1478,7 +1763,7 @@
           <button class="conversation-nav-btn active" id="expertNewConversation" onclick="handleConversationNewClick(this)">✦ 新会话</button>
           <div class="section-title" style="margin:18px 10px 8px;color:var(--ink-8);font-size:12px;">最近会话</div>
           <div class="conversation-history">
-            <button id="conversationHistoryTitle" onclick="selectConversationEntry('expert', 'history', this)">ROI 同比环比拆解</button>
+            <button id="conversationHistoryTitle" class="has-unread" data-unread="2" onclick="selectConversationEntry('expert', 'history', this)">ROI 同比环比拆解</button>
             <button onclick="selectConversationEntry('expert', 'history', this)">经营分析会材料整理</button>
             <button onclick="selectConversationEntry('expert', 'history', this)">销售预测系统规则调整</button>
             <button onclick="selectConversationEntry('expert', 'history', this)">客户反馈归因分析</button>
@@ -1731,17 +2016,47 @@
   <div class="asset-picker">
     <div class="asset-picker-head">
       <span id="assetPickerTitle">添加资产</span>
+      <span class="asset-picker-subtitle" id="assetPickerSubtitle">从资源中选择要添加到当前会话的资产</span>
+      <label class="asset-picker-search">
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#8C95B0" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+        <input id="assetPickerSearch" placeholder="搜索资产名称" />
+      </label>
       <button class="icon-btn" onclick="closeAssetPicker()">×</button>
     </div>
     <div class="asset-picker-body">
       <div class="asset-tree">
+        <div class="asset-tree-group">资源目录</div>
         <div class="asset-tree-row active">全部数据</div>
         <div class="asset-tree-row">仪表板</div>
+        <div class="asset-tree-row">数据集</div>
         <div class="asset-tree-row">文件夹1</div>
         <div class="asset-tree-row">文件夹2</div>
       </div>
       <div class="asset-preview-panel">
-        <div class="asset-preview-table" id="assetPickerPreview"></div>
+        <div class="asset-preview-toolbar">
+          <div>
+            <strong id="assetPickerPanelTitle">门店销售表</strong>
+            <span id="assetPickerPanelDesc">BI 资产 · 最近更新 2 小时前</span>
+          </div>
+          <button class="outline-btn">预览详情</button>
+        </div>
+        <div class="asset-grid-view">
+          <button class="asset-mini-card active" type="button" onclick="selectAssetPreview('bi', this)">
+            <div class="asset-mini-head">
+              <div class="asset-mini-title"><span class="file-badge bi">BI</span><strong>门店销售表</strong></div>
+              <span class="unread-count" style="position:static;min-width:20px;">1</span>
+            </div>
+            <div class="asset-mini-thumb" id="assetPickerPreview"></div>
+            <div class="asset-mini-desc">指标、分组、筛选条件都可直接复用到当前会话。</div>
+          </button>
+          <button class="asset-mini-card" type="button" onclick="selectAssetPreview('report', this)">
+            <div class="asset-mini-head">
+              <div class="asset-mini-title"><span class="file-badge ppt">FR</span><strong>地区经营看板</strong></div>
+            </div>
+            <div class="asset-mini-thumb" style="background:linear-gradient(135deg,#0B1740,#102A73);color:#fff;">报表预览</div>
+            <div class="asset-mini-desc">适合快速进入报表型分析或产出复用场景。</div>
+          </button>
+        </div>
       </div>
     </div>
     <div class="asset-picker-foot">
@@ -1761,6 +2076,16 @@
   let pendingAssetLabel = '';
   let conversationReturnView = 'dora';
   let currentConversationType = 'smart-data';
+  let currentModuleView = 'dora';
+  const moduleState = {
+    dora: { page: 'home' },
+    experts: { page: 'list', conversationType: 'smart-data' },
+    space: { page: 'home' }
+  };
+  const expertUnreadItems = [
+    { type: 'smart-data', label: '智能问数', summary: '经营指标归因分析', count: 2, latest: '本周经营指标归因分析' },
+    { type: 'report', label: '智能报告', summary: '报告生成任务已完成', count: 1, latest: '经营分析PPT生成' }
+  ];
   const conversationConfigs = {
     dora: {
       returnView: 'dora',
@@ -1884,9 +2209,22 @@
     pendingAssetType = type;
     pendingAssetLabel = type === 'bi' ? 'BI demo_门店销售表' : 'FR demo_地区看板';
     $('assetPickerTitle').textContent = type === 'bi' ? '添加 FineBI 资产' : '添加 FineReport 资产';
+    $('assetPickerSubtitle').textContent = type === 'bi' ? '从 FineBI 资产中选择要添加到当前会话的内容' : '从 FineReport 资产中选择要添加到当前会话的内容';
+    $('assetPickerPanelTitle').textContent = type === 'bi' ? '门店销售表' : '地区经营看板';
+    $('assetPickerPanelDesc').textContent = type === 'bi' ? 'BI 资产 · 最近更新 2 小时前' : 'FR 资产 · 最近更新 30 分钟前';
     $('assetPickerPreview').className = type === 'bi' ? 'asset-preview-table' : 'asset-preview-report';
     $('assetPickerMask').classList.add('open');
     closeSenderMenus();
+  }
+
+  function selectAssetPreview(type, button) {
+    pendingAssetType = type === 'report' ? 'fr' : 'bi';
+    pendingAssetLabel = type === 'report' ? 'FR demo_地区看板' : 'BI demo_门店销售表';
+    $('assetPickerPanelTitle').textContent = type === 'report' ? '地区经营看板' : '门店销售表';
+    $('assetPickerPanelDesc').textContent = type === 'report' ? 'FR 资产 · 最近更新 30 分钟前' : 'BI 资产 · 最近更新 2 小时前';
+    $('assetPickerPreview').className = type === 'report' ? 'asset-preview-report' : 'asset-preview-table';
+    document.querySelectorAll('.asset-mini-card').forEach(card => card.classList.remove('active'));
+    if (button) button.classList.add('active');
   }
 
   function closeAssetPicker() {
@@ -1945,23 +2283,83 @@
   document.addEventListener('pointerdown', event => {
     if (!event.target.closest('.sender-left-tools')) closeSenderMenus();
     if (!event.target.closest('.asset-picker')) closeAssetPicker();
+    if (!event.target.closest('.rail-tab-wrap') && $('expertUnreadPopover')) $('expertUnreadPopover').classList.remove('open');
   });
 
-  function switchView(view) {
+  function setRailActive(view) {
     document.querySelectorAll('.rail-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.view === view));
+  }
+
+  function showSurface(surfaceId) {
     document.querySelectorAll('.surface').forEach(surface => surface.classList.remove('active'));
-    $('view-' + view).classList.add('active');
+    $(surfaceId).classList.add('active');
+  }
+
+  function switchView(view) {
+    currentModuleView = view;
+    setRailActive(view);
+    if (view === 'experts' && moduleState.experts.page === 'conversation') {
+      showSurface('view-conversation');
+      return;
+    }
+    showSurface('view-' + view);
     closeSourcePopover();
+  }
+
+  function openUnreadExpert(type) {
+    const config = conversationConfigs[type] || conversationConfigs['smart-data'];
+    applyConversationConfig(type, config, 'experts');
+    moduleState.experts.page = 'conversation';
+    moduleState.experts.conversationType = type;
+    selectConversationEntry('expert', 'new', $('expertNewConversation'));
+  }
+
+  function clearExpertUnread(type) {
+    const item = expertUnreadItems.find(entry => entry.type === type);
+    if (item) item.count = 0;
+    refreshExpertUnreadState();
+  }
+
+  function refreshExpertUnreadState() {
+    const activeItems = expertUnreadItems.filter(item => item.count > 0);
+    const totalCount = activeItems.reduce((sum, item) => sum + item.count, 0);
+    const expertTab = document.querySelector('.rail-tab[data-view="experts"]');
+    const expertWrap = $('expertRailWrap');
+    if (expertTab) {
+      expertTab.classList.toggle('has-unread', totalCount > 0);
+      expertTab.dataset.unread = totalCount > 0 ? String(totalCount) : '';
+    }
+    if (expertWrap) expertWrap.classList.toggle('has-popover', totalCount > 0);
+    const popover = $('expertUnreadPopover');
+    if (popover) {
+      const popList = popover.querySelector('.rail-tab-popover-list');
+      const popHead = popover.querySelector('.rail-tab-popover-head .unread-count');
+      if (popHead) {
+        popHead.textContent = totalCount > 0 ? String(totalCount) : '';
+        popHead.style.display = totalCount > 0 ? '' : 'none';
+      }
+      if (popList) {
+        popList.innerHTML = activeItems.map(item => `
+          <button class="rail-tab-popover-item" onclick="openUnreadExpert('${item.type}')">
+            <strong>${item.label}</strong>
+            <span>${item.summary} · ${item.count} 条新消息</span>
+            <span class="unread-count">${item.count}</span>
+          </button>
+        `).join('');
+      }
+    }
   }
 
   function openAssetDetail() {
     switchView('space');
+    moduleState.space.page = 'detail';
     $('spaceHome').style.display = 'none';
     $('assetDetail').classList.add('active');
     expandChat();
   }
 
   function closeAssetDetail() {
+    moduleState.space.page = 'home';
     $('spaceHome').style.display = '';
     $('assetDetail').classList.remove('active');
     $('versionMenu').classList.remove('open');
@@ -1975,6 +2373,8 @@
     }
     const config = conversationConfigs[type] || conversationConfigs.dora;
     applyConversationConfig(type, config, config.returnView);
+    moduleState.experts.page = 'conversation';
+    moduleState.experts.conversationType = type;
     selectConversationEntry('expert', 'new', $('expertNewConversation'));
   }
 
@@ -2000,9 +2400,16 @@
     $('conversationInput').value = '';
     closeAgentSwitch();
     if (!isDoraConversation) renderAgentSwitchList('');
-    document.querySelectorAll('.rail-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.view === activeRailView));
-    document.querySelectorAll('.surface').forEach(surface => surface.classList.remove('active'));
-    $('view-conversation').classList.add('active');
+    currentModuleView = activeRailView;
+    if (activeRailView === 'experts') {
+      moduleState.experts.page = 'conversation';
+      moduleState.experts.conversationType = currentConversationType;
+    }
+    if (activeRailView === 'dora') {
+      moduleState.dora.page = 'conversation';
+    }
+    setRailActive(activeRailView);
+    showSurface('view-conversation');
   }
 
   function startDoraConversationFlow() {
@@ -2025,6 +2432,7 @@
   }
 
   function showDoraNewConversation() {
+    moduleState.dora.page = 'home';
     selectConversationEntry('dora', 'new', $('doraNewConversation'));
     switchView('dora');
     toggleDoraSidebar(true);
@@ -2087,6 +2495,9 @@
   }
 
   function backFromConversation() {
+    if (conversationReturnView === 'experts') {
+      moduleState.experts.page = 'list';
+    }
     switchView(conversationReturnView);
   }
 
@@ -2104,7 +2515,14 @@
     const historySelector = scope === 'dora' ? '.dora-side-history button' : '.conversation-history button';
     if (newButton) newButton.classList.toggle('active', type === 'new');
     document.querySelectorAll(historySelector).forEach(item => item.classList.remove('active'));
-    if (type === 'history' && target) target.classList.add('active');
+    if (type === 'history' && target) {
+      target.classList.add('active');
+      if (scope === 'expert' && target.classList.contains('has-unread')) {
+        target.classList.remove('has-unread');
+        target.dataset.unread = '';
+        clearExpertUnread(currentConversationType);
+      }
+    }
   }
 
   function toggleVersionMenu(event) {
@@ -2255,6 +2673,7 @@
 
   switchVariant('menu', document.querySelector('.v-tab.active'));
   document.body.dataset.senderVariant = currentVariant;
+  refreshExpertUnreadState();
 </script>
 </body>
 </html>

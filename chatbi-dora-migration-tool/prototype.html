@@ -1,0 +1,2311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChatBI → Dora 迁移工具</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── 方案切换栏 ── */
+    #variant-bar {
+      position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 9999;
+      height: 34px; background: rgba(26,26,46,0.96);
+      display: flex; align-items: center; gap: 4px; padding: 0 8px;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(9,30,64,0.16);
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+      backdrop-filter: blur(8px);
+    }
+    #variant-bar .label { color: #888; font-size: 12px; margin-right: 8px; }
+    .v-tab {
+      padding: 4px 14px; border-radius: 4px; border: none; cursor: pointer;
+      font-size: 12px; background: transparent; color: #aaa;
+    }
+    .v-tab.active { background: #0047FD; color: #fff; }
+    .v-tab:hover:not(.active) { background: rgba(255,255,255,0.1); color: #fff; }
+    .v-demo-toggle {
+      padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 11px;
+      background: transparent; color: #666; border: 1px solid rgba(255,255,255,0.15);
+      transition: background 120ms, color 120ms, border-color 120ms;
+    }
+    .v-demo-toggle.active { background: rgba(255,200,0,0.12); color: #FFC107; border-color: rgba(255,193,7,0.35); }
+    .v-demo-toggle:hover:not(.active) { background: rgba(255,255,255,0.08); color: #bbb; }
+    .demo-control { display: none !important; }
+    body.demo-mode .demo-control { display: flex !important; }
+
+    :root {
+      --primary: #3452e1;
+      --primary-light: #eef0fd;
+      --primary-hover: #2440c8;
+      --success: #10b981;
+      --success-light: #ecfdf5;
+      --warning: #f59e0b;
+      --warning-light: #fffbeb;
+      --danger: #ef4444;
+      --danger-light: #fef2f2;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --border-radius: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.05);
+      --shadow-lg: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-800);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: #fff;
+      border-bottom: 1px solid var(--gray-200);
+      padding: 0 32px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+
+    .demo-scenarios {
+      position: fixed;
+      top: 52px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9998;
+      padding: 8px;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      box-shadow: var(--shadow-lg);
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(8px);
+    }
+    .demo-scenarios span {
+      font-size: 12px;
+      color: var(--gray-500);
+      padding: 0 4px;
+    }
+    .demo-scenarios button {
+      height: 28px;
+      padding: 0 10px;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--gray-700);
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .demo-scenarios button:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .annotation-target {
+      position: relative;
+    }
+
+    body.demo-mode .annotation-target {
+      outline: 2px solid #0047FD;
+      outline-offset: 4px;
+      box-shadow: 0 0 0 6px rgba(0,71,253,0.10);
+      cursor: help;
+    }
+
+    body.demo-mode .annotation-target.annotation-tight {
+      outline-offset: 2px;
+      box-shadow: 0 0 0 4px rgba(0,71,253,0.10);
+    }
+
+    #annotation-tooltip-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 300000;
+      pointer-events: none;
+      display: none;
+    }
+
+    #annotation-tooltip-layer.open {
+      display: block;
+    }
+
+    #annotation-tooltip-bubble {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 260px;
+      max-width: min(300px, calc(100vw - 24px));
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(9,22,64,0.94);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.6;
+      text-align: left;
+      box-shadow: 0 8px 20px rgba(9,30,64,0.16);
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 120ms ease, transform 120ms ease;
+      white-space: normal;
+    }
+
+    #annotation-tooltip-layer.open #annotation-tooltip-bubble {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--gray-900);
+    }
+    .header-logo .logo-icon {
+      width: 28px; height: 28px;
+      background: var(--primary);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .header-logo .logo-icon svg { width: 16px; height: 16px; }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 32px;
+      padding: 0 12px;
+      border: 1px solid #bfd2ff;
+      border-radius: 6px;
+      background: #f3f7ff;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .header-link-btn:hover {
+      background: #e9f0ff;
+      border-color: #9bb8ff;
+      color: var(--primary-hover);
+    }
+    .header-link-btn.is-disabled,
+    .header-link-btn.is-disabled:hover {
+      background: #f8fafc;
+      border-color: #e5e7eb;
+      color: var(--gray-400);
+      cursor: not-allowed;
+    }
+    .header-link-btn svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+    .header-link-btn.warn {
+      border-color: #fed7aa;
+      background: #fff7ed;
+      color: #c2410c;
+    }
+    .header-link-btn.warn:hover {
+      background: #ffedd5;
+      border-color: #fdba74;
+      color: #9a3412;
+    }
+    .header-link-btn.warn.is-disabled,
+    .header-link-btn.warn.is-disabled:hover {
+      background: #f8fafc;
+      border-color: #e5e7eb;
+      color: var(--gray-400);
+      cursor: not-allowed;
+    }
+    /* ── Stepper ── */
+    .stepper-wrap {
+      background: #fff;
+      border-bottom: 1px solid var(--gray-200);
+      padding: 0 32px;
+    }
+    .stepper {
+      display: flex;
+      align-items: center;
+      max-width: 860px;
+      margin: 0 auto;
+      height: 64px;
+    }
+    .step-item {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      cursor: default;
+    }
+    .step-item:last-child { flex: 0; }
+    .step-circle {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600;
+      border: 2px solid var(--gray-300);
+      color: var(--gray-400);
+      background: #fff;
+      flex-shrink: 0;
+      transition: all 0.25s;
+    }
+    .step-item.active .step-circle {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff;
+    }
+    .step-item.done .step-circle {
+      border-color: var(--success);
+      background: var(--success);
+      color: #fff;
+    }
+    .step-label {
+      margin-left: 8px;
+      font-size: 13px;
+      color: var(--gray-400);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .step-item.active .step-label { color: var(--primary); }
+    .step-item.done .step-label { color: var(--success); }
+    .step-connector {
+      flex: 1;
+      height: 2px;
+      background: var(--gray-200);
+      margin: 0 12px;
+      transition: background 0.25s;
+    }
+    .step-connector.done { background: var(--success); }
+
+    /* ── Main ── */
+    .main {
+      max-width: 860px;
+      margin: 32px auto;
+      padding: 0 0 80px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+    .card-desc {
+      font-size: 13px;
+      color: var(--gray-500);
+      margin-bottom: 20px;
+    }
+
+    /* ── Step panels ── */
+    .step-panel { display: none; }
+    .step-panel.active { display: block; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+    /* ── Form ── */
+    .form-group { margin-bottom: 16px; }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+    .form-label .required { color: var(--danger); margin-left: 2px; }
+    .form-input {
+      width: 100%;
+      height: 36px;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--border-radius);
+      padding: 0 12px;
+      font-size: 13px;
+      color: var(--gray-800);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .form-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(52,82,225,0.12);
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .radio-group { display: flex; gap: 12px; margin-top: 4px; }
+    .radio-option {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 14px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.15s;
+    }
+    .radio-option.selected {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+    .radio-option input { display: none; }
+
+    /* ── Scan state ── */
+    .scan-idle { }
+    .scan-loading { display: none; }
+    .scan-result { display: none; }
+
+    .scan-spinner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 0;
+      gap: 16px;
+    }
+    .spinner-ring {
+      width: 48px; height: 48px;
+      border: 3px solid var(--gray-200);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .scan-log {
+      font-size: 12px;
+      color: var(--gray-500);
+      text-align: center;
+      min-height: 18px;
+    }
+
+    /* ── Asset cards ── */
+    .asset-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .asset-card {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      padding: 16px 12px;
+      text-align: center;
+    }
+    .asset-card.has-detail {
+      padding: 14px 12px 12px;
+    }
+    .asset-icon { font-size: 22px; margin-bottom: 6px; }
+    .asset-count {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1;
+    }
+    .asset-label {
+      font-size: 11px;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+    .asset-hierarchy {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--gray-200);
+      display: grid;
+      gap: 6px;
+      text-align: left;
+      font-size: 11px;
+      color: var(--gray-500);
+      line-height: 1.35;
+    }
+    .asset-hierarchy-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      position: relative;
+      padding-left: 13px;
+    }
+    .asset-hierarchy-row::before {
+      content: "";
+      position: absolute;
+      left: 1px;
+      top: 0.55em;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #9bb8ff;
+    }
+    .asset-hierarchy-row span:first-child {
+      color: var(--gray-600);
+    }
+    .asset-hierarchy-row strong {
+      color: var(--primary);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .asset-hierarchy-row strong.success-count {
+      color: var(--success);
+    }
+    .asset-hierarchy-row.is-sub {
+      margin-left: 14px;
+      padding-left: 16px;
+      font-size: 10.5px;
+      color: var(--gray-400);
+    }
+    .asset-hierarchy-row.is-sub::before {
+      left: 3px;
+      width: 4px;
+      height: 4px;
+      background: #c7d2fe;
+    }
+    .asset-hierarchy-row.is-sub::after {
+      content: "";
+      position: absolute;
+      left: -7px;
+      top: -7px;
+      width: 12px;
+      height: 14px;
+      border-left: 1px solid #d7def8;
+      border-bottom: 1px solid #d7def8;
+      border-radius: 0 0 0 5px;
+    }
+    .asset-hierarchy-row.is-sub span:first-child {
+      color: var(--gray-500);
+    }
+    .migration-map {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 16px 0 20px;
+    }
+    .migration-map-item {
+      border: 1px solid #bfdbfe;
+      background: #f8fbff;
+      border-radius: 8px;
+      padding: 10px 12px;
+      min-height: 82px;
+    }
+    .migration-map-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+    .migration-map-desc {
+      font-size: 11px;
+      color: var(--gray-600);
+      line-height: 1.55;
+    }
+    .mapping-lines {
+      display: grid;
+      gap: 4px;
+    }
+    .mapping-line {
+      position: relative;
+      padding-left: 10px;
+    }
+    .mapping-line::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.72em;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+    .mapping-path {
+      display: grid;
+      gap: 8px;
+    }
+    .mapping-path-line {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1.35;
+    }
+    .mapping-path-line.safe {
+      color: var(--success);
+    }
+    .mapping-path-desc {
+      margin-top: 3px;
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--gray-600);
+      line-height: 1.45;
+    }
+
+    /* ── Agent list ── */
+    .agent-section { margin-bottom: 20px; }
+    .agent-section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-600);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .agent-section-count {
+      background: var(--gray-100);
+      color: var(--gray-600);
+      font-size: 11px;
+      padding: 1px 7px;
+      border-radius: 10px;
+    }
+
+    .agent-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 14px;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: #fff;
+      transition: border-color 0.15s;
+    }
+    .agent-item:hover { border-color: var(--gray-300); }
+    .agent-item.warning { border-color: var(--warning); background: var(--warning-light); }
+    .agent-item.success { border-color: var(--gray-200); }
+
+    .agent-status {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px;
+      flex-shrink: 0;
+      margin-right: 10px;
+    }
+    .agent-status.ok { background: var(--success-light); color: var(--success); }
+    .agent-status.warn { background: var(--warning-light); color: var(--warning); }
+    .agent-status.err { background: var(--danger-light); color: var(--danger); }
+
+    .agent-info { flex: 1; }
+    .agent-name { font-size: 13px; font-weight: 500; color: var(--gray-800); }
+    .agent-meta { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+
+    .agent-tag {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .agent-tag.draft { background: var(--gray-100); color: var(--gray-500); }
+    .agent-tag.warn-tag { background: var(--warning-light); color: var(--warning); }
+
+    .agent-action {
+      margin-left: 10px;
+    }
+
+    /* ── Summary bar ── */
+    .summary-bar {
+      display: flex;
+      gap: 16px;
+      padding: 14px 16px;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .summary-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .summary-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+
+    /* ── Step 3: Review ── */
+    .review-section { margin-bottom: 20px; }
+    .review-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gray-800);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .warning-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--warning);
+      border-radius: 8px;
+      background: var(--warning-light);
+      margin-bottom: 10px;
+    }
+    .warning-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .warning-content { flex: 1; }
+    .warning-label { font-size: 13px; font-weight: 500; color: var(--gray-800); margin-bottom: 6px; }
+    .warning-desc { font-size: 12px; color: var(--gray-600); margin-bottom: 8px; }
+    .inline-input {
+      display: flex; gap: 8px; align-items: center;
+    }
+    .inline-input input {
+      height: 32px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      padding: 0 10px;
+      font-size: 12px;
+      outline: none;
+      width: 200px;
+    }
+    .inline-input input:focus { border-color: var(--primary); }
+    .resolved-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--success);
+      background: var(--success-light);
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .gap-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      border-radius: 6px;
+      background: var(--danger-light);
+      border: 1px solid #fecaca;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: var(--gray-700);
+      gap: 8px;
+    }
+    .gap-badge {
+      font-size: 11px;
+      padding: 1px 7px;
+      border-radius: 4px;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+    .gap-badge.roadmap { background: #ede9fe; color: #7c3aed; }
+    .gap-badge.partial { background: var(--warning-light); color: var(--warning); }
+
+    /* ── Step 4: Execute ── */
+    .progress-group { margin-bottom: 16px; }
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+    .progress-label span:first-child { color: var(--gray-700); font-weight: 500; }
+    .progress-label .pct { color: var(--gray-500); }
+    .progress-bar-wrap {
+      height: 8px;
+      background: var(--gray-100);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: var(--primary);
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+    .progress-bar-fill.success { background: var(--success); }
+
+    .exec-log {
+      background: var(--gray-900);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-family: 'SF Mono', 'Menlo', monospace;
+      font-size: 11.5px;
+      line-height: 1.7;
+      color: #a3e635;
+      max-height: 160px;
+      overflow-y: auto;
+      margin-top: 16px;
+    }
+    .exec-log.is-hidden { display: none; }
+    .exec-log .log-line { opacity: 0; animation: fadeLog 0.3s ease forwards; }
+    .exec-log .log-ok { color: #4ade80; }
+    .exec-log .log-info { color: #93c5fd; }
+    .exec-log .log-warn { color: #fde68a; }
+    @keyframes fadeLog { to { opacity: 1; } }
+
+    /* ── Report ── */
+    .report-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+      background: var(--success-light);
+      border: 1px solid #a7f3d0;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .report-header-main {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex: 1;
+      min-width: 360px;
+    }
+    .final-cleanup-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid #fbbf24;
+      border-radius: 10px;
+      background: #fffbeb;
+      flex-wrap: wrap;
+    }
+    .final-cleanup-card.is-success {
+      border-color: #a7f3d0;
+      background: var(--success-light);
+    }
+    .final-cleanup-main {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex: 1;
+      min-width: 420px;
+    }
+    .final-cleanup-icon {
+      font-size: 36px;
+      line-height: 1;
+    }
+    .final-cleanup-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+    .final-cleanup-desc {
+      font-size: 13px;
+      color: #92400e;
+      margin-top: 2px;
+      line-height: 1.5;
+    }
+    .final-cleanup-card.is-success .final-cleanup-desc {
+      color: var(--gray-600);
+    }
+    .report-icon { font-size: 36px; }
+    .report-title { font-size: 16px; font-weight: 600; color: var(--gray-900); }
+    .report-sub { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+
+    .report-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .report-stat {
+      padding: 16px;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      text-align: center;
+    }
+    .report-stat-num {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .report-stat-num.success { color: var(--success); }
+    .report-stat-num.warning { color: var(--warning); }
+    .report-stat-label { font-size: 12px; color: var(--gray-500); margin-top: 4px; }
+
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .report-table th {
+      text-align: left;
+      padding: 10px 12px;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+      font-weight: 500;
+      color: var(--gray-600);
+      font-size: 12px;
+    }
+    .report-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--gray-100);
+      color: var(--gray-700);
+    }
+    .report-table tr:last-child td { border-bottom: none; }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .status-pill.ok { background: var(--success-light); color: var(--success); }
+    .status-pill.skip { background: var(--warning-light); color: var(--warning); }
+    .status-pill.na { background: var(--danger-light); color: var(--danger); }
+
+    .next-step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+    .step-num {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Buttons ── */
+    .btn-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--gray-100);
+    }
+    .btn {
+      height: 36px;
+      padding: 0 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn-default {
+      background: #fff;
+      color: var(--gray-700);
+      border-color: var(--gray-300);
+    }
+    .btn-default:hover { background: var(--gray-50); }
+    .btn-success {
+      background: var(--success);
+      color: #fff;
+      border-color: var(--success);
+    }
+    .btn-success:hover { background: #059669; }
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-danger-outline {
+      background: #fff;
+      color: var(--danger);
+      border-color: #fecaca;
+    }
+    .btn-danger-outline:hover {
+      background: var(--danger-light);
+      border-color: #fca5a5;
+    }
+
+    /* ── Modal ── */
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(17, 24, 39, 0.42);
+      z-index: 300;
+      padding: 24px;
+    }
+    .modal-mask.show { display: flex; }
+    .modal-card {
+      width: min(460px, 100%);
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      padding: 24px;
+    }
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+    }
+    .modal-desc {
+      font-size: 13px;
+      color: var(--gray-600);
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+    .modal-warning {
+      padding: 12px;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      background: var(--warning-light);
+      color: #92400e;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* ── Misc ── */
+    .divider { border: none; border-top: 1px solid var(--gray-100); margin: 20px 0; }
+    .tag { display: inline-flex; align-items: center; font-size: 11px; padding: 2px 7px; border-radius: 4px; }
+    .mini-btn {
+      font-size: 11px; padding: 3px 10px; height: 24px;
+      border-radius: 4px; border: 1px solid var(--gray-300);
+      background: #fff; cursor: pointer; color: var(--gray-700);
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .mini-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .mini-btn.primary { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+
+    /* ── Agent Composer ── */
+    .composer-grid {
+      display: grid;
+      grid-template-columns: 0.95fr 1.35fr;
+      gap: 16px;
+      align-items: start;
+    }
+    .composer-panel {
+      min-height: 360px;
+    }
+    .composer-panel-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin-bottom: 10px;
+    }
+    .target-agent-card {
+      padding: 12px;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      background: #fff;
+      margin-bottom: 10px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .target-agent-card.has-error {
+      border-color: var(--danger);
+      background: var(--danger-light);
+    }
+    .target-card-body.no-check {
+      display: block;
+    }
+    .target-agent-head {
+      margin-bottom: 8px;
+    }
+    .target-name-input {
+      width: 100%;
+      height: 34px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      padding: 0 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-800);
+      outline: none;
+      background: #fff;
+    }
+    .target-name-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(52,82,225,0.12);
+    }
+    .target-name-input.has-error {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+    .target-agent-error {
+      font-size: 11px;
+      color: var(--danger);
+      margin-top: -3px;
+      margin-bottom: 8px;
+    }
+    .target-agent-table {
+      width: 100%;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .target-agent-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+      align-items: center;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .target-agent-row:last-child { border-bottom: 0; }
+    .target-agent-row.table-head {
+      background: var(--gray-50);
+      color: var(--gray-500);
+      font-size: 12px;
+      font-weight: 600;
+      padding-top: 9px;
+      padding-bottom: 9px;
+    }
+    .target-agent-row.has-error {
+      background: var(--danger-light);
+    }
+    .target-source-main {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-800);
+      margin-bottom: 2px;
+    }
+    .target-source-meta {
+      font-size: 12px;
+      color: var(--gray-500);
+      line-height: 1.45;
+    }
+    .target-agent-table .target-name-input {
+      height: 32px;
+    }
+    .agent-summary-line {
+      font-size: 12px;
+      color: var(--gray-500);
+      line-height: 1.5;
+      margin-top: 8px;
+    }
+    .composer-empty {
+      border: 1px dashed var(--gray-300);
+      border-radius: 8px;
+      padding: 22px;
+      text-align: center;
+      color: var(--gray-400);
+      font-size: 13px;
+      background: #fff;
+    }
+
+    .tip {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 10px 12px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #1e40af;
+      margin-bottom: 16px;
+    }
+
+    .page-title { font-size: 20px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; }
+    .page-sub { font-size: 13px; color: var(--gray-500); margin-bottom: 24px; }
+
+    /* ── Pre-check ── */
+    .precheck-list { margin: 0; }
+    .precheck-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .precheck-item:last-child { border-bottom: none; }
+    .precheck-icon-wrap {
+      width: 24px; height: 24px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .precheck-spinner {
+      width: 16px; height: 16px;
+      border: 2px solid var(--gray-200);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+    }
+    .precheck-idle-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--gray-300);
+    }
+    .precheck-label {
+      flex: 1;
+      font-size: 13px;
+      color: var(--gray-700);
+    }
+    .precheck-value {
+      font-size: 12px;
+      color: var(--gray-400);
+    }
+    .precheck-fail-action {
+      font-size: 12px;
+      color: var(--primary);
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .precheck-item.check-ok .precheck-label { color: var(--gray-700); }
+    .precheck-item.check-fail .precheck-label { color: var(--gray-600); }
+    .precheck-item.check-fail .precheck-value { color: var(--danger); }
+    .precheck-desc {
+      font-size: 12px;
+      color: var(--gray-400);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .precheck-desc-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--gray-300);
+      flex-shrink: 0;
+    }
+    .precheck-desc-dot.running { background: var(--primary); animation: pulse 1s ease-in-out infinite; }
+    .precheck-desc-dot.done-ok { background: var(--success); animation: none; }
+    .precheck-desc-dot.done-fail { background: var(--danger); animation: none; }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+  </style>
+</head>
+<body>
+
+<div id="variant-bar">
+  <span class="label">方案</span>
+  <button class="v-tab active" type="button">迁移工具 Demo</button>
+  <button class="v-demo-toggle" id="demo-toggle" type="button" onclick="toggleDemoMode()">交互说明</button>
+</div>
+
+<!-- Header
+  设计点：
+  1. 「关闭 Chat BI 服务」是独立的风险操作入口，点击只打开确认弹窗，不做页面跳转。
+  2. 关闭服务只能执行一次；执行后按钮进入灰色禁用态，并通过 title 提示「chatbi服务已关闭」。
+  3. 「Chat BI 原配置」保留外链图标，用于表达会新开页查看原系统配置。
+-->
+<header class="header annotation-target" data-annotation-tooltip="工具以独立页面承载迁移任务，页头只保留旧服务治理和原配置查看两个全局入口。">
+  <div class="header-logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+        <path d="M3 7h18M3 12h18M3 17h18"/>
+      </svg>
+    </div>
+    ChatBI → Dora 迁移工具
+  </div>
+  <div class="header-actions">
+    <button class="header-link-btn warn annotation-target annotation-tight" data-annotation-placement="bottom" data-annotation-tooltip="关闭 Chat BI 服务是高风险一次性操作，始终先弹窗确认，成功后入口置灰。" id="close-chatbi-service-btn" type="button" onclick="return openCloseChatbiServicePrompt(this)" title="关闭 Chat BI 服务">
+      关闭 Chat BI 服务
+    </button>
+    <a class="header-link-btn annotation-target annotation-tight" data-annotation-placement="bottom" data-annotation-tooltip="原配置以新标签页查看，避免打断当前迁移流程。" href="./admin-monitor.html" target="_blank" rel="noopener noreferrer" title="新开浏览器标签页查看 Chat BI 原配置">
+      Chat BI 原配置
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M15 3h6v6"/>
+        <path d="M10 14 21 3"/>
+        <path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"/>
+      </svg>
+    </a>
+  </div>
+</header>
+
+<!-- Stepper -->
+<div class="stepper-wrap">
+  <div class="stepper annotation-target" data-annotation-placement="bottom" data-annotation-tooltip="顶部步骤条表达三段主流程：预检扫描、确认目标 Agent、执行并查看报告。">
+    <div class="step-item active" id="step-tab-1">
+      <div class="step-circle" id="step-circle-1">1</div>
+      <div class="step-label">环境预检 & 资产扫描</div>
+    </div>
+    <div class="step-connector" id="conn-1"></div>
+    <div class="step-item" id="step-tab-2">
+      <div class="step-circle" id="step-circle-2">2</div>
+      <div class="step-label">确认目标Agent</div>
+    </div>
+    <div class="step-connector" id="conn-2"></div>
+    <div class="step-item" id="step-tab-3">
+      <div class="step-circle" id="step-circle-3">3</div>
+      <div class="step-label">执行 & 报告</div>
+    </div>
+  </div>
+</div>
+
+<div class="demo-scenarios demo-control">
+  <span>演示状态</span>
+  <button type="button" onclick="demoShowPrecheck()">预检</button>
+  <button type="button" onclick="demoShowScanResult()">扫描完成</button>
+  <button type="button" onclick="demoShowConflict()">命名冲突</button>
+  <button type="button" onclick="demoShowReport()">迁移完成</button>
+  <button type="button" onclick="showDeleteChatbiModal()">关闭确认</button>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- ═══ STEP 1 ═══ -->
+  <div class="step-panel active" id="panel-1">
+    <p class="page-title">环境预检 & 资产扫描</p>
+
+    <!-- Pre-check card
+      设计点：
+      1. 预检先确认迁移工具运行条件：ChatBI 插件已卸载、BI 平台版本、Dora 插件、超管权限。
+      2. 迁移插件定位为一次性迁移工具，因此这里不再提示“迁移过程中不要卸载 ChatBI 插件”。
+      3. precheckItems 是预检项的唯一数据源，新增/删除检测项时同步维护 DOM 中 pc-item-* 即可。
+    -->
+    <div class="card annotation-target" data-annotation-tooltip="预检自动执行，检测 ChatBI 卸载、BI 版本、Dora 插件和超管权限，通过后才能扫描。" id="precheck-card">
+      <div class="card-title">环境预检</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+        <div class="precheck-desc-dot running" id="precheck-dot"></div>
+        <span class="precheck-value" id="precheck-desc-text">正在检测平台环境...</span>
+      </div>
+
+      <div class="precheck-list">
+        <!-- Item a: ChatBI 插件信息 -->
+        <div class="precheck-item" id="pc-item-0">
+          <div class="precheck-icon-wrap" id="pc-icon-0"><div class="precheck-idle-dot"></div></div>
+          <div class="precheck-label">检测 ChatBI 插件已卸载</div>
+          <div class="precheck-value" id="pc-val-0">等待检测</div>
+        </div>
+        <!-- Item b: 版本检测 -->
+        <div class="precheck-item" id="pc-item-1">
+          <div class="precheck-icon-wrap" id="pc-icon-1"><div class="precheck-idle-dot"></div></div>
+          <div style="flex:1;">
+            <div class="precheck-label">BI 平台版本满足迁移要求（7.0）</div>
+            <div id="pc-version-warn" style="display:none;margin-top:5px;font-size:12px;color:var(--warning);background:var(--warning-light);padding:5px 8px;border-radius:4px;line-height:1.5;">
+              当前版本为 6.1，请先将帆软 BI 平台升级至 7.0，再执行 ChatBI → Dora 迁移
+            </div>
+          </div>
+          <div class="precheck-value" id="pc-val-1">等待检测</div>
+        </div>
+        <!-- Item c: Dora 插件检测 -->
+        <div class="precheck-item" id="pc-item-2">
+          <div class="precheck-icon-wrap" id="pc-icon-2"><div class="precheck-idle-dot"></div></div>
+          <div class="precheck-label">已安装 Dora 插件</div>
+          <div class="precheck-value" id="pc-val-2">等待检测</div>
+        </div>
+        <!-- Item d: 权限检测 -->
+        <div class="precheck-item" id="pc-item-3">
+          <div class="precheck-icon-wrap" id="pc-icon-3"><div class="precheck-idle-dot"></div></div>
+          <div class="precheck-label">当前账号具有超管权限</div>
+          <div class="precheck-value" id="pc-val-3">等待检测</div>
+        </div>
+      </div>
+
+      <div class="btn-row" style="border-top:none;padding-top:16px;margin-top:0;">
+        <button class="btn btn-default" id="recheck-btn" onclick="runPrecheck()" style="display:none;">重新检测</button>
+        <button class="btn btn-primary" id="scan-start-btn" disabled onclick="startScan()">开始扫描 ChatBI 资产 →</button>
+      </div>
+    </div>
+
+    <!-- Scanning -->
+    <div class="card annotation-target" data-annotation-tooltip="扫描中仅展示当前读取进度，避免用户误以为可以配置映射。" id="scan-loading" style="display:none;">
+      <div class="scan-spinner">
+        <div class="spinner-ring"></div>
+        <div style="font-size:14px;font-weight:500;color:var(--gray-700);">正在扫描 ChatBI 资产...</div>
+        <div class="scan-log" id="scan-log">读取数据主题...</div>
+      </div>
+    </div>
+
+    <!-- Scan Result
+      设计点：
+      1. “数据资产”不是数据标签和分析主题并列，而是：数据标签聚合分析主题，独立主题与数据标签同级。
+      2. 业务用语分两类：全局业务用语封装为知识库；业务域业务用语已在数据语义信息中，不单独迁移。
+      3. 这里展示的是原配置中存在的资产和迁移映射，不展示过多解释性文字。
+    -->
+    <div class="card annotation-target" data-annotation-tooltip="扫描结果先汇总资产数量，再说明 ChatBI 资产迁移到 Dora 的目标形态。" id="scan-result" style="display:none;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+        <span style="color:var(--success);font-size:18px;">✅</span>
+        <div class="card-title">扫描完成</div>
+      </div>
+      <div class="card-desc">发现原配置中存在以下资产</div>
+
+      <div class="asset-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="asset-card has-detail terms-card">
+          <div class="asset-icon">📊</div>
+          <div class="asset-count">9</div>
+          <div class="asset-label">数据资产</div>
+          <div class="asset-hierarchy">
+            <div class="asset-hierarchy-row"><span>数据标签</span><strong>8 个</strong></div>
+            <div class="asset-hierarchy-row is-sub"><span>分析主题</span><strong>22 个</strong></div>
+            <div class="asset-hierarchy-row"><span>独立主题</span><strong>1 个</strong></div>
+          </div>
+        </div>
+        <div class="asset-card has-detail">
+          <div class="asset-icon">📚</div>
+          <div class="asset-count">5</div>
+          <div class="asset-label">业务知识</div>
+          <div class="asset-hierarchy">
+            <div class="asset-hierarchy-row"><span>全局业务知识</span><strong>1 个</strong></div>
+            <div class="asset-hierarchy-row"><span>分析主题业务知识库</span><strong>4 个</strong></div>
+          </div>
+        </div>
+        <div class="asset-card has-detail">
+          <div class="asset-icon">💬</div>
+          <div class="asset-count">156</div>
+          <div class="asset-label">业务用语</div>
+          <div class="asset-hierarchy">
+            <div class="asset-hierarchy-row"><span>全局业务用语</span><strong>36 条</strong></div>
+            <div class="asset-hierarchy-row"><span>业务域业务用语</span><strong class="success-count">120 条</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="migration-map">
+        <div class="migration-map-item">
+          <div class="migration-map-title">数据资产 → 封装为 Agent</div>
+          <div class="migration-map-desc">8 个数据标签各生成 1 个 Agent；1 个独立主题单独生成 1 个 Agent。</div>
+        </div>
+        <div class="migration-map-item">
+          <div class="migration-map-title">业务知识 → 知识库</div>
+          <div class="migration-map-desc">业务知识同步迁移至 Dora 知识库，并关联到对应 Agent。</div>
+        </div>
+        <div class="migration-map-item">
+          <div class="mapping-path">
+            <div>
+              <div class="mapping-path-line">全局业务用语 → 知识库「全局业务用语」</div>
+              <div class="mapping-path-desc">封装为 Dora 知识库，作为全局可复用术语资产。</div>
+            </div>
+            <div>
+              <div class="mapping-path-line safe">业务域业务用语：已加载在数据语义信息中</div>
+              <div class="mapping-path-desc">作为原有数据语义配置展示，不单独迁移。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row" style="border-top:none;padding-top:0;">
+        <button class="btn btn-default" onclick="resetToPrecheck()">← 重新检测</button>
+        <button class="btn btn-primary" onclick="goTo(2)">确认目标Agent →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 2 ═══
+    设计点：
+    1. 当前不支持手动合并/拆分 Agent，按数据资产直接生成 Dora 目标 Agent。
+    2. Agent 名称允许直接编辑；同名冲突自动追加后缀，减少用户确认成本。
+    3. 使用表格结构展示“Agent名称 / 来源资产”，避免卡片嵌套过多和纵向空间浪费。
+  -->
+  <div class="step-panel" id="panel-2">
+    <p class="page-title">确认目标Agent</p>
+
+    <div class="summary-bar annotation-target" data-annotation-tooltip="进入确认页后先给出待创建 Agent 数、命名冲突和迁移组织方式的摘要。">
+      <div class="summary-item">
+        <span class="summary-dot" style="background:var(--primary)"></span>
+        <span style="color:var(--gray-600)">将创建 <strong style="color:var(--primary)" id="final-agent-count">9</strong> 个问数 Agent</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-dot" id="conflict-summary-dot" style="background:var(--warning)"></span>
+        <span id="conflict-summary-text" style="color:var(--gray-600)"><strong style="color:var(--success)">0</strong> 个命名冲突</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-dot" style="background:var(--gray-300)"></span>
+        <span style="color:var(--gray-600)">数据与知识按组迁移</span>
+      </div>
+    </div>
+
+    <div class="card annotation-target" data-annotation-tooltip="目标 Agent 列表只允许编辑名称，系统实时校验空名、同名和 Dora 已存在同名。">
+      <div class="review-title" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <span style="display:flex;align-items:center;gap:8px;">Dora 目标 Agent <span class="agent-section-count" id="target-agent-count">9 个</span></span>
+        <span style="font-size:12px;color:var(--gray-500);font-weight:400;">已自动处理同名 Agent 后缀</span>
+      </div>
+
+      <div class="composer-panel" style="min-height:auto;">
+        <div id="target-agent-list"></div>
+        <div id="target-empty-tip" class="composer-empty" style="display:none;">暂无目标 Agent</div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-default" onclick="goTo(1)">← 上一步</button>
+        <button class="btn btn-danger" id="exec-btn" onclick="goTo(3)" disabled>确认并执行迁移</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 3 ═══ -->
+  <div class="step-panel" id="panel-3">
+    <p class="page-title">执行 & 报告</p>
+    <p class="page-sub">正在将 ChatBI 资产迁移至 Dora，请勿关闭页面</p>
+
+    <div class="card annotation-target" data-annotation-tooltip="执行阶段以分项进度表达迁移正在推进，隐藏技术日志以降低评审噪音。" id="exec-running">
+      <div class="card-title" style="margin-bottom:20px;">迁移进度</div>
+
+      <div class="progress-group">
+        <div class="progress-label"><span>数据中心</span><span class="pct" id="pct-1">0%</span></div>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" id="bar-1"></div></div>
+      </div>
+      <div class="progress-group">
+        <div class="progress-label"><span>知识库 & 语义信息</span><span class="pct" id="pct-2">0%</span></div>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" id="bar-2"></div></div>
+      </div>
+      <div class="progress-group">
+        <div class="progress-label"><span>Agent 创建</span><span class="pct" id="pct-3">0%</span></div>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" id="bar-3"></div></div>
+      </div>
+      <div class="progress-group">
+        <div class="progress-label"><span>推荐问题</span><span class="pct" id="pct-4">0%</span></div>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" id="bar-4"></div></div>
+      </div>
+      <div class="progress-group">
+        <div class="progress-label"><span>模型配置</span><span class="pct" id="pct-5">0%</span></div>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" id="bar-5"></div></div>
+      </div>
+
+      <div class="exec-log is-hidden" id="exec-log"></div>
+    </div>
+
+    <!-- Report
+      设计点：
+      1. 迁移完成卡片只表达迁移成功和下载报告，避免塞入后续操作。
+      2. Chat BI 服务关闭作为独立收尾卡片，强调这是迁移后的最后治理动作。
+      3. 如果服务已关闭，收尾卡片切换为绿色成功态，并隐藏“关闭chatbi服务”按钮。
+    -->
+    <div id="exec-report" style="display:none;">
+      <div class="report-header annotation-target" data-annotation-tooltip="完成态优先表达迁移成功、耗时和下载报告，后续治理动作放在独立收尾卡片中。">
+        <div class="report-header-main">
+          <div class="report-icon">🎉</div>
+          <div>
+            <div class="report-title">迁移完成！</div>
+            <div class="report-sub">完成时间：2026-04-15 14:32:08 · 耗时约 2 分 14 秒</div>
+          </div>
+        </div>
+        <button class="btn btn-default" style="margin-left:auto;" onclick="downloadReport()">📥 下载报告 PDF</button>
+      </div>
+
+      <div class="final-cleanup-card annotation-target" data-annotation-tooltip="迁移完成后将关闭旧 Chat BI 服务作为独立收尾动作，可与页头入口共用同一确认逻辑。">
+        <div class="final-cleanup-main">
+          <div class="final-cleanup-icon">⚠️</div>
+          <div>
+            <div class="final-cleanup-title">同时关闭 Chat BI 服务</div>
+            <div class="final-cleanup-desc">建议你迁移完成后同时关闭旧服务，屏蔽 ChatBI 前端界面入口</div>
+          </div>
+        </div>
+        <button class="btn btn-danger-outline" style="margin-left:auto;" id="delete-chatbi-btn" onclick="showDeleteChatbiModal()">关闭chatbi服务</button>
+      </div>
+
+      <div class="report-grid">
+        <div class="report-stat">
+          <div class="report-stat-num success" id="report-total-agents">12</div>
+          <div class="report-stat-label">Agent 成功创建</div>
+        </div>
+        <div class="report-stat">
+          <div class="report-stat-num success">23</div>
+          <div class="report-stat-label">分析主题已迁移</div>
+        </div>
+        <div class="report-stat">
+          <div class="report-stat-num success">5</div>
+          <div class="report-stat-label">知识库已创建</div>
+        </div>
+        <div class="report-stat">
+          <div class="report-stat-num success">47</div>
+          <div class="report-stat-label">推荐问题已迁移</div>
+        </div>
+        <div class="report-stat">
+          <div class="report-stat-num success">0</div>
+          <div class="report-stat-label">执行失败项</div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden;">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>资产类型</th>
+              <th>迁移数量</th>
+              <th>目标位置</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>分析主题</td>
+              <td>23 个</td>
+              <td>数据中心</td>
+              <td><span class="status-pill ok">✓ 成功</span></td>
+            </tr>
+            <tr>
+              <td>全局业务知识</td>
+              <td>1 个知识库</td>
+              <td>知识：全局业务知识知识库</td>
+              <td><span class="status-pill ok">✓ 成功</span></td>
+            </tr>
+            <tr>
+              <td>业务域知识</td>
+              <td>4 个知识库</td>
+              <td>知识：各分析主题知识库</td>
+              <td><span class="status-pill ok">✓ 成功</span></td>
+            </tr>
+            <tr>
+              <td>全局业务用语</td>
+              <td>36 条</td>
+              <td>知识：全局业务用语知识库</td>
+              <td><span class="status-pill ok">✓ 成功</span></td>
+            </tr>
+            <tr>
+              <td>Agent</td>
+              <td id="report-agent-count">12 个（未发布）</td>
+              <td>Agent管理</td>
+              <td><span class="status-pill ok">✓ 成功</span></td>
+            </tr>
+            <tr>
+              <td>推荐问题</td>
+              <td>47 条</td>
+              <td>对应 Agent 首轮推荐</td>
+              <td><span class="status-pill ok">✓ 成功</span></td>
+            </tr>
+            <tr>
+              <td>模型配置</td>
+              <td>1 个</td>
+              <td>模型管理</td>
+              <td><span class="status-pill ok">✓ 成功</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Close Chat BI Service Modal
+  设计点：
+  1. 关闭服务不是删除资产，而是屏蔽原 ChatBI 所有相关功能入口。
+  2. 该弹窗同时服务于页头按钮和迁移完成页收尾卡片，确保关闭逻辑只有一套。
+-->
+<div class="modal-mask" id="delete-chatbi-modal">
+  <div class="modal-card annotation-target" data-annotation-placement="top" data-annotation-tooltip="确认弹窗明确关闭旧入口不删除资产，避免用户误解为清空 ChatBI 数据。">
+    <div class="modal-title">确认关闭 Chat BI 服务？</div>
+    <div class="modal-desc">
+      关闭后将屏蔽 ChatBI 前端界面入口，业务用户将无法再通过旧入口访问问数能力。
+    </div>
+    <div class="modal-warning">
+      该操作不会删除 ChatBI 资产。
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-default" onclick="hideDeleteChatbiModal()">取消</button>
+      <button class="btn btn-danger" onclick="confirmDeleteChatbi()">确认关闭 Chat BI 服务</button>
+    </div>
+  </div>
+</div>
+
+<div id="annotation-tooltip-layer" aria-hidden="true">
+  <div id="annotation-tooltip-bubble"></div>
+</div>
+
+<script>
+  let activeAnnotationTarget = null;
+
+  function toggleDemoMode() {
+    document.body.classList.toggle('demo-mode');
+    document.getElementById('demo-toggle').classList.toggle('active', document.body.classList.contains('demo-mode'));
+    if (!document.body.classList.contains('demo-mode')) hideAnnotationTooltip();
+  }
+
+  function getAnnotationTooltipLayer() {
+    return document.getElementById('annotation-tooltip-layer');
+  }
+
+  function getAnnotationTooltipBubble() {
+    return document.getElementById('annotation-tooltip-bubble');
+  }
+
+  function getAnnotationTooltipPlacement(target) {
+    return target && target.dataset.annotationPlacement ? target.dataset.annotationPlacement : 'right';
+  }
+
+  function hideAnnotationTooltip() {
+    activeAnnotationTarget = null;
+    const layer = getAnnotationTooltipLayer();
+    const bubble = getAnnotationTooltipBubble();
+    if (!layer || !bubble) return;
+    layer.classList.remove('open');
+    bubble.textContent = '';
+    bubble.style.left = '0px';
+    bubble.style.top = '0px';
+  }
+
+  function syncAnnotationTooltipPosition() {
+    if (!activeAnnotationTarget || !document.body.classList.contains('demo-mode')) {
+      hideAnnotationTooltip();
+      return;
+    }
+
+    const layer = getAnnotationTooltipLayer();
+    const bubble = getAnnotationTooltipBubble();
+    if (!layer || !bubble) return;
+
+    const targetRect = activeAnnotationTarget.getBoundingClientRect();
+    if (!targetRect.width && !targetRect.height) {
+      hideAnnotationTooltip();
+      return;
+    }
+
+    bubble.style.left = '0px';
+    bubble.style.top = '0px';
+    const bubbleRect = bubble.getBoundingClientRect();
+    const gap = 12;
+    const viewportPadding = 12;
+    const placement = getAnnotationTooltipPlacement(activeAnnotationTarget);
+
+    let left = targetRect.right + gap;
+    let top = targetRect.top + targetRect.height / 2 - bubbleRect.height / 2;
+
+    if (placement === 'top') {
+      left = targetRect.left + targetRect.width / 2 - bubbleRect.width / 2;
+      top = targetRect.top - bubbleRect.height - gap;
+      if (top < viewportPadding) top = targetRect.bottom + gap;
+    } else if (placement === 'left') {
+      left = targetRect.left - bubbleRect.width - gap;
+      if (left < viewportPadding) left = targetRect.right + gap;
+    } else if (placement === 'bottom') {
+      left = targetRect.left + targetRect.width / 2 - bubbleRect.width / 2;
+      top = targetRect.bottom + gap;
+    }
+
+    if (left + bubbleRect.width > window.innerWidth - viewportPadding) {
+      left = window.innerWidth - bubbleRect.width - viewportPadding;
+    }
+    if (left < viewportPadding) left = viewportPadding;
+    if (top + bubbleRect.height > window.innerHeight - viewportPadding) {
+      top = window.innerHeight - bubbleRect.height - viewportPadding;
+    }
+    if (top < viewportPadding) top = viewportPadding;
+
+    bubble.style.left = Math.round(left) + 'px';
+    bubble.style.top = Math.round(top) + 'px';
+  }
+
+  function showAnnotationTooltip(target) {
+    if (!target || !document.body.classList.contains('demo-mode')) return;
+    const text = target.dataset.annotationTooltip || '';
+    if (!text) return;
+    const layer = getAnnotationTooltipLayer();
+    const bubble = getAnnotationTooltipBubble();
+    if (!layer || !bubble) return;
+    activeAnnotationTarget = target;
+    bubble.textContent = text;
+    layer.classList.add('open');
+    syncAnnotationTooltipPosition();
+  }
+
+  function initAnnotationTooltips() {
+    const layer = getAnnotationTooltipLayer();
+    const bubble = getAnnotationTooltipBubble();
+    if (!layer || !bubble || layer.dataset.inited === 'true') return;
+
+    document.addEventListener('pointerover', event => {
+      const target = event.target.closest('.annotation-target');
+      if (target) showAnnotationTooltip(target);
+    });
+
+    document.addEventListener('pointerout', event => {
+      if (!activeAnnotationTarget) return;
+      const nextTarget = event.relatedTarget;
+      const nextAnnotation = nextTarget && nextTarget.closest ? nextTarget.closest('.annotation-target') : null;
+      if (nextAnnotation === activeAnnotationTarget) return;
+      hideAnnotationTooltip();
+    });
+
+    document.addEventListener('focusin', event => {
+      const target = event.target.closest('.annotation-target');
+      if (target) showAnnotationTooltip(target);
+    });
+
+    document.addEventListener('focusout', event => {
+      const nextAnnotation = event.relatedTarget && event.relatedTarget.closest
+        ? event.relatedTarget.closest('.annotation-target')
+        : null;
+      if (!nextAnnotation) hideAnnotationTooltip();
+    });
+
+    document.addEventListener('click', event => {
+      const target = event.target.closest('.annotation-target');
+      if (target) {
+        showAnnotationTooltip(target);
+        return;
+      }
+      hideAnnotationTooltip();
+    });
+
+    window.addEventListener('scroll', syncAnnotationTooltipPosition, true);
+    window.addEventListener('resize', syncAnnotationTooltipPosition);
+    layer.dataset.inited = 'true';
+  }
+
+  let currentStep = 1;
+  // 关闭 Chat BI 服务是全局一次性状态：
+  // - 从页头关闭或从迁移完成页关闭，都会写入这个状态。
+  // - 状态为 true 后，页头按钮禁用、结果页收尾卡片变为成功态。
+  let chatbiServiceClosed = false;
+  // ── Navigation ──
+  function goTo(step) {
+    document.getElementById('panel-' + currentStep).classList.remove('active');
+    document.getElementById('panel-' + step).classList.add('active');
+
+    // update stepper
+    for (let i = 1; i <= 3; i++) {
+      const tab = document.getElementById('step-tab-' + i);
+      const circle = document.getElementById('step-circle-' + i);
+      tab.classList.remove('active','done');
+      if (i < step) {
+        tab.classList.add('done');
+        circle.innerHTML = '✓';
+      } else if (i === step) {
+        tab.classList.add('active');
+        circle.innerHTML = i;
+      } else {
+        circle.innerHTML = i;
+      }
+    }
+    for (let i = 1; i <= 2; i++) {
+      const conn = document.getElementById('conn-' + i);
+      conn.classList.toggle('done', i < step);
+    }
+
+    currentStep = step;
+
+    if (step === 2) {
+      initMergeList();
+    }
+    if (step === 3) {
+      startExecution();
+    }
+  }
+
+  // 页头“关闭 Chat BI 服务”入口：
+  // 使用 button + 弹窗确认，不做 hash 跳转或新开页面。
+  // 已关闭后只保留灰态和 tooltip，不允许再次打开确认弹窗。
+  function openCloseChatbiServicePrompt(btn) {
+    if (btn.classList.contains('is-disabled')) return false;
+    showDeleteChatbiModal();
+    return false;
+  }
+
+  // ── Step 1: Environment Pre-check ──
+  // 预检项顺序需要和 DOM 中 pc-item-0/1/2/3 对应。
+  // 循环使用 precheckItems.length，后续新增预检项不需要再改循环边界。
+  const precheckItems = [
+    { okVal: 'v3.2.1',  failVal: '未检测到 ChatBI 插件', pass: true },
+    { okVal: '版本 7.0，满足要求',             failVal: '版本 6.1，需先升级平台至 7.0',   pass: true, versionWarn: false },
+    { okVal: 'Dora 插件已安装',               failVal: '未检测到 Dora 插件',         pass: true },
+    { okVal: '超管权限已验证',                  failVal: '非超管账号，请切换后重试',         pass: true },
+  ];
+
+  function runPrecheck() {
+    for (let j = 0; j < precheckItems.length; j++) {
+      document.getElementById('pc-icon-' + j).innerHTML = '<div class="precheck-idle-dot"></div>';
+      const v = document.getElementById('pc-val-' + j);
+      v.textContent = '等待检测';
+      v.style.color = '';
+      document.getElementById('pc-item-' + j).className = 'precheck-item';
+    }
+    document.getElementById('precheck-dot').className = 'precheck-desc-dot running';
+    document.getElementById('precheck-desc-text').textContent = '正在检测平台环境...';
+    document.getElementById('scan-start-btn').disabled = true;
+    document.getElementById('recheck-btn').style.display = 'none';
+
+    let i = 0;
+    let allPass = true;
+
+    function checkNext() {
+      if (i >= precheckItems.length) {
+        const dot  = document.getElementById('precheck-dot');
+        const desc = document.getElementById('precheck-desc-text');
+        if (allPass) {
+          dot.className = 'precheck-desc-dot done-ok';
+          desc.textContent = '预检完成，所有项目通过 ✓';
+          document.getElementById('scan-start-btn').disabled = false;
+        } else {
+          dot.className = 'precheck-desc-dot done-fail';
+          desc.textContent = '预检未通过，请处理上方错误后重试';
+          document.getElementById('recheck-btn').style.display = 'inline-flex';
+        }
+        return;
+      }
+
+      document.getElementById('pc-icon-' + i).innerHTML = '<div class="precheck-spinner"></div>';
+      document.getElementById('pc-val-' + i).textContent = '检测中...';
+
+      setTimeout(() => {
+        const item  = precheckItems[i];
+        const iconEl = document.getElementById('pc-icon-' + i);
+        const valEl  = document.getElementById('pc-val-' + i);
+        const rowEl  = document.getElementById('pc-item-' + i);
+
+        if (item.pass) {
+          iconEl.innerHTML = '<span style="color:var(--success);font-size:15px;">✅</span>';
+          valEl.textContent = item.okVal;
+          valEl.style.color = 'var(--gray-400)';
+          rowEl.classList.add('check-ok');
+        } else {
+          iconEl.innerHTML = '<span style="color:var(--danger);font-size:15px;">❌</span>';
+          valEl.textContent = item.failVal;
+          valEl.style.color = 'var(--danger)';
+          rowEl.classList.add('check-fail');
+          allPass = false;
+          // 版本检测失败时显示升级提示
+          if (i === 1 && item.versionWarn !== false) {
+            const warnEl = document.getElementById('pc-version-warn');
+            if (warnEl) warnEl.style.display = 'block';
+          }
+        }
+        i++;
+        checkNext();
+      }, 250 + Math.random() * 150);
+    }
+
+    setTimeout(checkNext, 300);
+  }
+
+  function startScan() {
+    document.getElementById('precheck-card').style.display = 'none';
+    document.getElementById('scan-loading').style.display = 'block';
+
+    const logs = [
+      '读取数据标签...',
+      '✓ 数据标签（8 个）读取完成',
+      '读取分析主题（23 个）...',
+      '✓ 分析主题读取完成',
+      '读取业务知识（5 个）...',
+      '读取业务用语（156 条）...',
+      '✓ 扫描完成，构建迁移映射...',
+    ];
+
+    let i = 0;
+    const logEl = document.getElementById('scan-log');
+    const interval = setInterval(() => {
+      if (i < logs.length) {
+        logEl.textContent = logs[i++];
+      } else {
+        clearInterval(interval);
+        document.getElementById('scan-loading').style.display = 'none';
+        document.getElementById('scan-result').style.display = 'block';
+      }
+    }, 450);
+  }
+
+  function resetToPrecheck() {
+    document.getElementById('scan-result').style.display = 'none';
+    document.getElementById('precheck-card').style.display = 'block';
+  }
+
+  // Auto-run precheck on page load
+  window.addEventListener('DOMContentLoaded', () => {
+    initAnnotationTooltips();
+    setTimeout(runPrecheck, 500);
+  });
+
+  // ── Step 2: editable migration workspace ──
+  const existingDoraAgentNames = ['人力资源分析'];
+  const agentData = [
+    { id: 'a1', name: '销售分析',       targetName: '销售问数', dataType: '数据标签', data: ['销售日报', '门店排名', '区域对比', '客单价分析'], knowledge: ['销售分析知识库', '全局业务知识'] },
+    { id: 'a2', name: '独立主题：财务日报', targetName: '财务日报', dataType: '独立主题', data: ['财务日报'], knowledge: ['财务日报知识库', '全局业务知识'] },
+    { id: 'a3', name: '仓储管理',       targetName: '库存分析', dataType: '数据标签', data: ['库存日报', '周转率分析'], knowledge: ['仓储管理知识库', '全局业务知识'] },
+    { id: 'a4', name: '零售运营',       targetName: '门店运营', dataType: '数据标签', data: ['门店客流', '动销分析', '促销复盘', '区域对比'], knowledge: ['零售运营知识库', '全局业务知识'] },
+    { id: 'a5', name: '人力资源',       targetName: '人力资源分析', dataType: '数据标签', data: ['绩效考核', '组织架构'], knowledge: ['人力资源知识库', '全局业务知识'] },
+    { id: 'a6', name: '独立主题：出勤统计', targetName: '出勤统计', dataType: '独立主题', data: ['出勤统计'], knowledge: ['人事制度知识库'] },
+    { id: 'a7', name: '独立主题：薪资明细', targetName: '薪资明细', dataType: '独立主题', data: ['薪资明细'], knowledge: ['薪酬口径知识库'] },
+    { id: 'a8', name: '供应链',         targetName: '采购分析', dataType: '数据标签', data: ['采购分析', '供应商评分'], knowledge: ['供应链知识库', '全局业务知识'] },
+    { id: 'a9', name: '独立主题：客户分析', targetName: '客户分析', dataType: '独立主题', data: ['客户分析'], knowledge: ['客户分层知识库'] },
+  ];
+
+  let targetGroups = [];
+  let composerInitialized = false;
+
+  // 目标 Agent 由数据资产自动生成；这里仅提供名称编辑，不提供合并/拆分能力。
+  function initMergeList() {
+    if (!composerInitialized) {
+      const usedNames = new Set(existingDoraAgentNames);
+      targetGroups = agentData.map(agent => {
+        const name = uniqueAgentName(agent.targetName, usedNames);
+        usedNames.add(name);
+        return { id: `g-${agent.id}`, name, sourceIds: [agent.id], touched: name !== agent.targetName };
+      });
+      composerInitialized = true;
+    }
+    renderComposer();
+  }
+
+  function uniqueAgentName(baseName, usedNames, ignoreGroupId = '') {
+    const base = (baseName || '未命名 Agent').trim();
+    if (!usedNames.has(base)) return base;
+    let i = 1;
+    let candidate = `${base}_迁移`;
+    while (usedNames.has(candidate) && candidate !== ignoreGroupId) {
+      i += 1;
+      candidate = `${base}_迁移${i}`;
+    }
+    return candidate;
+  }
+
+  function renderComposer() {
+    renderTargetAgents();
+    updateListSummary();
+    updateExecBtn();
+  }
+
+  // 表格两列：左侧直接编辑 Agent 名称，右侧展示来源资产和主题/知识库计数。
+  // 蓝色胶囊标签等重复信息已移除，保持极简。
+  function renderTargetAgents() {
+      const listEl = document.getElementById('target-agent-list');
+      const emptyEl = document.getElementById('target-empty-tip');
+      const errors = getGroupErrors();
+      emptyEl.style.display = targetGroups.length ? 'none' : '';
+      if (!targetGroups.length) {
+        listEl.innerHTML = '';
+        return;
+      }
+      listEl.innerHTML = `
+        <div class="target-agent-table">
+          <div class="target-agent-row table-head">
+            <div>Agent名称</div>
+            <div>来源资产</div>
+          </div>
+          ${targetGroups.map(group => renderTargetCard(group, errors)).join('')}
+        </div>`;
+  }
+
+  function renderTargetCard(group, errors) {
+      const agents = group.sourceIds.map(getAgentById).filter(Boolean);
+      const topics = agents.reduce((sum, agent) => sum + agent.data.length, 0);
+      const kbs = new Set(agents.flatMap(agent => agent.knowledge)).size;
+      const error = errors.get(group.id) || '';
+      const sourceNames = agents.map(agent => getAssetShortName(agent)).join('、');
+      return `
+        <div class="target-agent-row ${error ? 'has-error' : ''}" id="target-${group.id}">
+          <div>
+            <input id="target-name-${group.id}" class="target-name-input ${error ? 'has-error' : ''}" value="${escapeHtml(group.name)}"
+              oninput="renameTargetGroup('${group.id}', this.value)" />
+            <div class="target-agent-error" id="target-error-${group.id}" style="${error ? '' : 'display:none;'}">${error}</div>
+          </div>
+          <div>
+            <div class="target-source-main">${escapeHtml(sourceNames)}</div>
+            <div class="target-source-meta">${topics} 个分析主题 · ${kbs} 个知识库</div>
+          </div>
+        </div>`;
+  }
+
+  function getAssetShortName(agent) {
+    return agent.dataType === '数据标签' ? agent.name : agent.name.replace('独立主题：', '');
+  }
+
+  function renameTargetGroup(groupId, value) {
+    const group = targetGroups.find(item => item.id === groupId);
+    if (!group) return;
+    group.name = value;
+    group.touched = true;
+    updateListSummary();
+    updateExecBtn();
+    applyValidationStateToDom();
+  }
+
+  function applyValidationStateToDom() {
+    const errors = getGroupErrors();
+    targetGroups.forEach(group => {
+      const card = document.getElementById('target-' + group.id);
+      const input = document.getElementById('target-name-' + group.id);
+      const error = document.getElementById('target-error-' + group.id);
+      const message = errors.get(group.id) || '';
+      if (card) card.classList.toggle('has-error', Boolean(message));
+      if (input) input.classList.toggle('has-error', Boolean(message));
+      if (error) {
+        error.textContent = message;
+        error.style.display = message ? '' : 'none';
+      }
+    });
+  }
+
+  function getAgentById(sourceId) {
+    return agentData.find(agent => agent.id === sourceId);
+  }
+
+  function getGroupErrors() {
+    // 命名冲突处理策略：
+    // 1. 初始化时自动为 Dora 已存在同名 Agent 加后缀；
+    // 2. 用户编辑后实时校验当前列表内部重名和 Dora 已存在同名。
+    const errors = new Map();
+    const nameMap = new Map();
+    targetGroups.forEach(group => {
+      const name = group.name.trim();
+      if (!name) {
+        errors.set(group.id, 'Agent 名称不能为空');
+        return;
+      }
+      const lower = name.toLowerCase();
+      if (!nameMap.has(lower)) nameMap.set(lower, []);
+      nameMap.get(lower).push(group.id);
+      if (existingDoraAgentNames.some(existing => existing.toLowerCase() === lower)) {
+        errors.set(group.id, 'Dora 中已存在同名 Agent');
+      }
+    });
+    nameMap.forEach(ids => {
+      if (ids.length > 1) {
+        ids.forEach(id => errors.set(id, '迁移清单中存在同名 Agent'));
+      }
+    });
+    return errors;
+  }
+
+  function updateListSummary() {
+    const conflictCount = getGroupErrors().size;
+    document.getElementById('final-agent-count').textContent = targetGroups.length;
+    document.getElementById('target-agent-count').textContent = `${targetGroups.length} 个`;
+
+    const dot = document.getElementById('conflict-summary-dot');
+    const text = document.getElementById('conflict-summary-text');
+    if (conflictCount === 0) {
+      dot.style.background = 'var(--success)';
+      text.innerHTML = '<strong style="color:var(--success)">0</strong> 个命名冲突';
+    } else {
+      dot.style.background = 'var(--danger)';
+      text.innerHTML = `<strong style="color:var(--danger)">${conflictCount}</strong> 个命名冲突`;
+    }
+  }
+
+  function updateExecBtn() {
+    const hasErrors = getGroupErrors().size > 0;
+    document.getElementById('exec-btn').disabled = hasErrors || targetGroups.length === 0;
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ── Step 3: Execution ──
+  // 执行阶段展示进度，不展示底部代码块日志；日志仍保留在 DOM 中用于原型演示但默认隐藏。
+  function startExecution() {
+    const qaAgentCount = targetGroups.length;
+    const finalAgentCount = qaAgentCount + 3;
+    const firstAgentName = targetGroups[0]?.name || '销售问数';
+    const secondAgentName = targetGroups[1]?.name || '财务日报';
+    const hrGroupName = targetGroups.find(group => group.sourceIds.includes('a5'))?.name || '人力资源分析_迁移';
+    const bars = [
+      { bar: 'bar-1', pct: 'pct-1', delay: 0,    duration: 1800 },
+      { bar: 'bar-2', pct: 'pct-2', delay: 1400,  duration: 2000 },
+      { bar: 'bar-3', pct: 'pct-3', delay: 2800,  duration: 2400 },
+      { bar: 'bar-4', pct: 'pct-4', delay: 4600,  duration: 1600 },
+      { bar: 'bar-5', pct: 'pct-5', delay: 5600,  duration: 1000 },
+    ];
+
+    bars.forEach(({ bar, pct, delay, duration }) => {
+      setTimeout(() => {
+        animateBar(bar, pct, duration);
+      }, delay);
+    });
+
+    const logLines = [
+      { t: 100,  cls: 'log-info', text: `[14:30:00] 开始迁移任务，共 ${finalAgentCount} 个 Agent...` },
+      { t: 300,  cls: 'log-ok',   text: '[14:30:01] ✓ 数据中心：导入「销售日报」主题' },
+      { t: 700,  cls: 'log-ok',   text: '[14:30:02] ✓ 数据中心：导入「门店排名」主题' },
+      { t: 1100, cls: 'log-ok',   text: '[14:30:03] ✓ 数据中心：导入「财务日报」主题（+21 个）' },
+      { t: 1500, cls: 'log-ok',   text: '[14:30:04] ✓ 语义信息：业务域业务用语 120 条已随数据加载' },
+      { t: 1900, cls: 'log-info', text: '[14:30:05] 开始创建知识库...' },
+      { t: 2300, cls: 'log-ok',   text: '[14:30:06] ✓ 知识库：「全局业务知识」创建成功' },
+      { t: 2700, cls: 'log-ok',   text: '[14:30:07] ✓ 知识库：「销售分析」「财务日报」等 4 个创建成功' },
+      { t: 3100, cls: 'log-info', text: '[14:30:08] 开始创建问数 Agent...' },
+      { t: 3500, cls: 'log-ok',   text: `[14:30:09] ✓ Agent「${firstAgentName}」创建成功（草稿）` },
+      { t: 3900, cls: 'log-ok',   text: `[14:30:10] ✓ Agent「${secondAgentName}」创建成功（草稿）` },
+      { t: 4300, cls: 'log-ok',   text: `[14:30:11] ✓ Agent「${hrGroupName}」创建成功` },
+      { t: 4700, cls: 'log-ok',   text: '[14:30:12] ✓ 3 个报告 Agent 创建成功（草稿，不发布）' },
+      { t: 5100, cls: 'log-ok',   text: '[14:30:13] ✓ 推荐问题迁移完成：47 条' },
+      { t: 5500, cls: 'log-ok',   text: '[14:30:14] ✓ 模型配置迁移完成' },
+      { t: 5900, cls: 'log-warn', text: '[14:30:15] ⚠ 历史对话 1,204 条：个人资产，不在迁移范围，已跳过' },
+      { t: 6200, cls: 'log-warn', text: '[14:30:16] ⚠ 历史收藏对话 23 条：Dora 暂无对应位置，已跳过' },
+      { t: 6500, cls: 'log-ok',   text: `[14:30:17] 🎉 迁移任务完成！成功 ${finalAgentCount}/${finalAgentCount}，跳过 2 项，失败 0 项` },
+    ];
+
+    const logEl = document.getElementById('exec-log');
+    logLines.forEach(({ t, cls, text }) => {
+      setTimeout(() => {
+        const line = document.createElement('div');
+        line.className = 'log-line ' + cls;
+        line.textContent = text;
+        logEl.appendChild(line);
+        logEl.scrollTop = logEl.scrollHeight;
+      }, t);
+    });
+
+    // Show report after all done
+    setTimeout(() => {
+      document.getElementById('exec-running').style.display = 'none';
+      document.getElementById('exec-report').style.display = 'block';
+      document.getElementById('report-total-agents').textContent = finalAgentCount;
+      document.getElementById('report-agent-count').textContent = `${finalAgentCount} 个（未发布）`;
+      updateDeleteChatbiState(chatbiServiceClosed);
+
+      // Update page title
+      document.querySelector('#panel-3 .page-title').textContent = '迁移完成';
+      document.querySelector('#panel-3 .page-sub').textContent = '所有资产已成功迁移至 Dora，请按下方步骤完成收尾工作';
+
+      // Update stepper
+      const tab3 = document.getElementById('step-tab-3');
+      const circle3 = document.getElementById('step-circle-3');
+      tab3.classList.remove('active');
+      tab3.classList.add('done');
+      circle3.innerHTML = '✓';
+    }, 7000);
+  }
+
+  function animateBar(barId, pctId, duration) {
+    const bar = document.getElementById(barId);
+    const pctEl = document.getElementById(pctId);
+    const steps = 60;
+    const interval = duration / steps;
+    let current = 0;
+    const timer = setInterval(() => {
+      current++;
+      const pct = Math.round((current / steps) * 100);
+      bar.style.width = pct + '%';
+      pctEl.textContent = pct + '%';
+      if (current >= steps) {
+        clearInterval(timer);
+        bar.classList.add('success');
+      }
+    }, interval);
+  }
+
+  function downloadReport() {
+    alert('📥 迁移报告已生成（演示模式）\n实际产品中将下载 PDF 文件');
+  }
+
+  function showDeleteChatbiModal() {
+    document.getElementById('delete-chatbi-modal').classList.add('show');
+  }
+
+  function hideDeleteChatbiModal() {
+    document.getElementById('delete-chatbi-modal').classList.remove('show');
+  }
+
+  function updateDeleteChatbiState(isDeleted) {
+    // 关闭服务状态联动：
+    // - true：页头按钮禁用并显示 tooltip，结果页收尾卡片改为绿色成功态且隐藏操作按钮。
+    // - false：页头按钮可用，结果页保留“关闭chatbi服务”按钮。
+    // 注意：关闭 Chat BI 服务只屏蔽原 ChatBI 功能入口，不删除 ChatBI 资产。
+    const title = document.querySelector('.final-cleanup-title');
+    const desc = document.querySelector('.final-cleanup-desc');
+    const card = document.querySelector('.final-cleanup-card');
+    const icon = document.querySelector('.final-cleanup-icon');
+    const btn = document.getElementById('delete-chatbi-btn');
+    const headerBtn = document.getElementById('close-chatbi-service-btn');
+    if (!title || !desc || !btn) return;
+
+    if (isDeleted) {
+      chatbiServiceClosed = true;
+      if (card) card.classList.add('is-success');
+      if (icon) icon.textContent = '✅';
+      title.textContent = 'Chat BI 服务已同步关闭';
+      desc.textContent = '原有 Chat BI 旧入口已关闭，用户将统一访问 Dora。';
+      btn.className = 'btn btn-success';
+      btn.textContent = 'Chat BI 服务已关闭';
+      btn.disabled = true;
+      btn.style.display = 'none';
+      if (headerBtn) {
+        headerBtn.classList.add('is-disabled');
+        headerBtn.setAttribute('aria-disabled', 'true');
+        headerBtn.setAttribute('title', 'chatbi服务已关闭');
+      }
+    } else {
+      chatbiServiceClosed = false;
+      if (card) card.classList.remove('is-success');
+      if (icon) icon.textContent = '⚠️';
+      title.textContent = '同时关闭 Chat BI 服务';
+      desc.textContent = '建议你迁移完成后同时关闭旧服务，屏蔽 ChatBI 前端界面入口';
+      btn.className = 'btn btn-danger-outline';
+      btn.textContent = '关闭chatbi服务';
+      btn.disabled = false;
+      btn.style.display = 'inline-flex';
+      if (headerBtn) {
+        headerBtn.classList.remove('is-disabled');
+        headerBtn.removeAttribute('aria-disabled');
+        headerBtn.setAttribute('title', '关闭 Chat BI 服务');
+      }
+    }
+  }
+
+  function confirmDeleteChatbi() {
+    hideDeleteChatbiModal();
+    updateDeleteChatbiState(true);
+  }
+
+  function demoShowPrecheck() {
+    document.getElementById('scan-loading').style.display = 'none';
+    document.getElementById('scan-result').style.display = 'none';
+    document.getElementById('precheck-card').style.display = 'block';
+    goTo(1);
+    runPrecheck();
+  }
+
+  function demoShowScanResult() {
+    goTo(1);
+    document.getElementById('precheck-card').style.display = 'none';
+    document.getElementById('scan-loading').style.display = 'none';
+    document.getElementById('scan-result').style.display = 'block';
+  }
+
+  function demoShowConflict() {
+    goTo(2);
+    initMergeList();
+    const hrGroup = targetGroups.find(group => group.sourceIds.includes('a5'));
+    if (hrGroup) {
+      hrGroup.name = '人力资源分析';
+      hrGroup.touched = true;
+    }
+    renderComposer();
+  }
+
+  function demoShowReport() {
+    if (!composerInitialized) initMergeList();
+    goTo(3);
+    document.getElementById('exec-running').style.display = 'none';
+    document.getElementById('exec-report').style.display = 'block';
+    document.querySelector('#panel-3 .page-title').textContent = '迁移完成';
+    document.querySelector('#panel-3 .page-sub').textContent = '所有资产已成功迁移至 Dora，请按下方步骤完成收尾工作';
+    const finalAgentCount = targetGroups.length + 3;
+    document.getElementById('report-total-agents').textContent = finalAgentCount;
+    document.getElementById('report-agent-count').textContent = `${finalAgentCount} 个（未发布）`;
+    updateDeleteChatbiState(chatbiServiceClosed);
+  }
+</script>
+</body>
+</html>

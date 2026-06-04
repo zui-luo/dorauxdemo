@@ -1,0 +1,2489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Agent 对话 + 资料面板 · 原型</title>
+<style>
+  /* ── 方案切换栏 ── */
+  #variant-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+    height: 40px; background: #1a1a2e;
+    display: flex; align-items: center; gap: 4px; padding: 0 16px;
+    font-family: -apple-system, sans-serif;
+  }
+  #variant-bar .label { color: #888; font-size: 12px; margin-right: 8px; }
+  .v-tab { padding: 4px 14px; border-radius: 4px; border: none; cursor: pointer; font-size: 12px; background: transparent; color: #aaa; }
+  .v-tab.active { background: #0047FD; color: #fff; }
+  .v-tab:hover:not(.active) { background: rgba(255,255,255,0.1); color: #fff; }
+  .v-demo-toggle { padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; background: transparent; color: #666; border: 1px solid rgba(255,255,255,0.15); }
+  .v-demo-toggle.active { background: rgba(255,200,0,0.12); color: #FFC107; border-color: rgba(255,193,7,0.35); }
+  .v-demo-toggle:hover:not(.active) { background: rgba(255,255,255,0.08); color: #bbb; }
+  .demo-control { display: none !important; }
+  body.demo-mode .demo-control { display: flex !important; }
+  .variant { display: none; }
+  .variant.active { display: contents; }
+
+  /* ── Token ── */
+  :root {
+    --brand-6:#2562FF; --brand-7:#0047FD; --brand-1:#EAF0FF;
+    --neutral-0:#FFFFFF; --neutral-1:#F7F8FA; --neutral-2:#F0F1F5; --neutral-3:#E6E8ED; --neutral-4:#DADDE5;
+    --neutral-7:#8C95B0; --neutral-9:#5D6581; --neutral-10:#222D53; --neutral-11:#091640;
+    --red-6:#F5483B; --green-6:#22C55E; --purple-6:#7C5CFF; --orange-6:#FF9D52;
+    --shadow-card:0 0 6px 0 rgba(9,30,64,0.08); --shadow-large:0 6px 20px 0 rgba(9,30,64,0.16);
+    --radius-md:6px; --radius-lg:8px; --radius-xl:10px; --radius-xxl:12px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+    background: var(--neutral-1); color: var(--neutral-11);
+    padding-top: 40px; font-size: 13px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font-family: inherit; cursor: pointer; }
+  input, textarea { font-family: inherit; outline: none; }
+
+  /* ── 外层页面框架 ── */
+  .page-shell { display: flex; height: calc(100vh - 40px); background: var(--neutral-2); }
+
+  /* 内层：图标导航栏 */
+  .nav-rail {
+    width: 64px; flex-shrink: 0;
+    background: var(--neutral-2);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 12px 0 16px; gap: 4px;
+  }
+  .rail-logo {
+    width: 40px; height: 40px; margin-bottom: 8px;
+    border-radius: 8px;
+    background: var(--neutral-0);
+    box-shadow: var(--shadow-card);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .rail-logo svg { width: 22px; height: 22px; }
+  .rail-item {
+    width: 48px; padding: 8px 4px;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    border-radius: 8px;
+    color: var(--neutral-9); font-size: 11px;
+    cursor: pointer; border: none; background: transparent;
+    transition: background 120ms, color 120ms;
+  }
+  .rail-item:hover { background: var(--neutral-3); color: var(--neutral-10); }
+  .rail-item.is-active { background: var(--neutral-0); color: var(--neutral-11); box-shadow: var(--shadow-card); }
+  .rail-item svg { width: 18px; height: 18px; }
+  .rail-spacer { flex: 1; }
+  .rail-user {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, #4D8BFF 0%, #2562FF 100%);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; margin-top: 4px;
+  }
+  .rail-user svg { width: 16px; height: 16px; }
+
+  /* 外层：聊天列表面板 */
+  .nav-panel {
+    width: 240px; flex-shrink: 0;
+    background: var(--neutral-1);
+    border-right: 1px solid var(--neutral-3);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .np-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; flex-shrink: 0; }
+  .np-logo { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; color: var(--neutral-11); }
+  .np-logo .logo-icon {
+    width: 24px; height: 24px;
+    background: linear-gradient(135deg, #6FB9FF 0%, #2562FF 100%);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .np-logo .logo-icon svg { width: 14px; height: 14px; color: #fff; }
+  .np-toggle {
+    width: 28px; height: 28px;
+    border: none; background: transparent;
+    border-radius: 6px; color: var(--neutral-9);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .np-toggle:hover { background: var(--neutral-2); color: var(--neutral-10); }
+  .np-toggle svg { width: 16px; height: 16px; }
+
+  .np-newchat {
+    margin: 4px 14px 6px; padding: 10px 14px;
+    border: none; border-radius: 8px;
+    background: rgba(37,98,255,0.08); color: var(--brand-7);
+    font-size: 14px; font-weight: 500;
+    display: flex; align-items: center; gap: 8px; text-align: left;
+  }
+  .np-newchat:hover { background: rgba(37,98,255,0.14); }
+  .np-newchat svg { width: 16px; height: 16px; }
+
+  .np-task {
+    margin: 0 14px; padding: 10px 14px;
+    border: none; background: transparent;
+    border-radius: 8px; color: var(--neutral-10);
+    font-size: 14px;
+    display: flex; align-items: center; gap: 8px; text-align: left;
+  }
+  .np-task:hover { background: var(--neutral-2); }
+  .np-task svg { width: 16px; height: 16px; color: var(--neutral-9); }
+
+  .np-list-scroll { flex: 1; overflow-y: auto; padding: 8px 0 16px; }
+  .np-list-scroll::-webkit-scrollbar { width: 4px; }
+  .np-list-scroll::-webkit-scrollbar-thumb { background: var(--neutral-3); border-radius: 2px; }
+  .np-section { margin-top: 14px; }
+  .np-section-title { padding: 0 18px 6px; font-size: 12px; color: var(--neutral-9); font-weight: 500; }
+  .np-list { list-style: none; padding: 0 8px; margin: 0; display: flex; flex-direction: column; gap: 2px; }
+  .np-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: 6px;
+    font-size: 13px; color: var(--neutral-10);
+    cursor: pointer; transition: background 120ms;
+  }
+  .np-item:hover { background: var(--neutral-2); }
+  .np-item.is-active { background: var(--neutral-3); color: var(--neutral-11); font-weight: 500; }
+  .np-item .name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .np-item-icon {
+    width: 22px; height: 22px; border-radius: 4px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #fff; font-weight: 500;
+  }
+  .np-item-icon.wecom { background: #07C160; }
+  .np-item-icon.ding  { background: #1677FF; }
+  .np-item-icon.lark  { background: linear-gradient(135deg, #00D6B9 0%, #0091FF 100%); }
+  .np-badge {
+    min-width: 18px; height: 16px; padding: 0 5px;
+    border-radius: 8px;
+    background: var(--red-6); color: #fff;
+    font-size: 10px; font-weight: 500;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* 白色主区 */
+  .app-shell { flex: 1; display: flex; background: var(--neutral-0); min-width: 0; overflow: hidden; }
+  .pane-chat { flex: 0 0 47.5%; display: flex; flex-direction: column; border-right: 1px solid var(--neutral-3); min-width: 0; }
+  .pane-files { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+
+  /* 对话头部 */
+  .chat-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--neutral-2); flex-shrink: 0; }
+  .chat-header-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .chat-header-right { display: flex; align-items: center; gap: 6px; }
+  .icon-btn {
+    width: 32px; height: 32px;
+    border: none; background: transparent;
+    border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--neutral-10); position: relative;
+    transition: background 120ms;
+  }
+  .icon-btn:hover { background: var(--neutral-2); }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .chat-title { font-size: 15px; font-weight: 500; color: var(--neutral-11); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .folder-badge {
+    position: absolute; top: 2px; right: 2px;
+    min-width: 14px; height: 14px; padding: 0 4px;
+    border-radius: 7px;
+    background: var(--red-6); color: #fff;
+    font-size: 10px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center; line-height: 1;
+  }
+
+  /* 对话正文 */
+  .chat-body {
+    flex: 1; overflow-y: auto;
+    padding: 20px 24px 12px;
+    display: flex; flex-direction: column; gap: 18px;
+  }
+  .msg-user { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+  .user-file-pill {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid var(--neutral-3);
+    border-radius: var(--radius-lg);
+    background: var(--neutral-0);
+    box-shadow: var(--shadow-card);
+  }
+  .user-file-pill .mini-icon {
+    width: 28px; height: 28px; border-radius: 4px;
+    background: linear-gradient(135deg, #34D27E 0%, #16A34A 100%);
+    color: #fff; font-size: 9px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .user-file-pill .file-meta-name { font-size: 13px; color: var(--neutral-11); font-weight: 500; }
+  .user-file-pill .file-meta-size { font-size: 12px; color: var(--neutral-9); margin-top: 2px; }
+  .msg-user .bubble { background: var(--brand-1); color: var(--neutral-11); padding: 10px 14px; border-radius: 12px; border-top-right-radius: 4px; font-size: 14px; max-width: 80%; }
+
+  /* Agent 回复 */
+  .agent-reply { display: flex; flex-direction: column; gap: 14px; }
+  body[data-variant="process-top"] .agent-reply #execPanel { order: 2; }
+  body[data-variant="product-live"] .agent-reply #execPanel { order: 2; }
+  body[data-variant="muted-process"] .agent-reply #execPanel { order: 2; }
+  body[data-variant="process-top"] .agent-reply #resultSlot { order: 3; }
+  body[data-variant="product-live"] .agent-reply #resultSlot { order: 3; }
+  body[data-variant="muted-process"] .agent-reply #resultSlot { order: 3; }
+  body[data-variant="process-top"] .agent-reply #resultSlot:not(.is-empty) { margin-bottom: -6px; }
+  body[data-variant="product-live"] .agent-reply #resultSlot:not(.is-empty) { margin-bottom: -6px; }
+  body[data-variant="muted-process"] .agent-reply #resultSlot:not(.is-empty) { margin-bottom: -6px; }
+  body[data-variant="process-top"] .agent-reply #chartSlot { order: 5; }
+  body[data-variant="product-live"] .agent-reply #chartSlot { order: 5; }
+  body[data-variant="muted-process"] .agent-reply #chartSlot { order: 5; }
+  body[data-variant="process-top"] .agent-reply .lead-pill { order: 6; }
+  body[data-variant="product-live"] .agent-reply .lead-pill { order: 6; }
+  body[data-variant="muted-process"] .agent-reply .lead-pill { order: 6; }
+  body[data-variant="process-top"] .agent-reply #genuiSlot { order: 7; }
+  body[data-variant="product-live"] .agent-reply #genuiSlot { order: 7; }
+  body[data-variant="muted-process"] .agent-reply #genuiSlot { order: 7; }
+  body[data-variant="process-top"] .agent-reply #outputsSection { order: 8; }
+  body[data-variant="product-live"] .agent-reply #outputsSection { order: 8; }
+  body[data-variant="muted-process"] .agent-reply #outputsSection { order: 8; }
+  body[data-variant="process-top"] .agent-reply #finalActions { order: 9; }
+  body[data-variant="product-live"] .agent-reply #finalActions { order: 9; }
+  body[data-variant="muted-process"] .agent-reply #finalActions { order: 9; }
+  body[data-variant="process-top"] .agent-reply #waitLine { order: 99; }
+  body[data-variant="product-live"] .agent-reply #waitLine { order: 99; }
+  body[data-variant="muted-process"] .agent-reply #waitLine { order: 99; }
+  body[data-variant="process-top"] .agent-reply #waitLine.is-visible { margin-top: -4px; }
+  body[data-variant="product-live"] .agent-reply #waitLine.is-visible { margin-top: -4px; }
+  body[data-variant="muted-process"] .agent-reply #waitLine.is-visible { margin-top: -4px; }
+
+  body[data-variant="muted-process"] .exec-panel {
+    background: #FCFCFD;
+    border-color: #E9EBF1;
+    box-shadow: none;
+  }
+  body[data-variant="muted-process"] .exec-header {
+    padding: 11px 14px;
+    background: #F8F9FB;
+  }
+  body[data-variant="muted-process"] .exec-title {
+    color: #3E4A67;
+    font-weight: 500;
+  }
+  body[data-variant="muted-process"] .exec-node::before {
+    background: #D8DEE9;
+  }
+  body[data-variant="muted-process"] .exec-node.is-running::before {
+    background-image: linear-gradient(to bottom, #C6CEDB 0%, #C6CEDB 50%, transparent 50%, transparent 100%);
+  }
+  body[data-variant="muted-process"] .exec-dot {
+    background: #EEF2F7;
+    color: #6C7A96;
+    box-shadow: inset 0 0 0 1px #D8DEE9;
+  }
+  body[data-variant="muted-process"] .exec-node.is-running .exec-dot {
+    background: #FFFFFF;
+    border-color: #D8DEE9;
+    border-top-color: #7A879F;
+  }
+  body[data-variant="muted-process"] .exec-node-title {
+    color: #22304D;
+    font-weight: 500;
+  }
+  body[data-variant="muted-process"] .exec-node-detail,
+  body[data-variant="muted-process"] .exec-code {
+    background: #F7F8FA;
+    color: #5D6581;
+  }
+  body[data-variant="muted-process"] .stage-tag {
+    color: #667085;
+    background: #F2F4F7;
+  }
+  body[data-variant="muted-process"] .stage-tag.coordinator,
+  body[data-variant="muted-process"] .stage-tag.planner,
+  body[data-variant="muted-process"] .stage-tag.researcher,
+  body[data-variant="muted-process"] .stage-tag.coder,
+  body[data-variant="muted-process"] .stage-tag.reporter {
+    color: #667085;
+    background: #F2F4F7;
+  }
+  body[data-variant="muted-process"] .exec-file-pill {
+    background: #FFFFFF;
+    border-color: #E5E7EC;
+    color: #44506A;
+  }
+  body[data-variant="muted-process"] .exec-file-pill::before {
+    display: none;
+  }
+  .agent-row { display: flex; align-items: center; gap: 8px; }
+  .agent-avatar {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: linear-gradient(135deg, #6FB9FF 0%, #2562FF 100%);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .agent-avatar svg { width: 14px; height: 14px; color: #fff; }
+  .agent-name { font-size: 13px; color: var(--neutral-10); font-weight: 500; }
+
+  /* 中间/最终结果共槽 */
+  .result-slot { font-size: 14px; line-height: 1.75; color: var(--neutral-11); transition: opacity 280ms ease; }
+  .result-slot.is-empty { display: none; }
+  .result-slot.is-fading { opacity: 0; }
+  .result-slot strong { font-weight: 600; }
+  .result-slot.is-interim { color: var(--neutral-10); }
+  .result-slot p + p { margin-top: 10px; }
+  .result-slot .inline-img {
+    margin: 14px 0; height: 180px;
+    border-radius: var(--radius-lg);
+    background:
+      radial-gradient(circle at 25% 30%, rgba(124,92,255,0.18), transparent 55%),
+      radial-gradient(circle at 75% 70%, rgba(37,98,255,0.22), transparent 55%),
+      linear-gradient(135deg, var(--brand-1) 0%, #D9E5FF 100%);
+    border: 1px solid var(--neutral-3);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--brand-7); font-size: 13px; font-weight: 500; position: relative;
+  }
+  .result-slot .inline-img::after {
+    content: attr(data-caption);
+    position: absolute; bottom: 10px; left: 12px;
+    font-size: 11px; color: var(--neutral-9); font-weight: 400;
+  }
+  .result-slot .img-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0; }
+  .result-slot .img-grid .inline-img { height: 96px; margin: 0; font-size: 12px; }
+
+  .result-slot a.file-link {
+    display: inline-flex; align-items: center; gap: 4px;
+    color: var(--brand-7);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0 3px; border-radius: 3px;
+    transition: background 120ms;
+  }
+  .result-slot a.file-link:hover { background: rgba(37,98,255,0.08); }
+  .result-slot a.file-link::before {
+    content: ''; width: 11px; height: 11px; border-radius: 2px; flex-shrink: 0;
+    background: linear-gradient(135deg, #94A6FF 0%, #4D8BFF 100%);
+  }
+  .result-slot a.file-link.xlsx::before { background: linear-gradient(135deg, #34D27E 0%, #16A34A 100%); }
+  .result-slot a.file-link.pptx::before { background: linear-gradient(135deg, #FF9D52 0%, #E05B00 100%); }
+  .result-slot a.file-link.docx::before { background: linear-gradient(135deg, #4D8BFF 0%, #2562FF 100%); }
+  .result-slot a.file-link.md::before   { background: linear-gradient(135deg, #94A6FF 0%, #7C5CFF 100%); }
+  .result-slot a.file-link.html::before { background: linear-gradient(135deg, #B481FF 0%, #7C5CFF 100%); }
+  .result-slot a.file-link.pdf::before  { background: linear-gradient(135deg, #FF7A6E 0%, #E84135 100%); }
+  .result-slot a.file-link.csv::before  { background: linear-gradient(135deg, #6FD89C 0%, #2EAA61 100%); }
+  .result-slot a.file-link.json::before { background: linear-gradient(135deg, #FFD66F 0%, #D98B00 100%); }
+  .result-slot a.file-link.zip::before  { background: linear-gradient(135deg, #B0B8CC 0%, #707A99 100%); }
+
+  /* 执行过程区 */
+  .exec-panel {
+    border: 1px solid var(--neutral-3);
+    background: var(--neutral-1);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    transition: background 200ms, border-color 200ms;
+  }
+  .exec-panel.is-collapsed { background: var(--neutral-0); }
+  .exec-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; cursor: pointer; gap: 10px; }
+  .exec-title { flex: 1; font-size: 13px; color: var(--neutral-10); transition: opacity 240ms ease; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .exec-title.is-fading { opacity: 0; }
+  .exec-panel.is-collapsed .exec-title { color: var(--neutral-9); }
+  .exec-toggle {
+    width: 22px; height: 22px;
+    border: none; background: transparent;
+    border-radius: 4px; color: var(--neutral-9);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 240ms ease, background 120ms;
+  }
+  .exec-toggle:hover { background: var(--neutral-2); }
+  .exec-toggle svg { width: 14px; height: 14px; }
+  .exec-panel.is-collapsed .exec-toggle { transform: rotate(-90deg); }
+  .exec-body {
+    max-height: 380px; overflow-y: auto;
+    padding: 0 16px 12px;
+    transition: max-height 280ms ease, padding 280ms ease;
+  }
+  .exec-panel.is-collapsed .exec-body { max-height: 0; padding-top: 0; padding-bottom: 0; overflow: hidden; }
+  .exec-body::-webkit-scrollbar { width: 4px; }
+  .exec-body::-webkit-scrollbar-thumb { background: var(--neutral-3); border-radius: 2px; }
+
+  .exec-timeline { list-style: none; padding: 4px 0 0; position: relative; }
+  .exec-node {
+    position: relative; padding-left: 26px; padding-bottom: 14px;
+    opacity: 0; transform: translateY(4px);
+    transition: opacity 280ms ease, transform 280ms ease;
+  }
+  .exec-node.is-visible { opacity: 1; transform: translateY(0); }
+  .exec-node:last-child { padding-bottom: 4px; }
+  .exec-node::before {
+    content: ''; position: absolute; left: 9px; top: 20px; bottom: 0;
+    width: 1.5px; background: var(--brand-6);
+  }
+  .exec-node:last-child::before { display: none; }
+  .exec-node.is-running::before {
+    background-image: linear-gradient(to bottom, var(--brand-6) 0%, var(--brand-6) 50%, transparent 50%, transparent 100%);
+    background-size: 1.5px 8px; background-repeat: repeat-y; background-color: transparent;
+    animation: lineFlow 1.2s linear infinite;
+  }
+  @keyframes lineFlow { from { background-position: 0 0; } to { background-position: 0 8px; } }
+  .exec-dot {
+    position: absolute; left: 0; top: 1px;
+    width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--brand-7); color: #fff;
+  }
+  .exec-dot svg { width: 10px; height: 10px; }
+  .exec-node.is-running .exec-dot {
+    background: var(--neutral-0);
+    border: 2px solid var(--neutral-3);
+    border-top-color: var(--brand-7);
+    animation: spin 0.8s linear infinite;
+  }
+  .exec-node.is-running .exec-dot svg { display: none; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  .exec-node-title { font-size: 13px; color: var(--neutral-11); font-weight: 500; line-height: 18px; display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .stage-tag {
+    display: inline-flex; align-items: center;
+    font-size: 11px; font-weight: 500;
+    padding: 1px 8px; border-radius: 8px;
+    color: var(--neutral-9); background: var(--neutral-2);
+    line-height: 16px;
+    margin-left: 2px;
+  }
+  .stage-tag::before {
+    content: '技能：';
+    font-weight: 400;
+    opacity: 0.7;
+  }
+  .stage-tag.coordinator { color: #7C5CFF; background: rgba(124,92,255,0.08); }
+  .stage-tag.planner     { color: #2562FF; background: rgba(37,98,255,0.08); }
+  .stage-tag.researcher  { color: #16A34A; background: rgba(22,163,74,0.08); }
+  .stage-tag.coder       { color: #E05B00; background: rgba(255,157,82,0.12); }
+  .stage-tag.reporter    { color: #C026D3; background: rgba(192,38,211,0.08); }
+
+  .exec-node-detail {
+    margin-top: 6px; font-size: 12px; color: var(--neutral-9);
+    background: var(--neutral-2); border-radius: var(--radius-md);
+    padding: 8px 10px; line-height: 1.6;
+  }
+  .exec-node-files { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .exec-file-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px;
+    background: var(--neutral-0);
+    border: 1px solid var(--neutral-3);
+    border-radius: 14px;
+    font-size: 12px; color: var(--neutral-10);
+  }
+  .exec-file-pill::before {
+    content: ''; width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0;
+    background: linear-gradient(135deg, #94A6FF 0%, #4D8BFF 100%);
+  }
+  .exec-file-pill.is-code::before { background: linear-gradient(135deg, #7C5CFF 0%, #2562FF 100%); }
+  .exec-file-pill.is-data::before { background: linear-gradient(135deg, #34D27E 0%, #16A34A 100%); }
+  .exec-file-pill.is-img::before  { background: linear-gradient(135deg, #FF9D52 0%, #E05B00 100%); }
+
+  /* 三类角色：读入 / 过程（默认） / 交付产物 */
+  .exec-file-pill.role-input {
+    background: transparent;
+    border-style: dashed;
+    border-color: var(--neutral-4);
+    color: var(--neutral-9);
+  }
+  .exec-file-pill.role-input::after {
+    content: '读入';
+    font-size: 10px; color: var(--neutral-7);
+    margin-left: 4px; padding-left: 6px;
+    border-left: 1px solid var(--neutral-3);
+    font-weight: 500;
+  }
+  .exec-file-pill.role-deliver {
+    background: rgba(37,98,255,0.06);
+    border-color: rgba(37,98,255,0.30);
+    color: var(--brand-7);
+    font-weight: 500;
+  }
+  .exec-file-pill.role-deliver::after {
+    content: '产物';
+    font-size: 10px; color: var(--brand-7);
+    margin-left: 4px; padding-left: 6px;
+    border-left: 1px solid rgba(37,98,255,0.20);
+    font-weight: 500;
+  }
+
+  .exec-code {
+    margin-top: 6px;
+    background: var(--neutral-2);
+    border-radius: var(--radius-md);
+    padding: 8px 10px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px; color: var(--neutral-10); line-height: 1.6;
+    height: 80px; overflow-y: auto; white-space: pre;
+  }
+  .exec-code::-webkit-scrollbar { width: 4px; }
+  .exec-code::-webkit-scrollbar-thumb { background: var(--neutral-4); border-radius: 2px; }
+  .exec-code .cursor {
+    display: inline-block; width: 6px; height: 12px;
+    background: var(--brand-7); vertical-align: text-bottom;
+    animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* 等待文案 */
+  .wait-line {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 14px;
+    background: linear-gradient(90deg, rgba(124,92,255,0.06) 0%, rgba(37,98,255,0.06) 100%);
+    border-radius: 999px;
+    font-size: 12px; color: var(--neutral-9);
+    align-self: flex-start; max-width: 100%;
+    opacity: 0; transform: translateY(2px);
+    transition: opacity 280ms ease, transform 280ms ease;
+  }
+  .wait-line.is-visible { opacity: 1; transform: translateY(0); }
+  .wait-line[hidden] { display: none; }
+  .wait-spark {
+    width: 14px; height: 14px;
+    color: var(--brand-6); flex-shrink: 0;
+    animation: sparkPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes sparkPulse {
+    0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.65; }
+    50% { transform: scale(1.2) rotate(45deg); opacity: 1; }
+  }
+  .wait-time { color: var(--brand-7); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .wait-text { color: var(--neutral-10); }
+  .wait-text[hidden] { display: none; }
+  .wait-carousel { position: relative; height: 18px; overflow: hidden; min-width: 200px; }
+  .wait-carousel[hidden] { display: none; }
+  .wait-carousel-track { display: flex; flex-direction: column; transition: transform 380ms ease; }
+  .wait-carousel-track span { height: 18px; line-height: 18px; }
+
+  /* 过渡铺垫小药丸 */
+  .lead-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    align-self: flex-start;
+    padding: 6px 14px;
+    background: linear-gradient(90deg, rgba(124,92,255,0.08) 0%, rgba(37,98,255,0.08) 100%);
+    border-radius: 999px;
+    font-size: 12px; color: var(--neutral-9);
+    opacity: 0; transform: translateY(4px);
+    transition: opacity 280ms ease, transform 280ms ease;
+  }
+  .lead-pill.is-visible { opacity: 1; transform: translateY(0); }
+  .lead-pill.is-fading { opacity: 0; transform: translateY(-4px); }
+  .lead-pill svg { width: 13px; height: 13px; color: var(--brand-6); flex-shrink: 0; animation: sparkPulse 1.6s ease-in-out infinite; }
+  .lead-pill .dots { display: inline-flex; gap: 3px; margin-left: 2px; }
+  .lead-pill .dots span { width: 3px; height: 3px; border-radius: 50%; background: var(--brand-6); animation: dotBlink 1.4s ease-in-out infinite; }
+  .lead-pill .dots span:nth-child(2) { animation-delay: 0.2s; }
+  .lead-pill .dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes dotBlink { 0%, 60%, 100% { opacity: 0.25; transform: scale(0.85); } 30% { opacity: 1; transform: scale(1); } }
+
+  /* 中间查询图表槽位 — n5b 期间临时显示，n6 启动时收回 */
+  .chart-slot {
+    display: flex; flex-direction: column; gap: 10px;
+    opacity: 0; transform: translateY(14px);
+    max-height: 720px;
+    transform-origin: bottom center;
+    transition: opacity 540ms ease,
+                transform 540ms cubic-bezier(.2,.8,.2,1),
+                max-height 540ms cubic-bezier(.4,0,.2,1),
+                margin-top 540ms ease,
+                margin-bottom 540ms ease;
+  }
+  .chart-slot.is-visible { opacity: 1; transform: translateY(0); }
+  .chart-slot.is-collapsing {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+    max-height: 0;
+    margin-top: -10px; margin-bottom: 0;
+    pointer-events: none;
+  }
+  /* 时间线节点内嵌的查询图表：collapseChart 时承接 chart-slot 的内容 */
+  .node-chart-wrap {
+    margin-top: 0;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transform: scale(0.96);
+    transform-origin: top center;
+    transition: max-height 580ms cubic-bezier(.4,0,.2,1),
+                opacity 480ms ease,
+                transform 520ms cubic-bezier(.2,.8,.2,1),
+                margin-top 520ms ease;
+    width: 100%;
+  }
+  .node-chart-wrap.is-visible {
+    max-height: 800px;
+    opacity: 1;
+    transform: scale(1);
+    margin-top: 8px;
+  }
+  .chart-header {
+    font-size: 14px; font-weight: 500;
+    color: var(--neutral-11);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .chart-header::before {
+    content: ''; width: 4px; height: 14px; border-radius: 2px;
+    background: linear-gradient(180deg, #FF9D52 0%, #E84135 100%);
+  }
+  .chart-header .sub { font-size: 12px; font-weight: 400; color: var(--neutral-9); margin-left: 4px; }
+  .chart-frame {
+    border: 1px solid var(--neutral-3);
+    border-radius: var(--radius-xl);
+    background: var(--neutral-0);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+  .chart-rule-bar {
+    padding: 12px 14px;
+    background: var(--neutral-1);
+    border-bottom: 1px solid var(--neutral-2);
+    display: flex; flex-wrap: wrap; align-items: center;
+    gap: 6px;
+    font-size: 12px; color: var(--neutral-9);
+    line-height: 1.7;
+  }
+  .chart-rule-label { color: var(--neutral-9); margin-right: 4px; font-weight: 500; }
+  .chart-rule-bar .sep { color: var(--neutral-7); padding: 0 2px; }
+  .rule-pill {
+    display: inline-flex; align-items: center;
+    height: 24px; padding: 0 9px;
+    border-radius: 4px;
+    font-size: 12px; line-height: 24px;
+    white-space: nowrap;
+  }
+  .rule-pill.field { background: rgba(22,163,74,0.12); color: #16A34A; font-weight: 500; }
+  .rule-pill.op    { background: rgba(22,163,74,0.06); color: #2EAA61; }
+  .rule-pill.value {
+    background: var(--neutral-0); color: var(--neutral-10);
+    border: 1px solid var(--neutral-3);
+    font-size: 11px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+  }
+  .rule-pill.dim { background: rgba(124,92,255,0.10); color: #7C5CFF; font-weight: 500; }
+
+  .chart-table { width: 100%; border-collapse: collapse; }
+  .chart-table th, .chart-table td {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 13px;
+    border-bottom: 1px solid var(--neutral-2);
+  }
+  .chart-table th {
+    background: var(--neutral-1);
+    font-weight: 600; color: var(--neutral-11);
+    position: relative;
+  }
+  .chart-table th + th::before {
+    content: ''; position: absolute; left: 0; top: 25%; bottom: 25%;
+    width: 1px; background: var(--neutral-3);
+  }
+  .chart-table td { color: var(--neutral-10); }
+  .chart-table tbody tr:hover { background: var(--neutral-1); }
+  .chart-table tbody tr:last-child td { border-bottom: none; }
+
+  .chart-foot {
+    padding: 8px 16px;
+    border-top: 1px solid var(--neutral-2);
+    display: flex; justify-content: flex-end; align-items: center; gap: 10px;
+    font-size: 12px; color: var(--neutral-9);
+    background: var(--neutral-0);
+  }
+  .chart-foot .total .num { color: var(--brand-7); font-weight: 600; }
+  .chart-foot .pager { display: inline-flex; align-items: center; gap: 4px; }
+  .chart-foot .pager button {
+    width: 22px; height: 22px;
+    border: none; background: transparent;
+    color: var(--neutral-9);
+    border-radius: 3px;
+    font-size: 12px; cursor: pointer;
+  }
+  .chart-foot .pager button:hover { background: var(--neutral-2); }
+  .chart-foot .pager .page-num {
+    min-width: 26px; height: 22px;
+    padding: 0 6px;
+    border: 1px solid var(--neutral-3);
+    border-radius: 3px;
+    text-align: center; line-height: 20px;
+    font-weight: 500; color: var(--neutral-11);
+    background: var(--neutral-0);
+  }
+
+  /* GenUI Slot */
+  .genui-slot {
+    display: flex; flex-direction: column; gap: 10px;
+    opacity: 0; transform: translateY(14px);
+    transition: opacity 540ms ease, transform 540ms cubic-bezier(.2, .8, .2, 1);
+  }
+  .genui-slot.is-visible { opacity: 1; transform: translateY(0); }
+  .genui-header { font-size: 14px; font-weight: 500; color: var(--neutral-11); display: flex; align-items: center; gap: 8px; }
+  .genui-header .genui-sub { font-size: 12px; font-weight: 400; color: var(--neutral-9); margin-left: 4px; }
+  .genui-header::before {
+    content: ''; width: 4px; height: 14px; border-radius: 2px;
+    background: linear-gradient(180deg, var(--purple-6) 0%, var(--brand-7) 100%);
+  }
+  .genui-frame {
+    width: 100%;
+    border: 1px solid var(--neutral-3);
+    border-radius: var(--radius-xl);
+    background: var(--neutral-0);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    min-height: 220px;
+  }
+
+  /* 产出物区 */
+  .outputs-section {
+    display: flex; flex-direction: column; gap: 10px;
+    opacity: 0; transform: translateY(14px);
+    transition: opacity 480ms ease, transform 480ms cubic-bezier(.2, .8, .2, 1);
+  }
+  .outputs-section.is-visible { opacity: 1; transform: translateY(0); }
+  .outputs-title {
+    font-size: 14px; font-weight: 500; color: var(--neutral-11);
+    display: flex; align-items: center; gap: 8px; padding: 2px 0;
+  }
+  .outputs-title::before {
+    content: ''; width: 4px; height: 14px; border-radius: 2px;
+    background: linear-gradient(180deg, #34D27E 0%, #2562FF 100%);
+  }
+  .outputs-title .count { color: var(--brand-7); font-weight: 600; }
+  .outputs-title .sub { font-size: 12px; font-weight: 400; color: var(--neutral-9); margin-left: 4px; }
+  .outputs-cards { display: flex; flex-wrap: wrap; gap: 12px; }
+
+  .output-card {
+    width: 190px; flex: 0 0 190px;
+    background: var(--neutral-0);
+    border: 1px solid var(--neutral-3);
+    border-radius: var(--radius-xl);
+    overflow: hidden; cursor: pointer;
+    transition: border-color 120ms, box-shadow 120ms, transform 120ms;
+  }
+  .output-card:hover { border-color: var(--brand-6); box-shadow: var(--shadow-card); transform: translateY(-1px); }
+  .output-card.is-loading { cursor: default; }
+  .output-card.is-loading:hover { border-color: var(--neutral-3); box-shadow: none; transform: none; }
+
+  .output-preview {
+    width: 100%; aspect-ratio: 5 / 3;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    border-bottom: 1px solid var(--neutral-2);
+  }
+  .output-preview.loading {
+    background:
+      linear-gradient(110deg, rgba(240,241,245,0.9) 8%, rgba(255,255,255,0.95) 18%, rgba(240,241,245,0.9) 33%);
+    background-size: 220% 100%;
+    animation: previewLoading 1.4s linear infinite;
+  }
+  .output-preview.loading::after {
+    content: '';
+    position: absolute;
+    inset: 14px;
+    border-radius: 10px;
+    border: 1px dashed rgba(37,98,255,0.16);
+  }
+  .output-loading-copy {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--neutral-9);
+    font-size: 12px;
+    text-align: center;
+    padding: 0 18px;
+  }
+  .output-loading-copy .ring {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid rgba(37,98,255,0.16);
+    border-top-color: var(--brand-7);
+    animation: spin 0.8s linear infinite;
+  }
+  .output-meta .loading-note {
+    color: var(--brand-7);
+    font-weight: 500;
+  }
+  @keyframes previewLoading {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+  }
+  .output-preview.skill {
+    background:
+      radial-gradient(circle at 30% 30%, rgba(124,92,255,0.22), transparent 60%),
+      linear-gradient(135deg, #EAF0FF 0%, #C8DBFF 100%);
+  }
+  .output-preview.skill .prev-icon-big {
+    width: 44px; height: 44px; border-radius: 10px;
+    background: linear-gradient(135deg, #4D8BFF 0%, #2562FF 100%);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(37,98,255,0.28);
+  }
+  .output-preview.skill .prev-icon-big svg { width: 22px; height: 22px; color: #fff; }
+
+  .output-preview.pptx {
+    background:
+      radial-gradient(circle at 70% 30%, rgba(255,157,82,0.28), transparent 60%),
+      linear-gradient(135deg, #FFF5EC 0%, #FFE0C2 100%);
+  }
+  .output-preview.pptx .ext-badge {
+    padding: 8px 14px; background: #fff;
+    border-radius: 8px;
+    font-size: 16px; font-weight: 700;
+    color: #E05B00; letter-spacing: 1px;
+    box-shadow: 0 4px 12px rgba(224,91,0,0.18);
+  }
+
+  .output-preview.md {
+    background: linear-gradient(135deg, #F8FAFF 0%, #ECE9FF 100%);
+    align-items: flex-start; justify-content: flex-start;
+    flex-direction: column; padding: 14px 16px; gap: 4px;
+  }
+  .output-preview.md .md-line {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 9px; line-height: 1.5;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  .output-preview.md .md-line.hash { color: var(--brand-7); font-weight: 700; font-size: 10px; }
+  .output-preview.md .md-line.bullet { padding-left: 8px; position: relative; color: var(--neutral-10); }
+  .output-preview.md .md-line.bullet::before { content: '·'; position: absolute; left: 0; color: var(--neutral-9); }
+  .output-preview.md .md-line.dim { color: var(--neutral-7); }
+
+  .output-preview.html {
+    background:
+      radial-gradient(circle at 50% 50%, rgba(124,92,255,0.18), transparent 60%),
+      linear-gradient(135deg, #F4F0FF 0%, #D9CFFF 100%);
+  }
+  .output-preview.html .mini-html { display: flex; align-items: center; gap: 10px; }
+  .output-preview.html .mini-pie {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: conic-gradient(#2562FF 0% 42%, #6FB9FF 42% 70%, #B4D0FF 70% 88%, #E6E8ED 88% 100%);
+    position: relative;
+    box-shadow: 0 2px 8px rgba(37,98,255,0.18);
+  }
+  .output-preview.html .mini-pie::after {
+    content: ''; position: absolute; inset: 9px;
+    background: #fff; border-radius: 50%;
+  }
+  .output-preview.html .mini-lines { display: flex; flex-direction: column; gap: 4px; }
+  .output-preview.html .mini-lines span { width: 38px; height: 5px; border-radius: 2px; background: rgba(37,98,255,0.35); }
+  .output-preview.html .mini-lines span:nth-child(2) { width: 30px; background: rgba(111,185,255,0.55); }
+  .output-preview.html .mini-lines span:nth-child(3) { width: 24px; background: rgba(180,208,255,0.75); }
+
+  .output-preview.images {
+    background:
+      radial-gradient(circle at 50% 50%, rgba(124,92,255,0.14), transparent 60%),
+      linear-gradient(135deg, #EFF3FF 0%, #DCE6FF 100%);
+  }
+  .output-preview.images .prev-stack { position: relative; width: 96px; height: 56px; }
+  .output-preview.images .prev-stack-img {
+    position: absolute;
+    width: 48px; height: 48px; border-radius: 6px;
+    border: 1.5px solid #fff;
+    background: linear-gradient(135deg, var(--brand-1) 0%, #C8DBFF 100%);
+    box-shadow: 0 2px 6px rgba(9,30,64,0.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: var(--brand-7); font-weight: 600;
+  }
+  .output-preview.images .prev-stack-img:nth-child(1) { left: 0;  top: 4px; transform: rotate(-8deg); z-index: 1; }
+  .output-preview.images .prev-stack-img:nth-child(2) { left: 22px; top: 2px; z-index: 2; }
+  .output-preview.images .prev-stack-img:nth-child(3) { left: 44px; top: 6px; transform: rotate(8deg);  z-index: 3; }
+
+  /* DOCX 预览：模拟文档版式 */
+  .output-preview.docx {
+    background:
+      radial-gradient(circle at 30% 30%, rgba(77,139,255,0.20), transparent 60%),
+      linear-gradient(135deg, #F0F6FF 0%, #C8DBFF 100%);
+    align-items: flex-start; justify-content: flex-start;
+    flex-direction: column; padding: 12px 14px; gap: 4px;
+  }
+  .output-preview.docx .doc-h { height: 5px; width: 70%; border-radius: 2px; background: rgba(37,98,255,0.55); margin-bottom: 4px; }
+  .output-preview.docx .doc-l { height: 3px; border-radius: 2px; background: rgba(37,98,255,0.22); }
+  .output-preview.docx .doc-l:nth-child(2) { width: 92%; }
+  .output-preview.docx .doc-l:nth-child(3) { width: 88%; }
+  .output-preview.docx .doc-l:nth-child(4) { width: 76%; }
+  .output-preview.docx .doc-l:nth-child(5) { width: 84%; }
+  .output-preview.docx .doc-l:nth-child(6) { width: 60%; }
+
+  /* PDF 预览：红色徽章 + 角标 */
+  .output-preview.pdf {
+    background:
+      radial-gradient(circle at 70% 30%, rgba(255,122,110,0.28), transparent 60%),
+      linear-gradient(135deg, #FFEEEC 0%, #FFCFC9 100%);
+  }
+  .output-preview.pdf .ext-badge {
+    padding: 8px 14px; background: #fff;
+    border-radius: 8px;
+    font-size: 16px; font-weight: 700;
+    color: #E84135; letter-spacing: 1px;
+    box-shadow: 0 4px 12px rgba(232,65,53,0.20);
+  }
+
+  /* XLSX 输出预览：表格网格 */
+  .output-preview.xlsx {
+    background:
+      radial-gradient(circle at 30% 70%, rgba(52,210,126,0.22), transparent 60%),
+      linear-gradient(135deg, #EAFBF1 0%, #BFEFD4 100%);
+  }
+  .output-preview.xlsx .grid-mini {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
+    width: 84px; padding: 4px;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(22,163,74,0.18);
+  }
+  .output-preview.xlsx .grid-mini span {
+    height: 8px; border-radius: 1px;
+    background: rgba(22,163,74,0.18);
+  }
+  .output-preview.xlsx .grid-mini span:nth-child(-n+4) { background: #16A34A; }
+  .output-preview.xlsx .grid-mini span:nth-child(4n+1) { background: rgba(22,163,74,0.45); }
+
+  /* CSV 预览：极简文本行 */
+  .output-preview.csv {
+    background: linear-gradient(135deg, #F4FFEA 0%, #D9F2C2 100%);
+    align-items: flex-start; justify-content: flex-start;
+    flex-direction: column; padding: 12px 14px; gap: 3px;
+  }
+  .output-preview.csv .csv-line {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 9px; color: #2EAA61;
+    white-space: nowrap; overflow: hidden; max-width: 100%;
+  }
+  .output-preview.csv .csv-line.head { color: #1F7A47; font-weight: 700; }
+
+  /* JSON 预览：花括号代码 */
+  .output-preview.json {
+    background:
+      radial-gradient(circle at 50% 50%, rgba(255,214,111,0.30), transparent 60%),
+      linear-gradient(135deg, #FFF9EC 0%, #FFE8B0 100%);
+    align-items: flex-start; justify-content: flex-start;
+    flex-direction: column; padding: 12px 14px; gap: 2px;
+  }
+  .output-preview.json .j-line {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 9px; color: #8B6B00; line-height: 1.4;
+    white-space: nowrap; overflow: hidden; max-width: 100%;
+  }
+  .output-preview.json .j-line.brace { color: #D98B00; font-weight: 700; }
+  .output-preview.json .j-line.key { color: #B5760D; }
+  .output-preview.json .j-line.indent { padding-left: 8px; }
+
+  /* ZIP 预览：打包图标 */
+  .output-preview.zip {
+    background:
+      radial-gradient(circle at 50% 50%, rgba(176,184,204,0.30), transparent 60%),
+      linear-gradient(135deg, #F2F4F8 0%, #D5DAE5 100%);
+  }
+  .output-preview.zip .zip-icon {
+    width: 44px; height: 44px; border-radius: 8px;
+    background: linear-gradient(135deg, #8B95AE 0%, #5D6581 100%);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(93,101,129,0.28);
+    position: relative;
+  }
+  .output-preview.zip .zip-icon::before {
+    content: ''; position: absolute;
+    width: 4px; height: 22px;
+    background: rgba(255,255,255,0.85);
+    top: 11px; left: 50%; margin-left: -2px;
+    border-radius: 1px;
+  }
+  .output-preview.zip .zip-icon::after {
+    content: 'ZIP'; position: absolute;
+    width: 22px; height: 10px;
+    background: #fff; color: #5D6581;
+    font-size: 7px; font-weight: 700;
+    border-radius: 2px;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1;
+  }
+
+  .output-meta { padding: 10px 12px; }
+  .output-name { font-size: 13px; font-weight: 500; color: var(--neutral-11); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .output-sub { margin-top: 4px; font-size: 11px; color: var(--neutral-9); display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; }
+  .output-type-pill { display: inline-flex; align-items: center; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 500; flex-shrink: 0; }
+  .output-type-pill.skill  { background: rgba(37,98,255,0.10);  color: var(--brand-7); }
+  .output-type-pill.pptx   { background: rgba(255,157,82,0.16); color: #C04A00; }
+  .output-type-pill.md     { background: rgba(124,92,255,0.10); color: var(--purple-6); }
+  .output-type-pill.html   { background: rgba(124,92,255,0.14); color: var(--purple-6); }
+  .output-type-pill.images { background: rgba(22,163,74,0.10);  color: #16A34A; }
+  .output-type-pill.docx   { background: rgba(77,139,255,0.14); color: var(--brand-7); }
+  .output-type-pill.pdf    { background: rgba(232,65,53,0.12);  color: #C0332A; }
+  .output-type-pill.xlsx   { background: rgba(22,163,74,0.10);  color: #16A34A; }
+  .output-type-pill.csv    { background: rgba(46,170,97,0.12);  color: #1F7A47; }
+  .output-type-pill.json   { background: rgba(217,139,0,0.14);  color: #8B6B00; }
+  .output-type-pill.zip    { background: rgba(93,101,129,0.14); color: #5D6581; }
+
+  .msg-actions { display: flex; gap: 4px; }
+  .msg-actions.is-hidden { display: none; }
+  .msg-actions button {
+    width: 28px; height: 28px;
+    border: none; background: transparent;
+    border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--neutral-9);
+    transition: background 120ms, color 120ms;
+  }
+  .msg-actions button:hover { background: var(--neutral-2); color: var(--neutral-10); }
+  .msg-actions svg { width: 16px; height: 16px; }
+
+  .chat-footer-wrap { flex-shrink: 0; padding: 8px 24px 14px; }
+  .chat-input {
+    border: 1px solid var(--neutral-3);
+    border-radius: var(--radius-xl);
+    background: var(--neutral-0);
+    padding: 12px 14px 12px 16px;
+    display: flex; align-items: flex-end; gap: 12px;
+    transition: border-color 120ms, box-shadow 120ms;
+  }
+  .chat-input:focus-within { border-color: var(--brand-6); box-shadow: 0 0 0 3px rgba(37,98,255,0.08); }
+  .chat-input textarea { flex: 1; border: none; resize: none; background: transparent; font-size: 14px; color: var(--neutral-11); line-height: 1.6; min-height: 48px; max-height: 180px; }
+  .chat-input textarea::placeholder { color: var(--neutral-7); }
+  .send-btn {
+    width: 30px; height: 30px; border-radius: 50%;
+    border: none; background: var(--neutral-2); color: var(--neutral-7);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    transition: background 120ms, color 120ms;
+  }
+  .send-btn svg { width: 16px; height: 16px; }
+  .send-btn.is-active { background: var(--brand-7); color: #fff; }
+  .chat-disclaimer { text-align: center; font-size: 12px; color: var(--neutral-7); margin-top: 10px; }
+
+  .demo-control-bar {
+    display: none; align-items: center; gap: 8px;
+    padding: 6px 12px;
+    background: rgba(255,193,7,0.1);
+    border: 1px dashed rgba(255,193,7,0.5);
+    border-radius: 999px;
+    font-size: 12px; color: #946000;
+    align-self: center;
+  }
+  .demo-control-bar button { border: none; background: var(--brand-7); color: #fff; padding: 4px 12px; border-radius: 999px; font-size: 12px; }
+  .demo-control-bar button:hover { background: #003ED1; }
+
+  /* 右栏：资料 */
+  .files-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px 0; border-bottom: 1px solid var(--neutral-2); flex-shrink: 0; }
+  .files-tabs { display: flex; gap: 24px; }
+  .files-tab {
+    border: none; background: transparent;
+    padding: 4px 0 12px;
+    font-size: 15px; color: var(--neutral-9);
+    position: relative; font-weight: 500;
+  }
+  .files-tab.is-active { color: var(--neutral-11); font-weight: 600; }
+  .files-tab.is-active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--brand-7); border-radius: 2px; }
+  .files-close { width: 28px; height: 28px; margin-bottom: 8px; }
+  .files-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px 14px; gap: 12px; flex-shrink: 0; }
+  .toolbar-group { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+  .btn-pill {
+    height: 34px; padding: 0 18px;
+    border-radius: 999px;
+    border: 1px solid var(--neutral-3);
+    background: var(--neutral-0);
+    font-size: 13px; color: var(--neutral-10); font-weight: 500;
+    white-space: nowrap;
+  }
+  .btn-pill:hover { background: var(--neutral-1); }
+  .btn-pill.is-primary { background: var(--brand-7); color: #fff; border-color: var(--brand-7); }
+  .btn-pill.is-primary:hover { background: #003ED1; }
+  .search-input {
+    flex: 1; height: 34px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: transparent;
+    padding: 0 14px 0 32px;
+    font-size: 13px; color: var(--neutral-11);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='none' stroke='%238C95B0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><circle cx='7' cy='7' r='4.5'/><path d='M10.5 10.5L14 14'/></svg>");
+    background-repeat: no-repeat; background-position: 12px center;
+    min-width: 0;
+  }
+  .search-input::placeholder { color: var(--neutral-7); }
+  .search-input:hover { background-color: var(--neutral-1); }
+  .search-input:focus { border-color: var(--neutral-3); background-color: var(--neutral-0); }
+  .btn-upload {
+    height: 34px; padding: 0 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--neutral-3);
+    background: var(--neutral-0);
+    font-size: 13px; color: var(--neutral-10);
+    display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  }
+  .btn-upload:hover { background: var(--neutral-1); }
+  .btn-upload svg { width: 14px; height: 14px; }
+  .files-list {
+    flex: 1; overflow-y: auto;
+    padding: 0 24px 24px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .files-list[hidden] { display: none; }
+  .file-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 14px;
+    border-radius: var(--radius-lg);
+    background: var(--neutral-1);
+    transition: background 120ms;
+    cursor: pointer;
+  }
+  .file-row:hover { background: var(--neutral-2); }
+  .file-icon {
+    width: 36px; height: 36px;
+    border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.3px;
+    flex-shrink: 0; position: relative;
+  }
+  .file-icon.docx { background: linear-gradient(135deg, #4D8BFF 0%, #2562FF 100%); }
+  .file-icon.xlsx { background: linear-gradient(135deg, #34D27E 0%, #16A34A 100%); }
+  .file-icon.pptx { background: linear-gradient(135deg, #FF9D52 0%, #E05B00 100%); }
+  .file-icon.imgs { background: linear-gradient(135deg, #7C5CFF 0%, #2562FF 100%); }
+  .file-icon.md   { background: linear-gradient(135deg, #94A6FF 0%, #7C5CFF 100%); }
+  .file-icon.html { background: linear-gradient(135deg, #B481FF 0%, #7C5CFF 100%); font-size: 9px; }
+  .file-icon.pdf  { background: linear-gradient(135deg, #FF7A6E 0%, #E84135 100%); font-size: 11px; }
+  .file-icon.csv  { background: linear-gradient(135deg, #6FD89C 0%, #2EAA61 100%); font-size: 11px; }
+  .file-icon.json { background: linear-gradient(135deg, #FFD66F 0%, #D98B00 100%); font-size: 10px; }
+  .file-icon.zip  { background: linear-gradient(135deg, #B0B8CC 0%, #707A99 100%); font-size: 11px; }
+  .file-icon.skill { background: linear-gradient(135deg, #4D8BFF 0%, #2562FF 100%); font-size: 0; }
+  .file-icon.skill::before { display: none; }
+  .file-icon.skill svg { width: 18px; height: 18px; color: #fff; font-size: 13px; }
+  .file-icon::before { content: ""; position: absolute; top: 5px; right: 5px; width: 0; height: 0; border-top: 6px solid rgba(255,255,255,0.45); border-left: 6px solid transparent; }
+  .file-info { flex: 1; min-width: 0; }
+  .file-name { font-size: 13px; color: var(--neutral-11); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-size { margin-top: 4px; font-size: 12px; color: var(--neutral-9); }
+  .file-actions { display: flex; align-items: center; gap: 4px; }
+  .btn-attach {
+    height: 30px; padding: 0 14px;
+    border-radius: var(--radius-md);
+    background: var(--neutral-0); border: 1px solid var(--neutral-3);
+    color: var(--neutral-10); font-size: 12px; margin-right: 6px;
+  }
+  .btn-attach:hover { border-color: var(--brand-6); color: var(--brand-7); }
+  .file-icon-action {
+    width: 28px; height: 28px;
+    border-radius: var(--radius-md);
+    border: none; background: transparent;
+    color: var(--neutral-9);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .file-icon-action:hover { background: var(--neutral-3); color: var(--neutral-11); }
+  .file-icon-action.is-danger { color: var(--red-6); }
+  .file-icon-action.is-danger:hover { background: rgba(245,72,59,0.1); }
+  .file-icon-action svg { width: 16px; height: 16px; }
+
+  .tab-count {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 0 6px; min-width: 18px; height: 16px;
+    border-radius: 8px;
+    background: var(--neutral-3); color: var(--neutral-9);
+    font-size: 10px; font-weight: 600;
+    text-align: center; line-height: 16px;
+    vertical-align: 1px;
+  }
+  .files-tab.is-active .tab-count { background: rgba(0,71,253,0.12); color: var(--brand-7); }
+
+  /* 右栏：PPT 预览态 */
+  .pane-files.is-preview-mode .files-toolbar,
+  .pane-files.is-preview-mode .files-list { display: none; }
+  .files-preview { flex: 1; display: none; flex-direction: column; overflow: hidden; padding: 16px 20px 20px; }
+  .pane-files.is-preview-mode .files-preview { display: flex; }
+  .preview-toolbar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px;
+    border: 1px solid var(--neutral-3);
+    border-radius: var(--radius-lg);
+    background: var(--neutral-0);
+    flex-shrink: 0;
+  }
+  .preview-back {
+    width: 32px; height: 32px;
+    border: 1px solid var(--neutral-3);
+    border-radius: var(--radius-md);
+    background: var(--neutral-0);
+    color: var(--neutral-10);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .preview-back:hover { background: var(--neutral-1); }
+  .preview-back svg { width: 16px; height: 16px; }
+  .preview-filename { flex: 1; font-size: 14px; font-weight: 500; color: var(--neutral-11); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .preview-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .preview-body { flex: 1; display: flex; gap: 14px; margin-top: 14px; overflow: hidden; }
+  .slide-list {
+    flex: 0 0 140px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 10px;
+    padding-right: 4px;
+  }
+  .slide-list::-webkit-scrollbar { width: 4px; }
+  .slide-list::-webkit-scrollbar-thumb { background: var(--neutral-3); border-radius: 2px; }
+  .slide-thumb {
+    position: relative;
+    background: var(--neutral-0);
+    border: 1.5px solid var(--neutral-3);
+    border-radius: var(--radius-md);
+    aspect-ratio: 16 / 9;
+    padding: 6px 8px;
+    font-size: 9px; color: var(--neutral-10);
+    cursor: pointer; overflow: hidden;
+    margin-left: 18px;
+    transition: border-color 120ms;
+    opacity: 0; transform: translateX(-6px);
+    animation: slideThumbIn 320ms ease forwards;
+  }
+  @keyframes slideThumbIn { to { opacity: 1; transform: translateX(0); } }
+  .slide-thumb.is-active { border-color: var(--brand-7); box-shadow: 0 0 0 2px rgba(0,71,253,0.15); }
+  .slide-thumb-num { position: absolute; left: -18px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: 500; color: var(--neutral-9); }
+  .slide-thumb.is-active .slide-thumb-num { color: var(--brand-7); }
+  .slide-thumb-content {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #0E0F2E 0%, #2D1B6E 100%);
+    color: #fff;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 4px; text-align: center; line-height: 1.3;
+  }
+  .slide-thumb-content.is-light { background: var(--neutral-1); color: var(--neutral-11); }
+
+  .slide-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+  .slide-canvas {
+    width: 100%; aspect-ratio: 16 / 9;
+    background: linear-gradient(135deg, #0E0F2E 0%, #2D1B6E 100%);
+    border-radius: var(--radius-lg);
+    color: #fff; padding: 28px;
+    position: relative; overflow: hidden;
+    transition: opacity 240ms ease;
+  }
+  .slide-canvas.is-fading { opacity: 0; }
+  .slide-canvas::before {
+    content: ''; position: absolute; right: -120px; top: -60px;
+    width: 320px; height: 320px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(112,148,255,0.25), transparent 70%);
+    pointer-events: none;
+  }
+  .slide-canvas .s-title { font-size: 22px; font-weight: 600; margin-bottom: 8px; position: relative; }
+  .slide-canvas .s-sub   { font-size: 13px; opacity: 0.7; position: relative; }
+  .slide-canvas .s-bullets { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; position: relative; }
+  .slide-canvas .s-bullets li { list-style: none; padding-left: 14px; position: relative; opacity: 0.9; }
+  .slide-canvas .s-bullets li::before { content: '·'; position: absolute; left: 4px; color: #6FB9FF; font-weight: 700; }
+  .slide-canvas .footer-stamp { position: absolute; right: 22px; bottom: 16px; font-size: 10px; opacity: 0.45; }
+
+  .slide-notes {
+    background: var(--neutral-1);
+    border: 1px solid var(--neutral-3);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    font-size: 13px; color: var(--neutral-7);
+  }
+
+  .chat-body::-webkit-scrollbar, .files-list::-webkit-scrollbar { width: 6px; height: 6px; }
+  .chat-body::-webkit-scrollbar-thumb, .files-list::-webkit-scrollbar-thumb { background: var(--neutral-3); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div id="variant-bar">
+  <span class="label">方案对比：</span>
+  <button class="v-tab active" onclick="switchVariant('default', this)">默认方案</button>
+  <button class="v-tab" onclick="switchVariant('process-top', this)">方案2：过程前置</button>
+  <button class="v-tab" onclick="switchVariant('product-live', this)">方案3：产物直出</button>
+  <button class="v-tab" onclick="switchVariant('muted-process', this)">方案4：素色过程</button>
+  <div style="flex:1;"></div>
+  <button class="v-demo-toggle" onclick="toggleDemoMode(this)">交互说明</button>
+</div>
+
+<div id="variant-a" class="variant active">
+<div class="page-shell">
+
+  <!-- 内层：图标导航 -->
+  <aside class="nav-rail">
+    <div class="rail-logo" title="Dora">
+      <svg viewBox="0 0 24 24" fill="none">
+        <defs><linearGradient id="railLogoG" x1="0" y1="0" x2="24" y2="24"><stop offset="0%" stop-color="#6FB9FF"/><stop offset="100%" stop-color="#2562FF"/></linearGradient></defs>
+        <path d="M12 2C12 2 5 9 5 14.5C5 18.6 8.1 22 12 22C15.9 22 19 18.6 19 14.5C19 9 12 2 12 2Z" fill="url(#railLogoG)"/>
+      </svg>
+    </div>
+    <button class="rail-item">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l7-6 7 6"/><path d="M5 9v8h10v-8"/></svg>
+      首页
+    </button>
+    <button class="rail-item is-active">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3"/><path d="M4 17c0-3 2.7-5 6-5s6 2 6 5"/></svg>
+      Agent
+    </button>
+    <button class="rail-item">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="11" y="3" width="6" height="6" rx="1"/><rect x="3" y="11" width="6" height="6" rx="1"/><rect x="11" y="11" width="6" height="6" rx="1"/></svg>
+      空间
+    </button>
+    <div class="rail-spacer"></div>
+    <div class="rail-user" title="用户">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="6" r="2.5"/><path d="M3 14c0-2.5 2.2-4 5-4s5 1.5 5 4"/></svg>
+    </div>
+  </aside>
+
+  <!-- 外层：聊天列表 -->
+  <aside class="nav-panel">
+    <header class="np-header">
+      <div class="np-logo">
+        <span class="logo-icon"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5C8 1.5 3.5 6.5 3.5 10.2a4.5 4.5 0 009 0C12.5 6.5 8 1.5 8 1.5z"/></svg></span>
+        Dora
+      </div>
+      <button class="np-toggle" title="收起 / 切换">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3L2 8l3 5"/><path d="M11 3l3 5-3 5"/></svg>
+      </button>
+    </header>
+    <button class="np-newchat">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5a2 2 0 012-2h7a2 2 0 012 2v5a2 2 0 01-2 2H7l-3 2v-2H4.5a2 2 0 01-2-2V5z"/><path d="M8 6v3M6.5 7.5h3"/></svg>
+      新聊天
+    </button>
+    <button class="np-task">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M8 5v3.5l2 1.5"/></svg>
+      定时任务
+    </button>
+    <div class="np-list-scroll">
+      <div class="np-section">
+        <div class="np-section-title">分身</div>
+        <ul class="np-list">
+          <li class="np-item"><span class="np-item-icon wecom">企</span><span class="name">企业微信–未命名Agent_01</span><span class="np-badge">99+</span></li>
+          <li class="np-item"><span class="np-item-icon ding">钉</span><span class="name">钉钉–未命名Agent_01</span><span class="np-badge">1</span></li>
+          <li class="np-item"><span class="np-item-icon lark">飞</span><span class="name">飞书–未命名Agent_01</span></li>
+        </ul>
+      </div>
+      <div class="np-section">
+        <div class="np-section-title">历史会话</div>
+        <ul class="np-list">
+          <li class="np-item"><span class="name">你以后每天晚上8:00给我发一份...</span></li>
+          <li class="np-item is-active"><span class="name">请帮我分析这份客户反馈 Excel</span></li>
+          <li class="np-item"><span class="name">江苏省销售额</span></li>
+          <li class="np-item"><span class="name">去年门店销售额最高的商品...</span><span class="np-badge">20</span></li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+  <div class="app-shell">
+
+  <!-- 左侧：对话 -->
+  <section class="pane-chat">
+    <header class="chat-header">
+      <div class="chat-header-left">
+        <button class="icon-btn" title="收起侧栏"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="12" rx="1.5"/><path d="M8 4v12"/></svg></button>
+        <h1 class="chat-title">请帮我分析这份客户反馈 Excel</h1>
+      </div>
+      <div class="chat-header-right">
+        <button class="icon-btn" title="分享"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v3a1 1 0 001 1h10a1 1 0 001-1v-3"/><path d="M10 4v9"/><path d="M6.5 7.5L10 4l3.5 3.5"/></svg></button>
+        <button class="icon-btn" title="资料"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5.5A1.5 1.5 0 014.5 4h3l1.5 2h6.5A1.5 1.5 0 0117 7.5v7A1.5 1.5 0 0115.5 16h-11A1.5 1.5 0 013 14.5v-9z"/></svg><span class="folder-badge">3</span></button>
+      </div>
+    </header>
+
+    <div class="chat-body" id="chatBody">
+      <div class="msg-user">
+        <div class="user-file-pill">
+          <span class="mini-icon">XLSX</span>
+          <div>
+            <div class="file-meta-name">客户反馈明细.xlsx</div>
+            <div class="file-meta-size">161.17 KB</div>
+          </div>
+        </div>
+        <div class="bubble">请帮我分析这份客户反馈 Excel，找出主要问题，并生成一份汇报 PPT。</div>
+      </div>
+
+      <div class="agent-reply" id="agentReply">
+        <div class="agent-row">
+          <span class="agent-avatar"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5C8 1.5 3.5 6.5 3.5 10.2a4.5 4.5 0 009 0C12.5 6.5 8 1.5 8 1.5z"/></svg></span>
+          <span class="agent-name">未命名Agent_01</span>
+        </div>
+
+        <div class="result-slot is-interim is-empty" id="resultSlot"></div>
+
+        <div class="chart-slot" id="chartSlot" hidden></div>
+
+        <div class="genui-slot" id="genuiSlot" hidden></div>
+        <div class="outputs-section" id="outputsSection" hidden></div>
+
+        <div class="exec-panel" id="execPanel">
+          <header class="exec-header" onclick="togglePanel()">
+            <span class="exec-title" id="execTitle">准备中....</span>
+            <button class="exec-toggle" type="button" tabindex="-1"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5l4 4 4-4"/></svg></button>
+          </header>
+          <div class="exec-body"><ul class="exec-timeline" id="execTimeline"></ul></div>
+        </div>
+
+        <div class="wait-line" id="waitLine" hidden>
+          <svg class="wait-spark" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l1.5 5L14 7.5 9.5 9 8 14l-1.5-5L2 7.5 6.5 6z"/></svg>
+          <span class="wait-time" id="waitTime">0s</span>
+          <span class="wait-text" id="waitText" hidden></span>
+          <div class="wait-carousel" id="waitCarousel" hidden><div class="wait-carousel-track" id="waitCarouselTrack"></div></div>
+        </div>
+
+        <div class="msg-actions is-hidden" id="finalActions">
+          <button title="复制"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="8.5" height="8.5" rx="1.5"/><path d="M3 10.5V3.5A1 1 0 014 2.5h7"/></svg></button>
+          <button title="重新生成"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8a4.5 4.5 0 018.4-2.2"/><path d="M12 3.5V6h-2.5"/><path d="M12.5 8a4.5 4.5 0 01-8.4 2.2"/><path d="M4 12.5V10h2.5"/></svg></button>
+          <button title="分享"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v2.5a1 1 0 001 1h8a1 1 0 001-1V10"/><path d="M8 3v8"/><path d="M5 6l3-3 3 3"/></svg></button>
+          <button title="赞"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 7.5V13H3.5a1 1 0 01-1-1V8.5a1 1 0 011-1h2z"/><path d="M5.5 7.5l2.2-4.4A1.2 1.2 0 0110 3.7v2.3h2.6a1.2 1.2 0 011.2 1.4l-0.8 4.5a1.2 1.2 0 01-1.2 1H5.5"/></svg></button>
+          <button title="踩"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 8.5V3H12.5a1 1 0 011 1v3.5a1 1 0 01-1 1h-2z"/><path d="M10.5 8.5L8.3 12.9A1.2 1.2 0 016 12.3V10H3.4a1.2 1.2 0 01-1.2-1.4L3 4.1A1.2 1.2 0 014.2 3.1H10.5"/></svg></button>
+        </div>
+      </div>
+
+      <div class="demo-control demo-control-bar">
+        <span>客户反馈剧本（DeerFlow 7 阶段 / ~43s）</span>
+        <button onclick="playScenario()">▶ 重播剧本</button>
+        <button onclick="appendGenUIReply('给我 genui 看看分布')">💡 追加 GenUI 消息</button>
+      </div>
+
+      <div id="extraReplies"></div>
+    </div>
+
+    <div class="chat-footer-wrap">
+      <div class="chat-input">
+        <textarea id="chatInput" placeholder="试试输入「给我 genui」回车追加一条 GenUI 消息 · 或输入 @ 引用会话文件"></textarea>
+        <button class="send-btn" id="sendBtn" title="发送" onclick="handleSend()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V3"/><path d="M4 7l4-4 4 4"/></svg></button>
+      </div>
+      <p class="chat-disclaimer">内容均由AI生成，仅供参考</p>
+    </div>
+  </section>
+
+  <!-- 右侧：资料 / 产出 -->
+  <aside class="pane-files" id="paneFiles">
+    <header class="files-header">
+      <div class="files-tabs">
+        <button class="files-tab is-active" data-tab="materials">资料<span class="tab-count" id="materialsCount">1</span></button>
+        <button class="files-tab" data-tab="outputs">产出<span class="tab-count" id="outputsCount">0</span></button>
+      </div>
+      <button class="icon-btn files-close" title="关闭"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
+    </header>
+
+    <div class="files-toolbar">
+      <div class="toolbar-group">
+        <button class="btn-pill is-primary">上传文件</button>
+        <button class="btn-pill">平台数据</button>
+        <input class="search-input" placeholder="搜索名称" />
+      </div>
+      <button class="btn-upload"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="5" height="5" rx="0.6"/><rect x="9" y="2" width="5" height="5" rx="0.6"/><rect x="2" y="9" width="5" height="5" rx="0.6"/><rect x="9" y="9" width="5" height="5" rx="0.6"/></svg>上传</button>
+    </div>
+
+    <div class="files-list" id="filesListMaterials">
+      <div class="file-row" onclick="openPreview('xlsx', '客户反馈明细.xlsx')">
+        <div class="file-icon xlsx">XLSX</div>
+        <div class="file-info">
+          <div class="file-name">客户反馈明细.xlsx</div>
+          <div class="file-size">161.17 KB · 用户上传</div>
+        </div>
+        <div class="file-actions">
+          <button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button>
+          <button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button>
+          <button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="files-list" id="filesListOutputs" hidden>
+      <div class="file-row" id="outputSkillRow" style="display:none">
+        <div class="file-icon skill"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v5l-2 2"/><path d="M9 5l4 4-2.5 2.5L7 8"/><path d="M5.5 10.5L4 12l2 2 1.5-1.5"/></svg></div>
+        <div class="file-info">
+          <div class="file-name">客户反馈分析技能</div>
+          <div class="file-size">技能 · Agent 自动生成</div>
+        </div>
+        <div class="file-actions">
+          <button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button>
+          <button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button>
+        </div>
+      </div>
+      <div class="file-row" id="outputPptRow" style="display:none" onclick="openPreview('pptx', '客户反馈分析汇报.pptx')">
+        <div class="file-icon pptx">PPTX</div>
+        <div class="file-info">
+          <div class="file-name">客户反馈分析汇报.pptx</div>
+          <div class="file-size">2.4 MB · Agent 产出</div>
+        </div>
+        <div class="file-actions">
+          <button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button>
+          <button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button>
+          <button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button>
+        </div>
+      </div>
+      <div class="file-row" id="outputDocxRow" style="display:none" onclick="openPreview('docx', '反馈分析报告.docx')">
+        <div class="file-icon docx">DOCX</div>
+        <div class="file-info">
+          <div class="file-name">反馈分析报告.docx</div>
+          <div class="file-size">320 KB · 给管理层 · Agent 产出</div>
+        </div>
+        <div class="file-actions">
+          <button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button>
+          <button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button>
+          <button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button>
+        </div>
+      </div>
+      <div class="file-row" id="outputPdfRow" style="display:none" onclick="openPreview('pdf', '反馈分析报告.pdf')">
+        <div class="file-icon pdf">PDF</div>
+        <div class="file-info">
+          <div class="file-name">反馈分析报告.pdf</div>
+          <div class="file-size">480 KB · 归档版 · Agent 产出</div>
+        </div>
+        <div class="file-actions">
+          <button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button>
+          <button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button>
+          <button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button>
+        </div>
+      </div>
+      <div class="file-row" id="outputMdRow" style="display:none" onclick="openPreview('md', '反馈分析报告.md')">
+        <div class="file-icon md">MD</div>
+        <div class="file-info">
+          <div class="file-name">反馈分析报告.md</div>
+          <div class="file-size">12 KB · Agent 产出</div>
+        </div>
+        <div class="file-actions">
+          <button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button>
+          <button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button>
+          <button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button>
+        </div>
+      </div>
+      <div class="file-row" id="outputHtmlRow" style="display:none" onclick="openPreview('html', '反馈分布看板.html')">
+        <div class="file-icon html">HTML</div>
+        <div class="file-info">
+          <div class="file-name">反馈分布看板.html</div>
+          <div class="file-size">24 KB · 可交互 · Agent 产出</div>
+        </div>
+        <div class="file-actions">
+          <button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button>
+          <button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button>
+          <button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button>
+        </div>
+      </div>
+      <div class="file-row" id="outputXlsxRow" style="display:none" onclick="openPreview('xlsx', '反馈分类结果.xlsx')">
+        <div class="file-icon xlsx">XLSX</div>
+        <div class="file-info">
+          <div class="file-name">反馈分类结果.xlsx</div>
+          <div class="file-size">186 KB · 清洗后数据 · Agent 产出</div>
+        </div>
+        <div class="file-actions">
+          <button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button>
+          <button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button>
+          <button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button>
+        </div>
+      </div>
+      <div class="file-row" id="outputCsvRow" style="display:none" onclick="openPreview('csv', '反馈分类明细.csv')">
+        <div class="file-icon csv">CSV</div>
+        <div class="file-info">
+          <div class="file-name">反馈分类明细.csv</div>
+          <div class="file-size">142 KB · 1,247 行 · Agent 产出</div>
+        </div>
+        <div class="file-actions">
+          <button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button>
+          <button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button>
+          <button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button>
+        </div>
+      </div>
+      <div class="file-row" id="outputJsonRow" style="display:none" onclick="openPreview('json', 'analysis_result.json')">
+        <div class="file-icon json">JSON</div>
+        <div class="file-info">
+          <div class="file-name">analysis_result.json</div>
+          <div class="file-size">38 KB · 结构化结果 · Agent 产出</div>
+        </div>
+        <div class="file-actions">
+          <button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button>
+          <button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button>
+          <button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button>
+        </div>
+      </div>
+      <div class="file-row" id="outputImgRow" style="display:none" onclick="openPreview('imgs', '反馈分布图组')">
+        <div class="file-icon imgs">PNG</div>
+        <div class="file-info">
+          <div class="file-name">反馈分布图组（3 张）</div>
+          <div class="file-size">1.8 MB · Agent 产出</div>
+        </div>
+        <div class="file-actions">
+          <button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button>
+          <button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button>
+          <button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button>
+        </div>
+      </div>
+      <div class="file-row" id="outputZipRow" style="display:none" onclick="openPreview('zip', '完整交付包.zip')">
+        <div class="file-icon zip">ZIP</div>
+        <div class="file-info">
+          <div class="file-name">完整交付包.zip</div>
+          <div class="file-size">5.2 MB · 包含全部产物 · Agent 产出</div>
+        </div>
+        <div class="file-actions">
+          <button class="btn-attach" onclick="event.stopPropagation()">添加到对话</button>
+          <button class="file-icon-action" title="下载" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v8"/><path d="M5 8l3 3 3-3"/><path d="M3 13.5h10"/></svg></button>
+          <button class="file-icon-action is-danger" title="删除" onclick="event.stopPropagation()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5h10"/><path d="M6 4.5V3a1 1 0 011-1h2a1 1 0 011 1v1.5"/><path d="M4.5 4.5l.6 8.2a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-8.2"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="files-preview" id="filesPreview">
+      <div class="preview-toolbar">
+        <button class="preview-back" title="返回" onclick="closePreview()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3L5 8l5 5"/></svg></button>
+        <div class="file-icon pptx" id="previewIcon">PPTX</div>
+        <span class="preview-filename" id="previewFilename">客户反馈分析汇报.pptx</span>
+        <div class="preview-actions">
+          <button class="btn-attach">@到对话</button>
+          <button class="icon-btn" title="分享"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v3a1 1 0 001 1h10a1 1 0 001-1v-3"/><path d="M10 4v9"/><path d="M6.5 7.5L10 4l3.5 3.5"/></svg></button>
+          <button class="icon-btn" title="下载"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4v10"/><path d="M6 10l4 4 4-4"/><path d="M4 17h12"/></svg></button>
+        </div>
+      </div>
+      <div class="preview-body">
+        <div class="slide-list" id="slideList"></div>
+        <div class="slide-main">
+          <div class="slide-canvas" id="slideCanvas"><div style="text-align:center;color:rgba(255,255,255,0.5);margin-top:32%;">等待 PPT 生成...</div></div>
+          <div class="slide-notes">点击添加演示者备注</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  </div>
+</div>
+</div>
+
+<script>
+  function toggleDemoMode(el) { document.body.classList.toggle('demo-mode'); el.classList.toggle('active'); }
+  const $ = (id) => document.getElementById(id);
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const chatBody = $('chatBody');
+  const scrollToBottom = () => chatBody.scrollTop = chatBody.scrollHeight;
+  let currentVariant = 'default';
+  let resultStreamToken = 0;
+  let hasScenarioBooted = false;
+  let scenarioTimers = [], scenarioStartedAt = 0, waitTimerId = null, carouselIntervalId = null, actionCount = 0, nodeCounter = 0;
+
+  function isProcessTopLikeVariant() {
+    return currentVariant === 'process-top' || currentVariant === 'product-live' || currentVariant === 'muted-process';
+  }
+
+  function shouldStreamResult() {
+    return currentVariant === 'product-live' || currentVariant === 'muted-process';
+  }
+
+  function isLiveOutputVariant() {
+    return currentVariant === 'product-live' || currentVariant === 'muted-process';
+  }
+
+  function switchVariant(id, el, opts = {}) {
+    const previousVariant = currentVariant;
+    currentVariant = id;
+    document.body.dataset.variant = id;
+    document.querySelectorAll('.v-tab').forEach(tab => tab.classList.remove('active'));
+    if (el) el.classList.add('active');
+    if (isProcessTopLikeVariant()) scrollToBottom();
+    if (!opts.skipReplay && hasScenarioBooted && previousVariant !== id) {
+      playScenario();
+    }
+  }
+
+  function followStreamingReply() {
+    if (isProcessTopLikeVariant()) scrollToBottom();
+  }
+
+  function clearScenario() {
+    scenarioTimers.forEach(clearTimeout); scenarioTimers = [];
+    if (waitTimerId) { clearInterval(waitTimerId); waitTimerId = null; }
+    if (carouselIntervalId) { clearInterval(carouselIntervalId); carouselIntervalId = null; }
+  }
+  function at(ms, fn) { scenarioTimers.push(setTimeout(fn, ms)); }
+
+  async function setResult(html, opts = {}) {
+    const slot = $('resultSlot');
+    const { isFinal = false } = opts;
+    const stream = opts.stream ?? shouldStreamResult();
+    const token = ++resultStreamToken;
+    if (!slot.classList.contains('is-empty')) { slot.classList.add('is-fading'); await sleep(280); }
+    else { slot.classList.remove('is-empty'); }
+    slot.classList.toggle('is-final', isFinal);
+    slot.classList.toggle('is-interim', !isFinal);
+    if (token !== resultStreamToken) return;
+    if (!stream) {
+      slot.innerHTML = html;
+      void slot.offsetWidth;
+      slot.classList.remove('is-fading');
+      scrollToBottom();
+      return;
+    }
+    const streamText = html
+      .replace(/<(br|\/p|\/div|\/li)>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    slot.textContent = '';
+    void slot.offsetWidth;
+    slot.classList.remove('is-fading');
+    for (const char of streamText) {
+      if (token !== resultStreamToken) return;
+      slot.textContent += char;
+      followStreamingReply();
+      await sleep(12);
+    }
+    if (token !== resultStreamToken) return;
+    slot.innerHTML = html;
+    void slot.offsetWidth;
+    slot.classList.remove('is-fading');
+    scrollToBottom();
+  }
+
+  async function setExecTitle(text) {
+    const el = $('execTitle');
+    el.classList.add('is-fading'); await sleep(220);
+    el.textContent = text; el.classList.remove('is-fading');
+  }
+
+  function addActionNode({ stage, title, detail, files, code }) {
+    actionCount += 1; nodeCounter += 1;
+    const id = 'node-' + nodeCounter;
+    const li = document.createElement('li');
+    li.className = 'exec-node is-running'; li.id = id;
+    const stageHtml = stage ? `<span class="stage-tag ${stage.cls}">${stage.label}</span>` : '';
+    let body = `<div class="exec-node-title"><span class="title-text">${title}</span>${stageHtml}</div>`;
+    if (detail) body += `<div class="exec-node-detail">${detail}</div>`;
+    if (files && files.length) {
+      body += `<div class="exec-node-files">` +
+        files.map(f => {
+          const cls = (f.kind ? ' is-' + f.kind : '') + (f.role ? ' role-' + f.role : '');
+          return `<span class="exec-file-pill${cls}">${f.name || f}</span>`;
+        }).join('') +
+        `</div>`;
+    }
+    if (code !== undefined) body += `<pre class="exec-code" id="${id}-code"><span class="cursor"></span></pre>`;
+    li.innerHTML = `<span class="exec-dot"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5l2 2 4-5"/></svg></span>` + body;
+    $('execTimeline').appendChild(li);
+    requestAnimationFrame(() => li.classList.add('is-visible'));
+    scrollExecToBottom();
+    followStreamingReply();
+    return id;
+  }
+  function completeNode(id) {
+    const li = $(id); if (!li) return;
+    li.classList.remove('is-running'); li.classList.add('is-done');
+    const cur = li.querySelector('.exec-code .cursor'); if (cur) cur.remove();
+  }
+  async function appendCode(id, lines, perLineDelay = 260) {
+    const codeEl = $(id + '-code'); if (!codeEl) return;
+    for (const line of lines) {
+      codeEl.insertBefore(document.createTextNode(line + '\n'), codeEl.querySelector('.cursor'));
+      codeEl.scrollTop = codeEl.scrollHeight;
+      followStreamingReply();
+      await sleep(perLineDelay);
+    }
+  }
+  function scrollExecToBottom() { const body = document.querySelector('.exec-body'); if (body) body.scrollTop = body.scrollHeight; }
+
+  const CAROUSEL_MSGS = ['正在深度分析数据...','即将得出关键结论...','已为您加速处理中...','Agent 仍在持续工作中...'];
+  function showWaitLine() {
+    const el = $('waitLine');
+    el.hidden = false;
+    requestAnimationFrame(() => el.classList.add('is-visible'));
+    if (waitTimerId) return;
+    waitTimerId = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - scenarioStartedAt) / 1000);
+      $('waitTime').textContent = elapsed + 's';
+    }, 250);
+  }
+  function hideWaitLine() {
+    const el = $('waitLine');
+    el.classList.remove('is-visible');
+    if (waitTimerId) { clearInterval(waitTimerId); waitTimerId = null; }
+    setTimeout(() => { el.hidden = true; }, 300);
+  }
+  function clearWaitText() {
+    $('waitText').hidden = true; $('waitText').textContent = '';
+    $('waitCarousel').hidden = true;
+    if (carouselIntervalId) { clearInterval(carouselIntervalId); carouselIntervalId = null; }
+  }
+  function setWaitText(text) {
+    $('waitText').hidden = false; $('waitText').textContent = text;
+    $('waitCarousel').hidden = true;
+    if (carouselIntervalId) { clearInterval(carouselIntervalId); carouselIntervalId = null; }
+  }
+  function setWaitCarousel() {
+    $('waitText').hidden = true;
+    const carousel = $('waitCarousel'), track = $('waitCarouselTrack');
+    track.innerHTML = CAROUSEL_MSGS.concat(CAROUSEL_MSGS[0]).map(m => `<span>${m}</span>`).join('');
+    carousel.hidden = false;
+    let idx = 0; track.style.transform = 'translateY(0)';
+    if (carouselIntervalId) clearInterval(carouselIntervalId);
+    carouselIntervalId = setInterval(() => {
+      idx += 1;
+      track.style.transform = `translateY(-${idx * 18}px)`;
+      if (idx >= CAROUSEL_MSGS.length) {
+        setTimeout(() => {
+          track.style.transition = 'none'; track.style.transform = 'translateY(0)'; idx = 0;
+          requestAnimationFrame(() => track.style.transition = '');
+        }, 380);
+      }
+    }, 2200);
+  }
+
+  function togglePanel() { $('execPanel').classList.toggle('is-collapsed'); }
+  function foldPanelWithSummary(secondsUsed) {
+    setExecTitle(`已完成 ${actionCount} 个动作 · 耗时 ${secondsUsed} 秒`);
+    $('execPanel').classList.add('is-collapsed');
+  }
+  function reorderPanelToBottom() {
+    const reply = $('agentReply'), panel = $('execPanel'), ops = $('finalActions');
+    reply.insertBefore(panel, ops);
+  }
+
+  const GENUI_DASHBOARD_SRC = `<!doctype html><html><head><meta charset="UTF-8"><style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,"PingFang SC",sans-serif;padding:20px;color:#091640;background:#fff;font-size:13px;}
+.dash{display:flex;gap:24px;align-items:center;}
+.pie-wrap{position:relative;width:140px;height:140px;flex-shrink:0;}
+.pie{width:140px;height:140px;border-radius:50%;background:conic-gradient(#2562FF 0% 42%,#6FB9FF 42% 70%,#B4D0FF 70% 88%,#E6E8ED 88% 100%);transition:transform 240ms;}
+.pie:hover{transform:scale(1.04);}
+.pie::after{content:'';position:absolute;inset:34px;background:#fff;border-radius:50%;box-shadow:inset 0 0 0 1px #F0F1F5;}
+.center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.center .num{font-size:22px;font-weight:600;color:#091640;}
+.center .lbl{font-size:11px;color:#5D6581;margin-top:2px;}
+.legend{flex:1;display:flex;flex-direction:column;gap:12px;}
+.row{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:6px;transition:background 120ms;}
+.row:hover{background:#F7F8FA;}
+.dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+.row .name{flex:1;color:#222D53;}
+.row .val{font-weight:600;color:#091640;}
+.foot{margin-top:18px;padding-top:14px;border-top:1px solid #F0F1F5;font-size:12px;color:#5D6581;}
+</style></head><body>
+<div class="dash">
+  <div class="pie-wrap"><div class="pie"></div><div class="center"><div class="num">1,247</div><div class="lbl">总反馈</div></div></div>
+  <div class="legend">
+    <div class="row"><span class="dot" style="background:#2562FF"></span><span class="name">物流配送</span><span class="val">42%</span></div>
+    <div class="row"><span class="dot" style="background:#6FB9FF"></span><span class="name">客户服务</span><span class="val">28%</span></div>
+    <div class="row"><span class="dot" style="background:#B4D0FF"></span><span class="name">产品质量</span><span class="val">18%</span></div>
+    <div class="row"><span class="dot" style="background:#E6E8ED"></span><span class="name">其他</span><span class="val">12%</span></div>
+  </div>
+</div>
+<div class="foot">数据来源：客户反馈明细.xlsx</div>
+</body></html>`;
+
+  // 中间查询图表：抽出共用 frame HTML，便于在 chart-slot 和 timeline 节点内同时复用
+  function buildChartFrameHTML() {
+    return `
+      <div class="chart-frame">
+        <div class="chart-rule-bar">
+          <span class="chart-rule-label">图表生成规则：</span>
+          <span>筛选出了</span>
+          <span class="rule-pill field">反馈日期</span>
+          <span class="rule-pill value">2025/04/01 00:00:00 ~ 2025/06/30 23:59:59</span>
+          <span>的</span>
+          <span class="rule-pill field">反馈数</span>
+          <span class="rule-pill op">求和</span>
+          <span class="rule-pill op">降序排列</span>
+          <span class="sep">·</span>
+          <span class="rule-pill field">反馈数排名</span>
+          <span class="rule-pill op">求和</span>
+          <span class="rule-pill op">升序排列</span>
+          <span>，并按</span>
+          <span class="rule-pill dim">客户名称</span>
+          <span>分组</span>
+        </div>
+        <table class="chart-table">
+          <thead><tr><th>客户名称</th><th>反馈数</th><th>反馈数排名</th></tr></thead>
+          <tbody>
+            <tr><td>张涛</td><td>142</td><td>1</td></tr>
+            <tr><td>陶丹</td><td>98</td><td>2</td></tr>
+            <tr><td>孔杰</td><td>76</td><td>3</td></tr>
+            <tr><td>姜丽</td><td>58</td><td>4</td></tr>
+            <tr><td>曹丹</td><td>45</td><td>5</td></tr>
+          </tbody>
+        </table>
+        <div class="chart-foot">
+          <span class="total">共 <span class="num">25</span> 条</span>
+          <div class="pager">
+            <button title="上一页">‹</button>
+            <span class="page-num">1</span>
+            <span>/ 3</span>
+            <button title="下一页">›</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // 渲染时：spotlight 在 chart-slot（含 header）；同时在对应 timeline 节点里预置一份 frame，隐藏待用
+  function renderChart(nodeId) {
+    const frameHTML = buildChartFrameHTML();
+    const slot = $('chartSlot');
+    slot.hidden = false;
+    slot.innerHTML = `<div class="chart-header">Top 反馈客户排名<span class="sub">2025 Q2 · 按反馈数降序</span></div>${frameHTML}`;
+    requestAnimationFrame(() => slot.classList.add('is-visible'));
+
+    if (nodeId) {
+      const node = document.getElementById(nodeId);
+      if (node) {
+        let wrap = node.querySelector('.node-chart-wrap');
+        if (!wrap) {
+          wrap = document.createElement('div');
+          wrap.className = 'node-chart-wrap';
+          node.appendChild(wrap);
+        }
+        wrap.innerHTML = frameHTML;
+      }
+    }
+    scrollToBottom();
+  }
+
+  // 收回时：chart-slot 淡出消失，同时 timeline 节点内嵌的图表淡入展开，视觉接力
+  function collapseChart(nodeId) {
+    const slot = $('chartSlot');
+    if (!slot || slot.hidden) return;
+
+    slot.classList.add('is-collapsing');
+    slot.classList.remove('is-visible');
+
+    if (nodeId) {
+      const node = document.getElementById(nodeId);
+      if (node) {
+        const wrap = node.querySelector('.node-chart-wrap');
+        if (wrap) {
+          requestAnimationFrame(() => wrap.classList.add('is-visible'));
+          // 让 exec-body 跟上展开的高度，避免被遮住
+          setTimeout(scrollExecToBottom, 320);
+        }
+      }
+    }
+
+    setTimeout(() => {
+      slot.hidden = true;
+      slot.classList.remove('is-collapsing');
+      slot.innerHTML = '';
+    }, 600);
+  }
+
+  function renderInScenarioGenUI() {
+    const slot = $('genuiSlot');
+    slot.hidden = false;
+    slot.innerHTML = `<div class="genui-header">客户反馈问题分布<span class="genui-sub">悬停可查看各类细分占比</span></div><iframe class="genui-frame" sandbox="allow-same-origin"></iframe>`;
+    const iframe = slot.querySelector('iframe');
+    let revealed = false;
+    const reveal = () => {
+      if (revealed) return;
+      revealed = true;
+      try { iframe.style.height = (iframe.contentDocument.body.scrollHeight + 40) + 'px'; } catch (e) {}
+      requestAnimationFrame(() => slot.classList.add('is-visible'));
+      scrollToBottom();
+    };
+    iframe.addEventListener('load', reveal);
+    iframe.srcdoc = GENUI_DASHBOARD_SRC;
+    setTimeout(reveal, 900);
+  }
+
+  // 在产物/可视化块出现前先飘一个"铺垫小药丸"，给用户预期
+  async function showLeadPill(text, holdMs = 1400) {
+    const wrap = document.createElement('div');
+    wrap.className = 'lead-pill';
+    wrap.innerHTML = `
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l1.5 5L14 7.5 9.5 9 8 14l-1.5-5L2 7.5 6.5 6z"/></svg>
+      <span>${text}</span>
+      <span class="dots"><span></span><span></span><span></span></span>
+    `;
+    $('agentReply').insertBefore(wrap, $('execPanel'));
+    requestAnimationFrame(() => wrap.classList.add('is-visible'));
+    scrollToBottom();
+    await sleep(holdMs);
+    wrap.classList.add('is-fading');
+    wrap.classList.remove('is-visible');
+    setTimeout(() => wrap.remove(), 320);
+  }
+
+  const TYPE_LABEL = {
+    skill: '技能', pptx: 'PPT', md: 'Markdown', html: 'HTML 应用', images: '图片组',
+    docx: 'Word 文档', pdf: 'PDF 报告', xlsx: 'Excel 表', csv: 'CSV 数据', json: 'JSON 数据', zip: '归档包'
+  };
+
+  function buildPreviewContent(it) {
+    if (it.loading) {
+      return `<div class="output-loading-copy"><span class="ring"></span><span>${it.loadingLabel || '正在生成中'}</span></div>`;
+    }
+    if (it.type === 'skill') {
+      return `<span class="prev-icon-big"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v5l-2 2"/><path d="M9 5l4 4-2.5 2.5L7 8"/><path d="M5.5 10.5L4 12l2 2 1.5-1.5"/></svg></span>`;
+    }
+    if (it.type === 'pptx') return `<span class="ext-badge">PPTX</span>`;
+    if (it.type === 'md') {
+      return `<div class="md-line hash"># 客户反馈分析</div><div class="md-line bullet">物流配送 42%</div><div class="md-line bullet">客户服务 28%</div><div class="md-line dim">## 改进建议...</div>`;
+    }
+    if (it.type === 'html') {
+      return `<div class="mini-html"><div class="mini-pie"></div><div class="mini-lines"><span></span><span></span><span></span></div></div>`;
+    }
+    if (it.type === 'images') {
+      return `<div class="prev-stack"><div class="prev-stack-img">图 1</div><div class="prev-stack-img">图 2</div><div class="prev-stack-img">+${it.count - 2}</div></div>`;
+    }
+    if (it.type === 'docx') {
+      return `<div class="doc-h"></div><div class="doc-l"></div><div class="doc-l"></div><div class="doc-l"></div><div class="doc-l"></div><div class="doc-l"></div>`;
+    }
+    if (it.type === 'pdf') return `<span class="ext-badge">PDF</span>`;
+    if (it.type === 'xlsx') {
+      return `<div class="grid-mini">` +
+        Array.from({ length: 16 }).map(() => `<span></span>`).join('') +
+        `</div>`;
+    }
+    if (it.type === 'csv') {
+      return `<div class="csv-line head">客户,反馈类型,满意度,日期</div>` +
+        `<div class="csv-line">A001,物流配送,3,05-12</div>` +
+        `<div class="csv-line">A002,客户服务,2,05-12</div>` +
+        `<div class="csv-line">A003,产品质量,4,05-13</div>` +
+        `<div class="csv-line">A004,物流配送,3,05-13</div>` +
+        `<div class="csv-line">...</div>`;
+    }
+    if (it.type === 'json') {
+      return `<div class="j-line brace">{</div>` +
+        `<div class="j-line indent"><span class="key">"total":</span> 1247,</div>` +
+        `<div class="j-line indent"><span class="key">"categories":</span> [</div>` +
+        `<div class="j-line indent">&nbsp;&nbsp;{"name":"物流",...},</div>` +
+        `<div class="j-line indent">&nbsp;&nbsp;{"name":"客服",...}</div>` +
+        `<div class="j-line brace">}</div>`;
+    }
+    if (it.type === 'zip') {
+      return `<div class="zip-icon"></div>`;
+    }
+    return '';
+  }
+
+  function buildOutputCard(it) {
+    const card = document.createElement('div');
+    card.className = 'output-card' + (it.loading ? ' is-loading' : '');
+    if (it.onClick) card.onclick = it.onClick;
+    const titleAttr = it.desc ? `title="${it.name} — ${it.desc}"` : `title="${it.name}"`;
+    card.innerHTML = `
+      <div class="output-preview ${it.type}${it.loading ? ' loading' : ''}">${buildPreviewContent(it)}</div>
+      <div class="output-meta">
+        <div class="output-name" ${titleAttr}>${it.name}</div>
+        <div class="output-sub${it.loading ? ' loading-note' : ''}">${it.sub || ''}</div>
+      </div>`;
+    return card;
+  }
+
+  async function renderOutputs(items, opts = {}) {
+    const {
+      titleText = `本次为您准备了 <span class="count">${items.length}</span> 个产物`,
+      subText = '按使用场景分组，可直接取用或 @ 引用到后续对话',
+      animate = true
+    } = opts;
+    const wrap = $('outputsSection');
+    wrap.hidden = false;
+    wrap.innerHTML = `<div class="outputs-title">${titleText}<span class="sub">${subText}</span></div><div class="outputs-cards" id="outputsCards"></div>`;
+    requestAnimationFrame(() => wrap.classList.add('is-visible'));
+    const cards = $('outputsCards');
+    for (const it of items) {
+      const card = buildOutputCard(it);
+      if (animate) {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(8px)';
+      }
+      cards.appendChild(card);
+      if (animate) {
+        requestAnimationFrame(() => {
+          card.style.transition = 'opacity 320ms ease, transform 320ms ease';
+          card.style.opacity = '1';
+          card.style.transform = '';
+        });
+      }
+      scrollToBottom();
+      if (animate) await sleep(450);
+    }
+  }
+
+  const PPT_SLIDES = [
+    { title: '客户反馈分析汇报', sub: 'Q2 季度 · 1,247 条反馈', kind: 'cover' },
+    { title: '本季度概览', bullets: ['总反馈 1,247 条', '满意度 3.6（环比 -0.3）', '识别 3 类主要问题'] },
+    { title: '物流配送（42%）', bullets: ['配送延迟 60%', '包装破损 40%', 'Top 投诉地区：华南'] },
+    { title: '客户服务（28%）', bullets: ['响应慢 55%', '态度问题 45%'] },
+    { title: '产品质量（18%）', bullets: ['外观瑕疵 68%', '功能问题 32%'] },
+    { title: '满意度趋势', sub: '近 4 季度环比下降 -0.3，需重点关注', kind: 'light' },
+    { title: 'Top 反馈客户', sub: '识别 12 个高影响力客户' },
+    { title: '改进建议与行动项', bullets: ['物流端 SLA 复盘', '客服培训', '质检流程升级'] },
+  ];
+  let currentSlideIdx = 0, pptSlidesAdded = 0;
+
+  function openPreview(kind, filename, opts = {}) {
+    if (kind !== 'pptx') {
+      $('paneFiles').classList.add('is-preview-mode');
+      $('previewIcon').className = 'file-icon ' + kind;
+      $('previewIcon').textContent = (kind || 'FILE').toUpperCase();
+      $('previewFilename').textContent = filename;
+      $('slideList').innerHTML = '';
+      $('slideCanvas').innerHTML = `<div style="text-align:center;color:rgba(255,255,255,0.6);margin-top:32%;">该文件类型的预览（demo 占位）</div>`;
+      return;
+    }
+    $('paneFiles').classList.add('is-preview-mode');
+    $('previewIcon').className = 'file-icon pptx';
+    $('previewIcon').textContent = 'PPTX';
+    $('previewFilename').textContent = filename;
+    if (opts.progressive) {
+      resetPptPreview();
+      return;
+    }
+    renderAllSlides();
+  }
+  function closePreview() { $('paneFiles').classList.remove('is-preview-mode'); }
+  function buildSlideThumb(slide, index) {
+    const thumb = document.createElement('div');
+    thumb.className = 'slide-thumb' + (index === currentSlideIdx ? ' is-active' : '');
+    thumb.onclick = () => selectSlide(index);
+    thumb.innerHTML = `<span class="slide-thumb-num">${index + 1}</span><div class="slide-thumb-content${slide.kind === 'light' ? ' is-light' : ''}">${slide.title}</div>`;
+    return thumb;
+  }
+  function renderSlideMain(slide) {
+    const canvas = $('slideCanvas');
+    canvas.classList.add('is-fading');
+    setTimeout(() => {
+      canvas.style.background = slide.kind === 'light' ? 'linear-gradient(135deg, #FFFFFF 0%, #F0F4FF 100%)' : 'linear-gradient(135deg, #0E0F2E 0%, #2D1B6E 100%)';
+      canvas.style.color = slide.kind === 'light' ? '#091640' : '#fff';
+      let html = `<div class="s-title">${slide.title}</div>`;
+      if (slide.sub) html += `<div class="s-sub">${slide.sub}</div>`;
+      if (slide.bullets) html += `<ul class="s-bullets">` + slide.bullets.map(b => `<li>${b}</li>`).join('') + `</ul>`;
+      html += `<div class="footer-stamp">客户反馈分析 · Dora Agent</div>`;
+      canvas.innerHTML = html;
+      canvas.classList.remove('is-fading');
+    }, 200);
+  }
+  function selectSlide(idx) {
+    currentSlideIdx = idx;
+    document.querySelectorAll('.slide-thumb').forEach((t, i) => t.classList.toggle('is-active', i === idx));
+    renderSlideMain(PPT_SLIDES[idx]);
+  }
+  function renderAllSlides() {
+    const list = $('slideList'); list.innerHTML = '';
+    PPT_SLIDES.forEach((s, i) => list.appendChild(buildSlideThumb(s, i)));
+    pptSlidesAdded = PPT_SLIDES.length;
+    renderSlideMain(PPT_SLIDES[currentSlideIdx]);
+  }
+  function resetPptPreview() {
+    $('slideList').innerHTML = '';
+    $('slideCanvas').innerHTML = `<div style="text-align:center;color:rgba(255,255,255,0.5);margin-top:32%;">等待 PPT 生成...</div>`;
+    currentSlideIdx = 0; pptSlidesAdded = 0;
+  }
+  async function appendPptSlideProgressive() {
+    if (pptSlidesAdded >= PPT_SLIDES.length) return;
+    const slide = PPT_SLIDES[pptSlidesAdded];
+    const thumb = buildSlideThumb(slide, pptSlidesAdded);
+    $('slideList').appendChild(thumb);
+    selectSlide(pptSlidesAdded);
+    pptSlidesAdded += 1;
+  }
+
+  function getLiveOutputStage(stage) {
+    if (stage === 'ppt-start') {
+      return [
+        { type: 'images', name: '反馈分布图组', sub: '图表已生成 · 共 3 张', count: 3, onClick: () => openPreview('imgs', '反馈分布图组') },
+        { type: 'pptx', name: '客户反馈分析汇报.pptx', sub: '正在生成演示文稿...', loading: true, loadingLabel: '正在生成 PPT' }
+      ];
+    }
+    if (stage === 'ppt-ready') {
+      return [
+        { type: 'images', name: '反馈分布图组', sub: '图表已生成 · 共 3 张', count: 3, onClick: () => openPreview('imgs', '反馈分布图组') },
+        { type: 'pptx', name: '客户反馈分析汇报.pptx', sub: '2.4 MB · 8 页', onClick: () => openPreview('pptx', '客户反馈分析汇报.pptx') }
+      ];
+    }
+    if (stage === 'archive-start') {
+      return [
+        { type: 'images', name: '反馈分布图组', sub: '图表已生成 · 共 3 张', count: 3, onClick: () => openPreview('imgs', '反馈分布图组') },
+        { type: 'pptx', name: '客户反馈分析汇报.pptx', sub: '2.4 MB · 8 页', onClick: () => openPreview('pptx', '客户反馈分析汇报.pptx') },
+        { type: 'docx', name: '反馈分析报告.docx', sub: '正在整理管理层版本...', loading: true, loadingLabel: '正在导出 Word' },
+        { type: 'pdf', name: '反馈分析报告.pdf', sub: '正在生成归档版本...', loading: true, loadingLabel: '正在导出 PDF' },
+        { type: 'xlsx', name: '反馈分类结果.xlsx', sub: '正在写入清洗结果...', loading: true, loadingLabel: '正在写入 XLSX' }
+      ];
+    }
+    return null;
+  }
+
+  async function renderLiveOutputsStage(stage) {
+    const items = getLiveOutputStage(stage);
+    if (!items) return;
+    await renderOutputs(items, {
+      titleText: `已识别到 <span class="count">${items.length}</span> 个产物`,
+      subText: items.some(item => item.loading) ? '已完成的产物可直接使用，生成中的产物会自动转为可用状态' : '当前产物已可直接预览或继续引用',
+      animate: false
+    });
+  }
+
+  function resetScenario() {
+    clearScenario();
+    actionCount = 0; nodeCounter = 0;
+    $('execTimeline').innerHTML = '';
+    $('execTitle').textContent = '准备中....';
+    $('execPanel').classList.remove('is-collapsed');
+    const slot = $('resultSlot');
+    slot.classList.add('is-empty'); slot.classList.remove('is-fading', 'is-final'); slot.classList.add('is-interim');
+    slot.innerHTML = '';
+    hideWaitLine(); clearWaitText();
+    $('waitTime').textContent = '0s';
+    const cs = $('chartSlot'); if (cs) { cs.classList.remove('is-visible', 'is-collapsing'); cs.hidden = true; cs.innerHTML = ''; cs.style.cssText = ''; }
+    const gs = $('genuiSlot'); gs.classList.remove('is-visible'); gs.hidden = true; gs.innerHTML = '';
+    const os = $('outputsSection'); os.classList.remove('is-visible'); os.hidden = true; os.innerHTML = '';
+    $('finalActions').classList.add('is-hidden');
+    document.querySelectorAll('.lead-pill').forEach(el => el.remove());
+    ['outputSkillRow','outputPptRow','outputDocxRow','outputPdfRow','outputMdRow','outputHtmlRow','outputXlsxRow','outputCsvRow','outputJsonRow','outputImgRow','outputZipRow'].forEach(id => { const el = $(id); if (el) el.style.display = 'none'; });
+    $('outputsCount').textContent = '0';
+    $('extraReplies').innerHTML = '';
+    closePreview(); resetPptPreview();
+  }
+
+  function playScenario() {
+    resetScenario();
+    scenarioStartedAt = Date.now();
+    const isProductLiveScenario = isLiveOutputVariant();
+
+    at(300, () => { showWaitLine(); setExecTitle('正在理解任务需求....'); });
+    at(600, () => setResult('正在分析您的请求...'));
+
+    let n1;
+    at(800, () => { n1 = addActionNode({ stage: { cls: 'coordinator', label: '意图识别' }, title: '理解任务意图', detail: '识别为「数据分析 + 报告生成」复合任务，路由至任务规划' }); });
+
+    let n2;
+    at(2000, () => { completeNode(n1); setExecTitle('正在规划执行路径....'); });
+    at(2200, () => { n2 = addActionNode({ stage: { cls: 'planner', label: '任务规划' }, title: '拆解为 5 步执行计划', detail: '步骤：读取数据 → 字段抽取 → 编写分类器 → 执行分析 → 综合报告', files: [{ name: 'plan.md', kind: 'code' }] }); });
+
+    let n3;
+    at(3800, () => { completeNode(n2); setExecTitle('正在读取数据源....'); });
+    at(4000, () => { n3 = addActionNode({ stage: { cls: 'researcher', label: '数据分析' }, title: '读取并解析输入数据', detail: '工作表 3 · 总行数 1,247', files: [{ name: '客户反馈明细.xlsx', kind: 'data', role: 'input' }, { name: 'schema.json', kind: 'data' }] }); });
+    at(5500, () => completeNode(n3));
+    at(5700, () => setResult('已识别 <strong>7 个字段</strong>：客户名称、反馈类型、满意度、问题描述、日期、渠道、处理状态。'));
+
+    let n4;
+    at(6200, () => { setExecTitle('正在编写分类器....'); n4 = addActionNode({ stage: { cls: 'coder', label: '代码执行' }, title: '编写分类器代码', files: [{ name: 'classifier.py', kind: 'code' }], code: '' }); });
+    at(6400, () => appendCode(n4, [
+      '# 关键词词典 + 情感倾向 双通道',
+      "kw = load_keywords('物流|客服|质量|价格')",
+      "def classify(text):",
+      "    cat = match_keywords(text, kw)",
+      "    sent = sentiment(text)",
+      "    return (cat, sent)",
+      "df['cat'], df['sent'] = zip(*df['问题描述'].map(classify))",
+      '流式输出中......'
+    ], 320));
+
+    let n5;
+    at(9800, () => completeNode(n4));
+    at(10000, () => { setExecTitle('正在执行分类计算....'); n5 = addActionNode({ stage: { cls: 'coder', label: '代码执行' }, title: '执行分类计算 · 1,247 条', detail: '运行 Python REPL · 估算耗时较长', files: [{ name: 'classification_result.csv', kind: 'data' }] }); });
+
+    at(13000, () => setWaitText('Agent 正在持续工作中...'));
+    at(18000, () => setWaitText('数据量较大，请您耐心等待...'));
+    at(25000, () => setWaitCarousel());
+
+    at(27000, () => { clearWaitText(); setResult('已发现 <strong>3 类</strong>主要问题：物流配送（42%）、客户服务（28%）、产品质量（18%）。'); completeNode(n5); });
+
+    // 新增 n5b：查询 Top 反馈客户，配合中间图表组件
+    let n5b;
+    at(27500, () => {
+      setExecTitle('正在查询 Top 反馈客户....');
+      n5b = addActionNode({
+        stage: { cls: 'researcher', label: '数据分析' },
+        title: '查询 Top 反馈客户排名',
+        detail: '2025 Q2 · 按反馈数降序 · 共 25 条',
+        files: [{ name: '反馈数_2025Q2.json', kind: 'data' }]
+      });
+    });
+    at(28100, () => renderChart(n5b));
+    at(31600, () => completeNode(n5b));
+
+    let n6;
+    at(32000, () => {
+      collapseChart(n5b);
+      setExecTitle('正在生成可视化图表....');
+      n6 = addActionNode({ stage: { cls: 'reporter', label: '报告生成' }, title: '生成可视化图表', files: [{ name: '分类分布.png', kind: 'img', role: 'deliver' }, { name: '满意度趋势.png', kind: 'img', role: 'deliver' }, { name: 'Top 客户.png', kind: 'img', role: 'deliver' }] });
+    });
+    at(34000, () => completeNode(n6));
+
+    let n7;
+    at(34400, () => { setExecTitle('正在撰写汇报 PPT....'); n7 = addActionNode({ stage: { cls: 'reporter', label: '报告生成' }, title: '撰写汇报 PPT', detail: '组织封面 / 概览 / 三类问题 / 趋势 / Top 客户 / 行动项', files: [{ name: 'ppt_generator.py', kind: 'code' }, { name: '客户反馈分析汇报.pptx', role: 'deliver' }], code: '' }); });
+    at(34450, () => { if (isProductLiveScenario) renderLiveOutputsStage('ppt-start'); });
+    at(34600, () => appendCode(n7, [
+      "from pptx import Presentation",
+      "prs = Presentation('templates/dora.pptx')",
+      "for slide_data in slides:",
+      "    add_slide(prs, slide_data)",
+      "prs.save('客户反馈分析汇报.pptx')",
+      "上传文件中......"
+    ], 380));
+
+    at(34700, () => openPreview('pptx', '客户反馈分析汇报.pptx', { progressive: true }));
+    PPT_SLIDES.forEach((s, i) => { at(35200 + i * (isProductLiveScenario ? 1500 : 700), () => appendPptSlideProgressive()); });
+
+    at(40200, () => {
+      completeNode(n7);
+      if (isProductLiveScenario) renderLiveOutputsStage('ppt-ready');
+    });
+
+    // 新增节点：导出多格式归档（Word / PDF / 清洗 XLSX / CSV / JSON / ZIP）
+    let n8;
+    at(40500, () => {
+      setExecTitle('正在导出多格式归档....');
+      n8 = addActionNode({
+        stage: { cls: 'reporter', label: '报告生成' },
+        title: '导出多格式归档',
+        detail: '为不同消费者准备：Word/PDF 给管理层、清洗 XLSX/CSV 给数据团队、JSON 给下游系统、ZIP 一键打包',
+        files: [
+          { name: '反馈分析报告.docx', role: 'deliver' },
+          { name: '反馈分析报告.pdf', role: 'deliver' },
+          { name: '反馈分类结果.xlsx', kind: 'data', role: 'deliver' },
+          { name: '反馈分类明细.csv', kind: 'data', role: 'deliver' },
+          { name: 'analysis_result.json', kind: 'data', role: 'deliver' },
+          { name: '完整交付包.zip', role: 'deliver' }
+        ]
+      });
+    });
+    at(42700, () => completeNode(n8));
+
+    at(43200, () => {
+      if (isProductLiveScenario) return;
+      hideWaitLine();
+      setResult(`
+        <p>本季度客户反馈共 <strong>1,247</strong> 条，主要集中在 <strong>3 类问题</strong>。整体满意度均值为 3.6（满分 5），低于上季度的 3.9。原始数据来自 <a class="file-link xlsx" onclick="openPreview('xlsx','客户反馈明细.xlsx')">客户反馈明细.xlsx</a>。</p>
+        <p>从分布看，<strong>物流配送</strong>占比最高(42%)，主要为延迟交付与包装破损；<strong>客户服务</strong>(28%) 与 <strong>产品质量</strong>(18%) 紧随其后。</p>
+        <div class="inline-img" data-caption="图 1 · 反馈类型分布">📊 反馈类型分布饼图</div>
+        <p>分类型来看：物流问题集中于"配送延迟（60%）"与"包装破损（40%）"；客户服务集中于"响应慢（55%）"与"态度问题（45%）"；产品质量集中于"外观瑕疵（68%）"。</p>
+        <div class="img-grid">
+          <div class="inline-img" data-caption="图 2 · 满意度趋势">📈 满意度趋势</div>
+          <div class="inline-img" data-caption="图 3 · Top 客户">🏆 Top 客户</div>
+          <div class="inline-img" data-caption="图 4 · 投诉热点">📉 投诉热点</div>
+        </div>
+        <p>建议优先推进物流端的改造，可为整体满意度带来约 <strong>+0.4</strong> 的提升。汇报已生成为 <a class="file-link pptx" onclick="openPreview('pptx','客户反馈分析汇报.pptx')">客户反馈分析汇报.pptx</a>；另已同步导出 <a class="file-link docx" onclick="openPreview('docx','反馈分析报告.docx')">Word</a> / <a class="file-link pdf" onclick="openPreview('pdf','反馈分析报告.pdf')">PDF</a> 给管理层，<a class="file-link xlsx" onclick="openPreview('xlsx','反馈分类结果.xlsx')">XLSX</a> / <a class="file-link csv" onclick="openPreview('csv','反馈分类明细.csv')">CSV</a> / <a class="file-link json" onclick="openPreview('json','analysis_result.json')">JSON</a> 给数据团队，全部产物也已打包为 <a class="file-link zip" onclick="openPreview('zip','完整交付包.zip')">完整交付包.zip</a>。</p>
+      `, { isFinal: true });
+    });
+
+    // 过渡 1：先飘一个小药丸预告，再让 GenUI 滑入
+    at(45200, () => { if (!isProductLiveScenario) showLeadPill('正在为您渲染可交互看板', 1200); });
+    at(46400, () => { if (!isProductLiveScenario) renderInScenarioGenUI(); });
+
+    // 过渡 2：再飘一个小药丸，再让产出物滑入
+    at(49200, () => { if (!isProductLiveScenario) showLeadPill('正在归集本次会话产出', 1100); });
+    at(50300, () => {
+      if (!isProductLiveScenario) {
+        renderOutputs([
+          { type: 'skill', name: '客户反馈分析技能', sub: '自动生成', desc: '基于本次客户反馈明细自动生成。输入新的反馈表即可复用此分析流程，输出主要问题分类、占比、Top 客户与改进建议。' },
+          { type: 'pptx', name: '客户反馈分析汇报.pptx', sub: '2.4 MB · 8 页', onClick: () => openPreview('pptx', '客户反馈分析汇报.pptx') },
+          { type: 'docx', name: '反馈分析报告.docx', sub: '320 KB · 给管理层', onClick: () => openPreview('docx', '反馈分析报告.docx') },
+          { type: 'pdf', name: '反馈分析报告.pdf', sub: '480 KB · 归档版', onClick: () => openPreview('pdf', '反馈分析报告.pdf') },
+          { type: 'md', name: '反馈分析报告.md', sub: '12 KB · 纯文本', onClick: () => openPreview('md', '反馈分析报告.md') },
+          { type: 'html', name: '反馈分布看板.html', sub: '24 KB · 可交互', onClick: () => openPreview('html', '反馈分布看板.html') },
+          { type: 'xlsx', name: '反馈分类结果.xlsx', sub: '186 KB · 清洗后数据', onClick: () => openPreview('xlsx', '反馈分类结果.xlsx') },
+          { type: 'csv', name: '反馈分类明细.csv', sub: '142 KB · 1,247 行', onClick: () => openPreview('csv', '反馈分类明细.csv') },
+          { type: 'json', name: 'analysis_result.json', sub: '38 KB · 结构化', onClick: () => openPreview('json', 'analysis_result.json') },
+          { type: 'images', name: '反馈分布图组', count: 3, sub: '共 3 张 · 1.8 MB', onClick: () => openPreview('imgs', '反馈分布图组') },
+          { type: 'zip', name: '完整交付包.zip', sub: '5.2 MB · 包含全部产物', onClick: () => openPreview('zip', '完整交付包.zip') }
+        ]);
+      }
+    });
+
+    if (isProductLiveScenario) {
+      at(41400, () => showLeadPill('正在为您渲染可交互看板', 1200));
+      at(42600, () => renderInScenarioGenUI());
+      at(46800, () => {
+        hideWaitLine();
+        setResult(`
+          <p>本季度客户反馈共 <strong>1,247</strong> 条，主要集中在 <strong>3 类问题</strong>。整体满意度均值为 3.6（满分 5），低于上季度的 3.9。原始数据来自 <a class="file-link xlsx" onclick="openPreview('xlsx','客户反馈明细.xlsx')">客户反馈明细.xlsx</a>。</p>
+          <p>从分布看，<strong>物流配送</strong>占比最高(42%)，主要为延迟交付与包装破损；<strong>客户服务</strong>(28%) 与 <strong>产品质量</strong>(18%) 紧随其后。</p>
+          <div class="inline-img" data-caption="图 1 · 反馈类型分布">📊 反馈类型分布饼图</div>
+          <p>分类型来看：物流问题集中于"配送延迟（60%）"与"包装破损（40%）"；客户服务集中于"响应慢（55%）"与"态度问题（45%）"；产品质量集中于"外观瑕疵（68%）"。</p>
+        `, { isFinal: true });
+      });
+      at(54000, () => renderLiveOutputsStage('archive-start'));
+      at(59600, () => renderOutputs([
+        { type: 'images', name: '反馈分布图组', count: 3, sub: '图表已生成 · 共 3 张', onClick: () => openPreview('imgs', '反馈分布图组') },
+        { type: 'pptx', name: '客户反馈分析汇报.pptx', sub: '2.4 MB · 8 页', onClick: () => openPreview('pptx', '客户反馈分析汇报.pptx') },
+        { type: 'docx', name: '反馈分析报告.docx', sub: '320 KB · 给管理层', onClick: () => openPreview('docx', '反馈分析报告.docx') },
+        { type: 'pdf', name: '反馈分析报告.pdf', sub: '480 KB · 归档版', onClick: () => openPreview('pdf', '反馈分析报告.pdf') },
+        { type: 'xlsx', name: '反馈分类结果.xlsx', sub: '186 KB · 清洗后数据', onClick: () => openPreview('xlsx', '反馈分类结果.xlsx') },
+        { type: 'csv', name: '反馈分类明细.csv', sub: '142 KB · 1,247 行', onClick: () => openPreview('csv', '反馈分类明细.csv') },
+        { type: 'json', name: 'analysis_result.json', sub: '38 KB · 结构化', onClick: () => openPreview('json', 'analysis_result.json') },
+        { type: 'md', name: '反馈分析报告.md', sub: '12 KB · 纯文本', onClick: () => openPreview('md', '反馈分析报告.md') },
+        { type: 'html', name: '反馈分布看板.html', sub: '24 KB · 可交互', onClick: () => openPreview('html', '反馈分布看板.html') },
+        { type: 'skill', name: '客户反馈分析技能', sub: '自动生成', desc: '基于本次客户反馈明细自动生成。输入新的反馈表即可复用此分析流程，输出主要问题分类、占比、Top 客户与改进建议。' },
+        { type: 'zip', name: '完整交付包.zip', sub: '5.2 MB · 包含全部产物', onClick: () => openPreview('zip', '完整交付包.zip') }
+      ], {
+        titleText: `已识别到 <span class="count">11</span> 个产物`,
+        subText: '已完成的产物可直接使用，可继续引用到后续对话',
+        animate: false
+      }));
+    }
+
+    at(55700, () => {
+      if (isProductLiveScenario) return;
+      foldPanelWithSummary(55);
+      $('finalActions').classList.remove('is-hidden');
+      ['outputSkillRow','outputPptRow','outputDocxRow','outputPdfRow','outputMdRow','outputHtmlRow','outputXlsxRow','outputCsvRow','outputJsonRow','outputImgRow','outputZipRow']
+        .forEach(id => { const el = $(id); if (el) el.style.display = ''; });
+      $('outputsCount').textContent = '11';
+      scrollToBottom();
+    });
+
+    if (isProductLiveScenario) {
+      at(64000, () => {
+        foldPanelWithSummary(55);
+        $('finalActions').classList.remove('is-hidden');
+        ['outputSkillRow','outputPptRow','outputDocxRow','outputPdfRow','outputMdRow','outputHtmlRow','outputXlsxRow','outputCsvRow','outputJsonRow','outputImgRow','outputZipRow']
+          .forEach(id => { const el = $(id); if (el) el.style.display = ''; });
+        $('outputsCount').textContent = '11';
+        scrollToBottom();
+      });
+    }
+  }
+
+  function appendGenUIReply(userText) {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:14px;margin-top:8px;';
+    wrap.innerHTML = `
+      <div class="msg-user"><div class="bubble">${userText}</div></div>
+      <div class="agent-reply">
+        <div class="agent-row">
+          <span class="agent-avatar"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5C8 1.5 3.5 6.5 3.5 10.2a4.5 4.5 0 009 0C12.5 6.5 8 1.5 8 1.5z"/></svg></span>
+          <span class="agent-name">未命名Agent_01</span>
+        </div>
+        <div style="font-size:14px;color:var(--neutral-11);">根据上轮分析结果，为您渲染交互式分布卡片：</div>
+        <div class="genui-slot is-visible">
+          <div class="genui-header">客户反馈问题分布</div>
+          <iframe class="genui-frame" sandbox="allow-same-origin"></iframe>
+        </div>
+      </div>`;
+    const iframe = wrap.querySelector('iframe');
+    iframe.srcdoc = GENUI_DASHBOARD_SRC;
+    iframe.addEventListener('load', () => { try { iframe.style.height = (iframe.contentDocument.body.scrollHeight + 40) + 'px'; } catch (e) {} });
+    $('extraReplies').appendChild(wrap);
+    scrollToBottom();
+  }
+
+  function handleSend() {
+    const input = $('chatInput');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = ''; $('sendBtn').classList.remove('is-active');
+    if (/genui/i.test(text)) { appendGenUIReply(text); }
+    else {
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;margin-top:8px;';
+      wrap.innerHTML = `
+        <div class="msg-user"><div class="bubble">${text}</div></div>
+        <div class="agent-row" style="margin-top:8px;">
+          <span class="agent-avatar"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5C8 1.5 3.5 6.5 3.5 10.2a4.5 4.5 0 009 0C12.5 6.5 8 1.5 8 1.5z"/></svg></span>
+          <span class="agent-name">未命名Agent_01</span>
+        </div>
+        <div style="font-size:14px;color:var(--neutral-11);">（演示原型，仅支持 <strong>「重播剧本」</strong> 与 <strong>「genui」</strong> 触发；正式对话需接入后端）</div>`;
+      $('extraReplies').appendChild(wrap);
+      scrollToBottom();
+    }
+  }
+
+  $('chatInput').addEventListener('input', e => { $('sendBtn').classList.toggle('is-active', e.target.value.trim().length > 0); });
+  $('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } });
+
+  document.querySelectorAll('.files-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.files-tab').forEach(t => t.classList.remove('is-active'));
+      tab.classList.add('is-active');
+      const target = tab.dataset.tab;
+      $('filesListMaterials').hidden = (target !== 'materials');
+      $('filesListOutputs').hidden = (target !== 'outputs');
+    });
+  });
+  document.querySelectorAll('.btn-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.btn-pill').forEach(b => b.classList.remove('is-primary'));
+      btn.classList.add('is-primary');
+    });
+  });
+
+  window.addEventListener('load', () => {
+    switchVariant('default', document.querySelector('.v-tab.active'), { skipReplay: true });
+    hasScenarioBooted = true;
+    setTimeout(playScenario, 600);
+  });
+</script>
+
+</body>
+</html>

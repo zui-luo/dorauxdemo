@@ -1,0 +1,2871 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>通用管理 · 权限管理 Tab</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    #variant-bar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+      height: 40px; background: #1a1a2e;
+      display: flex; align-items: center; gap: 4px; padding: 0 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+    }
+    #variant-bar .label { color: #888; font-size: 12px; margin-right: 8px; }
+    .v-tab {
+      padding: 4px 14px; border-radius: 4px; border: none; cursor: pointer;
+      font-size: 12px; background: transparent; color: #aaa;
+    }
+    .v-tab.active { background: #0047FD; color: #fff; }
+    .v-demo-toggle {
+      padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 11px;
+      background: transparent; color: #666; border: 1px solid rgba(255,255,255,0.15);
+    }
+    .v-demo-toggle.active {
+      background: rgba(255,200,0,0.12); color: #FFC107; border-color: rgba(255,193,7,0.35);
+    }
+    .demo-control { display: none !important; }
+    body.demo-mode .demo-control { display: flex !important; }
+    .variant { display: none; }
+    .variant.active { display: contents; }
+
+    :root {
+      --brand-7: #0047FD;
+      --neutral-0: #FFFFFF;
+      --neutral-1: #F7F8FA;
+      --neutral-2: #F0F1F5;
+      --neutral-3: #E6E8ED;
+      --neutral-8: #8A92A8;
+      --neutral-9: #5D6581;
+      --neutral-10: #222D53;
+      --neutral-11: #091640;
+      --brand-soft: #ECF4FF;
+      --success: #00B96B;
+      --success-soft: #F0FFF7;
+      --warning: #FA8C16;
+      --warning-soft: #FFF7E6;
+      --radius-md: 6px;
+      --radius-xl: 10px;
+      --radius-xxl: 12px;
+    }
+
+    body {
+      padding-top: 40px;
+      min-height: 100vh;
+      overflow: hidden;
+      background: var(--neutral-1);
+      color: var(--neutral-10);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+      font-size: 14px;
+    }
+
+    .app {
+      height: calc(100vh - 40px);
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+      background: var(--neutral-1);
+    }
+
+    .sidebar {
+      width: 260px;
+      height: 100%;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+    }
+
+    .sidebar-header {
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 12px;
+      color: var(--neutral-11);
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .back-btn {
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: var(--radius-md);
+      background: transparent;
+      color: var(--neutral-9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .menu {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: visible;
+    }
+
+    .menu-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .menu-divider {
+      height: 1px;
+      margin: 8px;
+      background: var(--neutral-3);
+    }
+
+    .menu-item {
+      position: relative;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 12px;
+      border-radius: var(--radius-md);
+      color: var(--neutral-10);
+      white-space: nowrap;
+    }
+
+    .menu-item.active {
+      background: var(--neutral-3);
+      font-weight: 500;
+    }
+
+    .menu-icon {
+      width: 16px;
+      height: 16px;
+      color: var(--neutral-9);
+      flex-shrink: 0;
+    }
+
+    .account {
+      margin-top: 16px;
+      padding: 16px 12px 0;
+      border-top: 1px solid var(--neutral-3);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--brand-7);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .account-name {
+      font-size: 13px;
+      color: var(--neutral-10);
+    }
+
+    .panel {
+      height: 100%;
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      background: var(--neutral-0);
+      border-radius: var(--radius-xxl);
+      overflow: visible;
+    }
+
+    .module {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .module-header {
+      height: 52px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--neutral-3);
+      color: var(--neutral-11);
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .module-content {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      padding: 20px;
+      position: relative;
+    }
+
+    .fd-tab {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .tab-header {
+      display: flex;
+      align-items: center;
+      height: 36px;
+      border-bottom: 1px solid var(--neutral-3);
+      flex-shrink: 0;
+    }
+
+    .tab-item {
+      position: relative;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      margin-right: 28px;
+      padding: 0;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      color: var(--neutral-9);
+      font-family: inherit;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .tab-item.active {
+      color: var(--brand-7);
+      font-weight: 500;
+    }
+
+    .tab-item.active::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      height: 2px;
+      border-radius: 999px;
+      background: var(--brand-7);
+    }
+
+    .tab-body {
+      flex: 1;
+      min-height: 0;
+      display: none;
+    }
+
+    .tab-body.active {
+      display: flex;
+    }
+
+    .server-config {
+      width: 560px;
+      padding: 16px 0 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .config-section {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--neutral-3);
+    }
+
+    .config-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--neutral-11);
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 88px 1fr;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .field-label {
+      color: var(--neutral-9);
+      font-size: 13px;
+    }
+
+    .input {
+      height: 32px;
+      border: 1px solid var(--neutral-3);
+      border-radius: var(--radius-md);
+      background: var(--neutral-0);
+      padding: 0 10px;
+      color: var(--neutral-8);
+      font-size: 13px;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 8px;
+      padding-left: 100px;
+    }
+
+    .btn {
+      height: 32px;
+      padding: 0 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--neutral-3);
+      background: var(--neutral-0);
+      color: var(--neutral-10);
+      font-size: 13px;
+    }
+
+    .btn-primary {
+      border-color: var(--brand-7);
+      background: var(--brand-7);
+      color: #fff;
+    }
+
+    .content-pane {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      padding: 16px 4px 28px;
+    }
+
+    .stack-lg > * + * {
+      margin-top: 14px;
+    }
+
+    .intro-card {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 16px 18px;
+      border: 1px solid var(--neutral-3);
+      border-radius: var(--radius-xl);
+      background: var(--neutral-1);
+    }
+
+    .intro-title {
+      color: var(--neutral-11);
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .intro-desc {
+      margin-top: 6px;
+      color: var(--neutral-9);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .sync-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: var(--success-soft);
+      color: var(--success);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .role-card {
+      border: 1px solid var(--neutral-3);
+      border-radius: var(--radius-xl);
+      background: var(--neutral-0);
+      padding: 14px;
+    }
+
+    .role-card-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--neutral-11);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .role-card-desc {
+      margin-top: 8px;
+      color: var(--neutral-9);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: var(--neutral-2);
+      color: var(--neutral-9);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .tag.primary {
+      background: var(--brand-soft);
+      color: var(--brand-7);
+    }
+
+    .tag.success {
+      background: var(--success-soft);
+      color: var(--success);
+    }
+
+    .tag.warning {
+      background: var(--warning-soft);
+      color: var(--warning);
+    }
+
+    .section-card {
+      margin-top: 14px;
+      border: 1px solid var(--neutral-3);
+      border-radius: var(--radius-xl);
+      background: var(--neutral-0);
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--neutral-3);
+    }
+
+    .section-title {
+      color: var(--neutral-11);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .section-subtitle {
+      margin-top: 4px;
+      color: var(--neutral-9);
+      font-size: 12px;
+    }
+
+    .table-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .search-input {
+      height: 30px;
+      width: 210px;
+      border: 1px solid var(--neutral-3);
+      border-radius: var(--radius-md);
+      background: var(--neutral-1);
+      color: var(--neutral-8);
+      padding: 0 10px;
+      font-size: 12px;
+    }
+
+    .scope-tabs {
+      display: inline-flex;
+      gap: 8px;
+      padding: 4px;
+      border-radius: 999px;
+      background: var(--neutral-1);
+    }
+
+    .scope-tab {
+      height: 30px;
+      padding: 0 14px;
+      border: none;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--neutral-9);
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .scope-tab.active {
+      background: var(--neutral-0);
+      color: var(--brand-7);
+      box-shadow: 0 1px 4px rgba(9,30,64,0.08);
+      font-weight: 500;
+    }
+
+    .manage-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-left,
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      height: 30px;
+      padding: 0 12px;
+      border: 1px solid var(--neutral-3);
+      border-radius: 999px;
+      background: var(--neutral-0);
+      color: var(--neutral-9);
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      white-space: nowrap;
+    }
+
+    .manage-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 14px;
+      margin-top: 14px;
+      align-items: start;
+    }
+
+    .manage-main,
+    .manage-drawer {
+      position: relative;
+      border: 1px solid var(--neutral-3);
+      border-radius: var(--radius-xl);
+      background: var(--neutral-0);
+      overflow: hidden;
+    }
+
+    .manage-drawer {
+      position: sticky;
+      top: 0;
+    }
+
+    .drawer-body {
+      padding: 16px;
+    }
+
+    .drawer-section + .drawer-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--neutral-3);
+    }
+
+    .drawer-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .drawer-grid-item {
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--neutral-1);
+      border: 1px solid var(--neutral-3);
+    }
+
+    .drawer-grid-label {
+      font-size: 12px;
+      color: var(--neutral-9);
+    }
+
+    .drawer-grid-value {
+      margin-top: 4px;
+      color: var(--neutral-11);
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.6;
+    }
+
+    .drawer-role-list {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .drawer-role-item {
+      width: 100%;
+      border: 1px solid var(--neutral-3);
+      border-radius: 12px;
+      background: var(--neutral-0);
+      padding: 12px;
+      text-align: left;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .drawer-role-item.active {
+      border-color: rgba(0,71,253,0.22);
+      background: var(--brand-soft);
+      box-shadow: 0 0 0 1px rgba(0,71,253,0.08) inset;
+    }
+
+    .drawer-role-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .drawer-role-title {
+      color: var(--neutral-11);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .drawer-role-desc {
+      margin-top: 6px;
+      color: var(--neutral-9);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .drawer-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .table-row-action {
+      color: var(--brand-7);
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .note-card {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 12px;
+      background: var(--neutral-1);
+      border: 1px solid var(--neutral-3);
+    }
+
+    .note-card-title {
+      color: var(--neutral-11);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .note-card-desc {
+      margin-top: 6px;
+      color: var(--neutral-9);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--neutral-3);
+      text-align: left;
+      vertical-align: top;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .data-table th {
+      background: var(--neutral-1);
+      color: var(--neutral-9);
+      font-weight: 500;
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tbody tr {
+      cursor: pointer;
+      transition: background 120ms ease;
+    }
+
+    .data-table tbody tr:hover {
+      background: #f8faff;
+    }
+
+    .data-table tbody tr.selected {
+      background: var(--brand-soft);
+    }
+
+    .object-name {
+      color: var(--neutral-11);
+      font-weight: 500;
+    }
+
+    .object-meta {
+      margin-top: 2px;
+      color: var(--neutral-9);
+      font-size: 12px;
+    }
+
+    .drawer-empty,
+    .table-empty {
+      padding: 28px 20px;
+      color: var(--neutral-9);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .drawer-empty {
+      padding: 16px 0 0;
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    .member-preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .member-pill {
+      display: inline-flex;
+      align-items: center;
+      height: 24px;
+      max-width: 100%;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: var(--neutral-1);
+      color: var(--neutral-10);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .member-pill.strong {
+      background: var(--brand-soft);
+      color: var(--brand-7);
+    }
+
+    .member-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .member-list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--neutral-3);
+      border-radius: 10px;
+      background: var(--neutral-1);
+    }
+
+    .member-list-name {
+      color: var(--neutral-11);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .member-list-meta {
+      margin-top: 2px;
+      color: var(--neutral-9);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .manage-layout.tree-mode {
+      grid-template-columns: 1fr;
+    }
+
+    .manage-layout.simple-mode {
+      grid-template-columns: 1fr;
+    }
+
+    .manage-layout.simple-mode .manage-drawer {
+      display: none;
+    }
+
+    .manage-layout.tree-mode .manage-drawer {
+      display: none;
+    }
+
+    .tree-workbench {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      min-height: 560px;
+    }
+
+    .tree-panel {
+      border-right: 1px solid var(--neutral-3);
+      background: var(--neutral-1);
+      padding: 14px 12px;
+    }
+
+    .tree-panel-title {
+      color: var(--neutral-11);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .tree-panel-subtitle {
+      margin-top: 4px;
+      color: var(--neutral-9);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .tree-group {
+      margin-top: 14px;
+    }
+
+    .tree-group-label {
+      padding: 0 10px;
+      color: var(--neutral-8);
+      font-size: 12px;
+      line-height: 28px;
+    }
+
+    .tree-node {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 10px 10px 18px;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--neutral-10);
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+    }
+
+    .tree-node + .tree-node {
+      margin-top: 4px;
+    }
+
+    .tree-node:hover {
+      background: rgba(255,255,255,0.7);
+    }
+
+    .tree-node.active {
+      background: var(--brand-soft);
+      color: var(--brand-7);
+    }
+
+    .tree-node-main {
+      min-width: 0;
+    }
+
+    .tree-node-name {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .tree-node-meta {
+      margin-top: 2px;
+      color: var(--neutral-8);
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .tree-content {
+      padding: 16px;
+    }
+
+    .tree-summary {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border: 1px solid var(--neutral-3);
+      border-radius: 12px;
+      background: var(--neutral-1);
+    }
+
+    .tree-summary-meta {
+      margin-top: 6px;
+      color: var(--neutral-9);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .tree-actions {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border: 1px solid var(--neutral-3);
+      border-radius: 12px;
+      background: var(--neutral-0);
+    }
+
+    .tree-actions-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .inline-role-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .inline-role-card {
+      border: 1px solid var(--neutral-3);
+      border-radius: 12px;
+      padding: 12px;
+      background: var(--neutral-0);
+      cursor: pointer;
+    }
+
+    .inline-role-card.active {
+      border-color: rgba(0,71,253,0.22);
+      background: var(--brand-soft);
+      box-shadow: 0 0 0 1px rgba(0,71,253,0.08) inset;
+    }
+
+    .inline-role-card-title {
+      color: var(--neutral-11);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .inline-role-card-desc {
+      margin-top: 6px;
+      color: var(--neutral-9);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .hit-user-section {
+      margin-top: 14px;
+      border: 1px solid var(--neutral-3);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--neutral-0);
+    }
+
+    .role-select {
+      min-width: 156px;
+      height: 30px;
+      padding: 0 28px 0 10px;
+      border: 1px solid var(--neutral-3);
+      border-radius: 8px;
+      background: var(--neutral-0);
+      color: var(--neutral-10);
+      font-size: 12px;
+      font-family: inherit;
+    }
+
+    .batch-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--neutral-3);
+      border-radius: 12px;
+      background: var(--neutral-1);
+    }
+
+    .batch-toolbar-left,
+    .batch-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .batch-count {
+      color: var(--neutral-11);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .table-check {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--brand-7);
+      cursor: pointer;
+    }
+
+    .link {
+      color: var(--brand-7);
+      font-size: 12px;
+    }
+
+    .bullet-list {
+      margin-left: 16px;
+      color: var(--neutral-10);
+    }
+
+    .bullet-list li + li {
+      margin-top: 6px;
+    }
+
+    .empty-tab {
+      position: relative;
+      width: 100%;
+      height: 400px;
+      padding-top: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      color: var(--neutral-9);
+    }
+
+    .empty-icon {
+      width: 88px;
+      height: 64px;
+      color: var(--neutral-3);
+    }
+
+    .empty-text {
+      font-size: 13px;
+      color: var(--neutral-9);
+    }
+
+    .change-marker {
+      position: absolute;
+      z-index: 1200;
+      top: -8px;
+      right: -8px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      align-items: center;
+      justify-content: center;
+      background: var(--brand-7);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 20px;
+      box-shadow: 0 4px 12px rgba(0,71,253,0.28);
+      cursor: help;
+    }
+
+    .change-marker::after {
+      content: "";
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 1px solid rgba(0,71,253,0.28);
+      animation: markerPulse 1.6s ease-in-out infinite;
+    }
+
+    .change-marker.table-mark {
+      top: 42px;
+      right: 22px;
+    }
+
+    .change-marker.user-mark {
+      top: 14px;
+      right: 14px;
+    }
+
+    .change-tooltip {
+      display: none;
+    }
+
+    #annotation-tooltip-layer {
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 30000;
+      width: 240px;
+      padding: 10px 12px;
+      border-radius: var(--radius-xl);
+      background: rgba(9,22,64,0.94);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.6;
+      text-align: left;
+      opacity: 0;
+      pointer-events: none;
+      box-shadow: 0 8px 20px rgba(9,30,64,0.16);
+      transition: opacity 120ms ease;
+      visibility: hidden;
+    }
+
+    #annotation-tooltip-layer.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    @keyframes markerPulse {
+      0%, 100% { transform: scale(1); opacity: 0.55; }
+      50% { transform: scale(1.45); opacity: 0; }
+    }
+
+    /* IM 用户映射 — 工具栏 IM 激活态 */
+    .manage-toolbar.im-active .search-input,
+    .manage-toolbar.im-active .toolbar-right { display: none; }
+
+    /* IM 映射视图容器 */
+    .im-mapping-view {
+      display: none;
+      flex-direction: column;
+      gap: 0;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* 平台子 Tab */
+    .im-platform-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--neutral-3);
+      padding: 0 20px;
+      flex-shrink: 0;
+    }
+
+    .im-platform-tab {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 4px;
+      height: 44px;
+      border: none;
+      background: transparent;
+      font-size: 13px;
+      color: var(--neutral-9);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      font-family: inherit;
+      transition: color 0.12s;
+      margin-right: 20px;
+    }
+
+    .im-platform-tab:last-child { margin-right: 0; }
+
+    .im-platform-tab:hover:not(.active) { color: var(--neutral-10); }
+
+    .im-platform-tab.active {
+      color: var(--brand-7);
+      border-bottom-color: var(--brand-7);
+      font-weight: 500;
+    }
+
+    .im-platform-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* 空状态 */
+    .im-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 52px 32px 40px;
+      gap: 10px;
+      text-align: center;
+    }
+
+    .im-empty-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2px;
+      flex-shrink: 0;
+    }
+
+    .im-empty-status {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--neutral-8);
+      background: var(--neutral-2);
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 2px;
+    }
+
+    .im-empty-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--neutral-8);
+    }
+
+    .im-empty-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--neutral-11);
+    }
+
+    .im-empty-desc {
+      font-size: 13px;
+      color: var(--neutral-9);
+      max-width: 340px;
+      line-height: 1.65;
+    }
+
+    .im-empty-hints {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      align-items: flex-start;
+      background: var(--neutral-1);
+      border-radius: var(--radius-xl);
+      padding: 12px 16px;
+      width: 340px;
+      margin-top: 4px;
+    }
+
+    .im-empty-hint-item {
+      font-size: 12px;
+      color: var(--neutral-8);
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      line-height: 1.5;
+      text-align: left;
+    }
+
+    .im-empty-hint-bullet {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--neutral-8);
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+
+    /* 有映射时的表格头 */
+    .im-table-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px 12px;
+      flex-shrink: 0;
+    }
+
+    .im-table-count {
+      font-size: 13px;
+      color: var(--neutral-9);
+    }
+
+    .im-table-count strong {
+      color: var(--neutral-10);
+      font-weight: 500;
+    }
+
+    .im-table-wrap {
+      padding: 0 8px 8px;
+    }
+
+    /* 删除按钮 */
+    .btn-danger-ghost {
+      background: transparent;
+      color: #CF1322;
+      border-color: #FFCCC7;
+      font-size: 12px;
+      padding: 0 8px;
+      height: 26px;
+    }
+
+    .btn-danger-ghost:hover {
+      background: #FFF1F0;
+      border-color: #FF7875;
+    }
+
+    /* 模态框 */
+    .im-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 22, 64, 0.38);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .im-modal-overlay.open { display: flex; }
+
+    .im-modal {
+      background: var(--neutral-0);
+      border-radius: var(--radius-xxl);
+      width: 440px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 12px 40px rgba(9, 22, 64, 0.18);
+    }
+
+    .im-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .im-modal-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--neutral-11);
+    }
+
+    .im-modal-close {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: var(--neutral-8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-md);
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .im-modal-close:hover { background: var(--neutral-2); color: var(--neutral-10); }
+
+    .im-modal-form { display: flex; flex-direction: column; gap: 16px; }
+
+    .im-form-field { display: flex; flex-direction: column; gap: 6px; }
+
+    .im-form-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--neutral-10);
+    }
+
+    .im-form-hint {
+      font-size: 12px;
+      color: var(--neutral-8);
+    }
+
+    .im-form-select,
+    .im-form-input {
+      height: 36px;
+      border: 1px solid var(--neutral-3);
+      border-radius: var(--radius-md);
+      padding: 0 10px;
+      font-size: 13px;
+      color: var(--neutral-10);
+      font-family: inherit;
+      background: var(--neutral-0);
+      outline: none;
+      width: 100%;
+    }
+
+    .im-form-select:focus,
+    .im-form-input:focus {
+      border-color: var(--brand-7);
+      box-shadow: 0 0 0 2px rgba(0, 71, 253, 0.1);
+    }
+
+    .im-form-input.error { border-color: #FF4D4F; }
+    .im-form-error { font-size: 12px; color: #CF1322; margin-top: 2px; }
+
+    .im-modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div id="variant-bar">
+    <span class="label">方案对比：</span>
+    <button class="v-tab active" onclick="switchVariant('a', this)">用户权限设计</button>
+    <div style="flex:1;"></div>
+    <button class="v-demo-toggle" onclick="toggleDemoMode(this)">交互说明</button>
+  </div>
+
+  <div id="variant-a" class="variant active">
+    <div id="annotation-tooltip-layer" aria-hidden="true"></div>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <button class="back-btn" aria-label="返回工作台">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M10 3L5 8l5 5" />
+            </svg>
+          </button>
+          <span>Data Agent</span>
+        </div>
+
+        <nav class="menu">
+          <div class="menu-group">
+            <div class="menu-item">
+              <svg class="menu-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M8 2.5l4.5 2.6v5.2L8 13 3.5 10.3V5.1z" />
+                <path d="M8 7.8v5.1" />
+              </svg>
+              <span>Agent 管理</span>
+            </div>
+          </div>
+
+          <div class="menu-divider"></div>
+
+          <div class="menu-group">
+            <div class="menu-item">
+              <svg class="menu-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M3 4h10M3 8h10M3 12h7" />
+              </svg>
+              <span>技能库</span>
+            </div>
+            <div class="menu-item">
+              <svg class="menu-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <ellipse cx="8" cy="4" rx="4.5" ry="2" />
+                <path d="M3.5 4v4c0 1.1 2 2 4.5 2s4.5-.9 4.5-2V4" />
+                <path d="M3.5 8v4c0 1.1 2 2 4.5 2s4.5-.9 4.5-2V8" />
+              </svg>
+              <span>数据中心</span>
+            </div>
+            <div class="menu-item">
+              <svg class="menu-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M3 3.5h7.5L13 6v6.5H3z" />
+                <path d="M10.5 3.5V6H13" />
+              </svg>
+              <span>知识库</span>
+            </div>
+            <div class="menu-item">
+              <svg class="menu-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M4 5.5h8M4 8h8M4 10.5h5" />
+                <rect x="2.5" y="3" width="11" height="10" rx="2" />
+              </svg>
+              <span>模型管理</span>
+            </div>
+          </div>
+
+          <div class="menu-divider"></div>
+
+          <div class="menu-group">
+            <div class="menu-item">
+              <svg class="menu-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M3 12.5h10M5 10V6.5M8 10V3.5M11 10V8" />
+              </svg>
+              <span>Agent 监控</span>
+            </div>
+            <div class="menu-item">
+              <svg class="menu-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M6.5 5.5l3 5M9.5 5.5l-3 5" />
+                <path d="M4.5 4h7A1.5 1.5 0 0113 5.5v5A1.5 1.5 0 0111.5 12h-7A1.5 1.5 0 013 10.5v-5A1.5 1.5 0 014.5 4z" />
+              </svg>
+              <span>Agent 连接</span>
+            </div>
+          </div>
+
+          <div class="menu-divider"></div>
+
+          <div class="menu-group">
+            <div class="menu-item active">
+              <svg class="menu-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M3 4h10v8H3z" />
+                <path d="M5.5 6.5h5M5.5 9.5h3" />
+              </svg>
+              <span>通用管理</span>
+              <span class="change-marker demo-control">1
+                <span class="change-tooltip">左侧入口调整到所有管理菜单项的最下方，仍保持当前选中态。</span>
+              </span>
+            </div>
+          </div>
+        </nav>
+
+        <div class="account">
+          <div class="avatar">A</div>
+          <div class="account-name">管理员</div>
+        </div>
+      </aside>
+
+      <main class="panel">
+        <section class="module">
+          <header class="module-header">通用管理</header>
+
+          <div class="module-content">
+            <div class="fd-tab">
+              <div class="tab-header">
+                <button class="tab-item" data-tab="platform" onclick="switchBusinessTab('platform', this)">平台服务</button>
+                <button class="tab-item active" data-tab="user" onclick="switchBusinessTab('user', this)">用户管理
+                  <span class="change-marker demo-control tooltip-top">2
+                    <span class="change-tooltip">「用户管理」承接 BI 同步来的用户、部门、身份角色，并在这里为对象分配 Data Agent权限角色。</span>
+                  </span>
+                </button>
+                <button class="tab-item" data-tab="permission" onclick="switchBusinessTab('permission', this)">权限管理</button>
+              </div>
+
+              <div class="tab-body" id="tab-platform">
+                <div class="server-config">
+                  <div class="config-section">
+                    <div class="config-title">语义模型服务器配置</div>
+                    <div class="field-row">
+                      <div class="field-label">服务器地址</div>
+                      <div class="input">semantic-model.example.com</div>
+                    </div>
+                    <div class="field-row">
+                      <div class="field-label">端口</div>
+                      <div class="input">8080</div>
+                    </div>
+                    <div class="button-row">
+                      <button class="btn">测试连接</button>
+                      <button class="btn btn-primary">保存</button>
+                    </div>
+                  </div>
+
+                  <div class="config-section">
+                    <div class="config-title">Fine AI 服务器 Host</div>
+                    <div class="field-row">
+                      <div class="field-label">服务器地址</div>
+                      <div class="input">fine-ai.example.com</div>
+                    </div>
+                    <div class="field-row">
+                      <div class="field-label">端口</div>
+                      <div class="input">8090</div>
+                    </div>
+                    <div class="button-row">
+                      <button class="btn">测试连接</button>
+                      <button class="btn btn-primary">保存</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tab-body active" id="tab-user">
+                <div class="content-pane">
+                  <div class="intro-card">
+                    <div>
+                      <div class="intro-title">用户管理</div>
+                      <div class="intro-desc">管理用户、部门、身份角色对应的 Data Agent权限角色。</div>
+                    </div>
+                  </div>
+
+                  <div class="manage-toolbar">
+                    <div class="toolbar-left">
+                      <div class="scope-tabs" id="scopeTabs">
+                        <button class="scope-tab active" data-scope="user" onclick="switchManageScope('user', this)">所有用户</button>
+                        <button class="scope-tab" data-scope="department" onclick="switchManageScope('department', this)">部门</button>
+                        <button class="scope-tab" data-scope="role" onclick="switchManageScope('role', this)">身份角色</button>
+                        <button class="scope-tab" data-scope="im" onclick="switchManageScope('im', this)">IM 用户映射</button>
+                      </div>
+                      <input class="search-input" id="manageSearchInput" value="" placeholder="搜索对象" oninput="handleManageSearch(this.value)" />
+                    </div>
+                    <div class="toolbar-right">
+                      <span class="filter-chip" id="scopeHintChip">当前视角：所有用户</span>
+                    </div>
+                  </div>
+
+                  <div class="manage-layout">
+                    <div class="manage-main">
+                      <div class="section-header">
+                        <div>
+                          <div class="section-title" id="manageTableTitle">用户列表</div>
+                          <div class="section-subtitle" id="manageTableSubtitle">选择对象并配置权限。</div>
+                        </div>
+                      </div>
+                      <div id="manageTableWrap"></div>
+                    </div>
+
+                    <div class="manage-drawer annotated">
+                      <span class="change-marker demo-control user-mark tooltip-top">4
+                        <span class="change-tooltip">用户管理改成“列表 + 编辑抽屉”的标准管理界面，更适合做搜索、筛选、批量管理和单条编辑。</span>
+                      </span>
+                      <div class="section-header">
+                        <div>
+                          <div class="section-title">编辑权限</div>
+                        </div>
+                      </div>
+                      <div class="drawer-body">
+                        <div class="drawer-section">
+                          <div class="section-title">对象信息</div>
+                          <div class="drawer-grid" id="manageDrawerSummary"></div>
+                        </div>
+
+                        <div class="drawer-section">
+                          <div class="section-title">命中成员</div>
+                          <div class="member-list" id="manageDrawerMembers"></div>
+                        </div>
+
+                        <div class="drawer-section">
+                          <div class="section-title">分配 Data Agent权限角色</div>
+                          <div class="drawer-role-list" id="manageDrawerRoles"></div>
+                        </div>
+
+                        <div class="drawer-actions">
+                          <button class="btn" id="manageCancelBtn" onclick="resetManageRole()">取消</button>
+                          <button class="btn btn-primary" id="manageSaveBtn" onclick="saveManageRole()">保存权限分配</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- IM 用户映射视图 -->
+                  <div id="imMappingView" class="im-mapping-view"></div>
+                </div>
+              </div>
+
+              <!-- 添加 IM 映射模态框 -->
+              <div class="im-modal-overlay" id="imModalOverlay" onclick="handleImModalOverlayClick(event)">
+                <div class="im-modal">
+                  <div class="im-modal-header">
+                    <div class="im-modal-title" id="imModalTitle">添加映射</div>
+                    <button class="im-modal-close" onclick="closeImMappingModal()">×</button>
+                  </div>
+                  <div class="im-modal-form">
+                    <div class="im-form-field">
+                      <label class="im-form-label">BI 用户</label>
+                      <select class="im-form-select" id="imModalUserSelect" onchange="imMappingState.modalUser = this.value"></select>
+                    </div>
+                    <div class="im-form-field">
+                      <label class="im-form-label" id="imModalAccountLabel">账号</label>
+                      <input class="im-form-input" id="imModalAccountInput" placeholder="" oninput="imMappingState.modalAccount = this.value.trim()" />
+                      <div class="im-form-hint" id="imModalAccountHint"></div>
+                      <div class="im-form-error" id="imModalAccountError" style="display:none;"></div>
+                    </div>
+                  </div>
+                  <div class="im-modal-footer">
+                    <button class="btn" onclick="closeImMappingModal()">取消</button>
+                    <button class="btn btn-primary" onclick="submitImMapping()">确认添加</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tab-body" id="tab-permission">
+                <div class="content-pane">
+                  <span class="change-marker demo-control table-mark">3
+                    <span class="change-tooltip">权限管理页签用于解释三类用户的权限类型与具体权限边界，作为用户管理分配时的说明依据。</span>
+                  </span>
+                  <div class="intro-card">
+                    <div>
+                      <div class="intro-title">用户权限说明</div>
+                      <div class="intro-desc">Data Agent 平台有三类用户：超级管理员、Agent 查看用户和 Agent 开发用户。权限分为使用权限、管理权限、发布权限、页面管理权限，分级授权暂不考虑。</div>
+                    </div>
+                  </div>
+
+                  <div class="section-card">
+                    <div class="section-header">
+                      <div>
+                        <div class="section-title">角色体系与权限类型</div>
+                        <div class="section-subtitle">根据产品文档整理为权限说明矩阵，便于评审角色边界。</div>
+                      </div>
+                    </div>
+                    <table class="data-table">
+                      <thead>
+                        <tr>
+                          <th style="width:18%;">用户</th>
+                          <th style="width:28%;">说明</th>
+                          <th style="width:18%;">权限类型</th>
+                          <th>具体说明</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><span class="object-name">超级管理员</span></td>
+                          <td>Data Agent 平台最高权限用户。</td>
+                          <td><span class="tag primary">全局管理权限</span></td>
+                          <td>拥有全部页面管理权限，可查看所有用户创建的 Agent，并管理用户角色。</td>
+                        </tr>
+                        <tr>
+                          <td><span class="object-name">Agent 查看用户</span></td>
+                          <td>具有使用特定 Agent 的权限；可在 Agent 配置页按角色、部门、用户配置。</td>
+                          <td><span class="tag success">使用权限</span></td>
+                          <td>
+                            <ul class="bullet-list">
+                              <li>使用：可以使用 Agent 进行提问。</li>
+                              <li>分享内容：可以将自己提问的内容、勾选聊天记录进行分享。</li>
+                              <li>分享 Agent：可以将 Agent 链接分享给其他用户。</li>
+                            </ul>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td><span class="object-name">Agent 开发用户</span></td>
+                          <td>具有管理后台权限；默认拥有开发相关页面与资源的使用权限。</td>
+                          <td><span class="tag warning">管理权限</span></td>
+                          <td>
+                            <ul class="bullet-list">
+                              <li>创建：允许在管理系统创建 Agent。</li>
+                              <li>删除：允许删除 Agent。</li>
+                              <li>编辑：允许编辑 Agent 基本设置、skill、知识等内容。</li>
+                              <li>查看：超管可看所有 Agent；普通开发者只能看自己创建或拥有协作权限的 Agent。</li>
+                            </ul>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td><span class="object-name">Agent 开发用户</span></td>
+                          <td>以 Agent 为例，skills / 大模型 / 知识库同理。</td>
+                          <td><span class="tag warning">发布权限</span></td>
+                          <td>允许发布 Agent；发布时控制全员发布，或指定用户进行发布。</td>
+                        </tr>
+                        <tr>
+                          <td><span class="object-name">Agent 开发用户</span></td>
+                          <td>控制是否可进入各后台模块。</td>
+                          <td><span class="tag">页面管理权限</span></td>
+                          <td>控制是否具有 Agent、skills、大模型、知识库、Agent 管理、Agent 开放集成等页面权限。</td>
+                        </tr>
+                        <tr>
+                          <td><span class="object-name">Agent 开发用户</span></td>
+                          <td>次级管理员下发深层权限。</td>
+                          <td><span class="tag">分级授权</span></td>
+                          <td>暂不考虑。</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    function switchVariant(id, el) {
+      document.querySelectorAll(".variant").forEach(item => item.classList.remove("active"));
+      document.querySelectorAll(".v-tab").forEach(item => item.classList.remove("active"));
+      document.getElementById("variant-" + id).classList.add("active");
+      el.classList.add("active");
+    }
+
+    function toggleDemoMode(el) {
+      document.body.classList.toggle("demo-mode");
+      el.classList.toggle("active");
+      if (!document.body.classList.contains("demo-mode")) {
+        hideAnnotationTooltip();
+      }
+    }
+
+    const userManageState = {
+      scope: "user",
+      searchKeyword: "",
+      selectedId: "u-1",
+      pendingRole: "superAdmin",
+      selectedUserIds: [],
+      pendingBatchRole: "viewer",
+    };
+
+    const manageScopeMeta = {
+      user: {
+        title: "所有用户",
+        subtitle: "按用户配置权限。",
+        searchPlaceholder: "搜索用户 / 账号",
+        hint: "当前视角：所有用户",
+      },
+      department: {
+        title: "部门树",
+        subtitle: "按部门配置权限。",
+        searchPlaceholder: "搜索部门",
+        hint: "当前视角：部门",
+      },
+      role: {
+        title: "身份角色树",
+        subtitle: "按身份角色配置权限。",
+        searchPlaceholder: "搜索身份角色",
+        hint: "当前视角：身份角色",
+      },
+    };
+
+    const platformRoleMeta = {
+      superAdmin: {
+        title: "超级管理员",
+        short: "超管",
+        tag: "平台最高权限",
+        tagClass: "primary",
+        desc: "拥有 Data Agent 平台全部管理权限，可查看所有用户创建的 Agent。",
+        points: ["查看所有 Agent", "管理用户角色", "进入全部后台模块"],
+      },
+      viewer: {
+        title: "Agent 查看用户",
+        short: "查看",
+        tag: "使用权限",
+        tagClass: "success",
+        desc: "具有使用特定 Agent 的权限，可进行提问、分享内容和分享 Agent。",
+        points: ["使用 Agent", "分享聊天内容", "分享 Agent 链接"],
+      },
+      developer: {
+        title: "Agent 开发用户",
+        short: "开发",
+        tag: "管理权限",
+        tagClass: "warning",
+        desc: "具有后台管理权限，可创建、编辑、删除、发布、协作管理 Agent 及相关资源。",
+        points: ["创建 / 编辑 / 删除 Agent", "发布 Agent", "管理技能、知识、模型等资源"],
+      },
+    };
+
+    const userManageData = {
+      user: [
+        {
+          id: "u-1",
+          name: "林知予",
+          meta: "BI 用户 · 市场运营部 · lin.zhiyu",
+          source: "BI 用户",
+          owner: "市场运营部",
+          biRole: "运营管理员",
+          affected: "仅当前用户",
+          memberCount: "1 人",
+          currentRole: "superAdmin",
+          updated: "今天 10:32",
+          impactDesc: "该授权仅影响当前用户本人，适合单人授权或为个别用户提升 Data Agent权限角色。",
+          impactChips: ["即时生效", "不影响同部门成员", "适合例外授权"],
+          members: [{ name: "林知予", meta: "市场运营部 · 运营管理员" }],
+        },
+        {
+          id: "u-2",
+          name: "周可欣",
+          meta: "BI 用户 · 市场运营部 · zhou.kexin",
+          source: "BI 用户",
+          owner: "市场运营部",
+          biRole: "普通成员",
+          affected: "仅当前用户",
+          memberCount: "1 人",
+          currentRole: "viewer",
+          updated: "昨天 18:16",
+          impactDesc: "适合将少量同事设置为 Agent 查看用户，不需要改动整个部门授权。",
+          impactChips: ["按人精确授权", "适合试点用户", "便于单人回收"],
+          members: [{ name: "周可欣", meta: "市场运营部 · 普通成员" }],
+        },
+        {
+          id: "u-3",
+          name: "陈一帆",
+          meta: "BI 用户 · 数据分析部 · chen.yifan",
+          source: "BI 用户",
+          owner: "数据分析部",
+          biRole: "增长分析角色",
+          affected: "仅当前用户",
+          memberCount: "1 人",
+          currentRole: "developer",
+          updated: "4 月 23 日",
+          impactDesc: "适合为具备建设需求的核心成员单独赋予开发权限。",
+          impactChips: ["可单独提权", "适合核心成员", "易于回收"],
+          members: [{ name: "陈一帆", meta: "数据分析部 · 增长分析角色" }],
+        },
+      ],
+      department: [
+        {
+          id: "d-1",
+          name: "市场运营部",
+          meta: "BI 部门 · 24 人",
+          source: "BI 部门",
+          owner: "市场体系",
+          biRole: "运营类角色",
+          affected: "部门内全部成员",
+          memberCount: "24 人",
+          currentRole: "viewer",
+          updated: "今天 09:18",
+          impactDesc: "部门授权适合做默认权限分配，新加入部门的成员可自动继承该 Data Agent权限角色。",
+          impactChips: ["批量覆盖 24 人", "新增成员自动继承", "适合作为默认权限"],
+          members: [
+            { name: "林知予", meta: "运营管理员" },
+            { name: "周可欣", meta: "普通成员" },
+            { name: "高明宇", meta: "投放专员" },
+            { name: "顾南栀", meta: "内容运营" },
+            { name: "王叙白", meta: "活动策划" },
+          ],
+        },
+        {
+          id: "d-2",
+          name: "数据分析部",
+          meta: "BI 部门 · 11 人",
+          source: "BI 部门",
+          owner: "数据中心",
+          biRole: "分析类角色",
+          affected: "部门内全部成员",
+          memberCount: "11 人",
+          currentRole: "developer",
+          updated: "4 月 22 日",
+          impactDesc: "适合将具备建设需求的部门整体设为 Agent 开发用户，减少逐人配置成本。",
+          impactChips: ["批量覆盖 11 人", "适合建设型团队", "统一后台权限"],
+          members: [
+            { name: "陈一帆", meta: "增长分析角色" },
+            { name: "许嘉禾", meta: "数据建模" },
+            { name: "宋知遥", meta: "经营分析" },
+            { name: "段越", meta: "BI 开发" },
+          ],
+        },
+        {
+          id: "d-3",
+          name: "品牌增长组",
+          meta: "BI 部门 · 8 人",
+          source: "BI 部门",
+          owner: "市场体系",
+          biRole: "品牌类角色",
+          affected: "部门内全部成员",
+          memberCount: "8 人",
+          currentRole: "viewer",
+          updated: "4 月 20 日",
+          impactDesc: "适合给市场侧子团队配置统一的使用权限，避免逐人维护。",
+          impactChips: ["覆盖 8 人", "适合稳定团队", "减少逐人操作"],
+          members: [
+            { name: "秦若", meta: "品牌策略" },
+            { name: "沈听澜", meta: "内容增长" },
+            { name: "裴昭", meta: "品牌投放" },
+          ],
+        },
+      ],
+      role: [
+        {
+          id: "r-1",
+          name: "增长分析角色",
+          meta: "身份角色 · 覆盖 18 人",
+          source: "身份角色",
+          owner: "分析人群",
+          biRole: "增长分析角色",
+          affected: "命中该身份角色的全部成员",
+          memberCount: "18 人",
+          currentRole: "developer",
+          updated: "昨天 18:30",
+          impactDesc: "适合将现有身份角色直接映射为 Data Agent权限角色，降低重复维护成本。",
+          impactChips: ["复用身份角色", "适合权限映射", "便于统一治理"],
+          members: [
+            { name: "陈一帆", meta: "数据分析部" },
+            { name: "许嘉禾", meta: "数据分析部" },
+            { name: "梁书宁", meta: "商业分析部" },
+            { name: "顾川", meta: "增长团队" },
+            { name: "周意", meta: "运营策略组" },
+          ],
+        },
+        {
+          id: "r-3",
+          name: "经营分析角色",
+          meta: "身份角色 · 覆盖 9 人",
+          source: "身份角色",
+          owner: "经营分析人群",
+          biRole: "经营分析角色",
+          affected: "命中该身份角色的全部成员",
+          memberCount: "9 人",
+          currentRole: "developer",
+          updated: "4 月 19 日",
+          impactDesc: "适合将经营分析类角色统一映射为开发用户，方便持续建设 Agent 资产。",
+          impactChips: ["经营分析团队", "统一开发权限", "便于持续建设"],
+          members: [
+            { name: "闻溪", meta: "经营分析部" },
+            { name: "顾未", meta: "经营分析部" },
+            { name: "梁灼", meta: "业务策略组" },
+          ],
+        },
+        {
+          id: "r-2",
+          name: "访客角色",
+          meta: "身份角色 · 覆盖 36 人",
+          source: "身份角色",
+          owner: "外部协作者",
+          biRole: "访客角色",
+          affected: "命中该身份角色的全部成员",
+          memberCount: "36 人",
+          currentRole: "viewer",
+          updated: "4 月 21 日",
+          impactDesc: "适合把外部访客或只读用户统一映射为 Agent 查看用户，控制平台使用范围。",
+          impactChips: ["统一只读用户", "适合访客群体", "便于集中回收"],
+          members: [
+            { name: "宋芸", meta: "外部协作者" },
+            { name: "郑昀", meta: "合作伙伴" },
+            { name: "何映", meta: "临时访客" },
+            { name: "唐苏", meta: "代理商账号" },
+          ],
+        },
+      ],
+    };
+
+    const manageTreeData = {
+      department: [
+        {
+          id: "dept-market",
+          name: "市场体系",
+          meta: "2 个下级部门",
+          children: [
+            { id: "d-1", name: "市场运营部", meta: "24 人" },
+            { id: "d-3", name: "品牌增长组", meta: "8 人" },
+          ],
+        },
+        {
+          id: "dept-data",
+          name: "数据中心",
+          meta: "1 个下级部门",
+          children: [
+            { id: "d-2", name: "数据分析部", meta: "11 人" },
+          ],
+        },
+      ],
+      role: [
+        {
+          id: "role-analytics",
+          name: "分析类角色",
+          meta: "2 个身份角色",
+          children: [
+            { id: "r-1", name: "增长分析角色", meta: "18 人" },
+            { id: "r-3", name: "经营分析角色", meta: "9 人" },
+          ],
+        },
+        {
+          id: "role-access",
+          name: "访问类角色",
+          meta: "1 个身份角色",
+          children: [
+            { id: "r-2", name: "访客角色", meta: "36 人" },
+          ],
+        },
+      ],
+    };
+
+    /* ========== IM 用户映射 — 状态与数据 ========== */
+
+    const imMappingState = {
+      platform: "feishu",
+      modalUser: "",
+      modalAccount: "",
+    };
+
+    // 初始为空，代表尚未配置任何映射
+    const imMappingData = {
+      feishu: [],
+      dingtalk: [],
+      wecom: [],
+    };
+
+    const imPlatformMeta = {
+      feishu: {
+        name: "飞书",
+        color: "#0062F5",
+        dotColor: "#0062F5",
+        accountLabel: "飞书账号",
+        accountPlaceholder: "企业邮箱或用户名，如 zhang.san@company.com",
+        accountHint: "支持企业邮箱地址或飞书用户名",
+        icon: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="7" fill="#0062F5"/><path d="M19 8L9 14.5L12.5 21L15 16L19 8Z" fill="white" opacity="0.92"/><path d="M9 14.5L15 16L12.5 21" stroke="white" stroke-width="1.4" fill="none" stroke-linejoin="round"/></svg>`,
+      },
+      dingtalk: {
+        name: "钉钉",
+        color: "#FF4040",
+        dotColor: "#FF4040",
+        accountLabel: "钉钉账号",
+        accountPlaceholder: "绑定手机号，如 13800138000",
+        accountHint: "请输入该用户注册钉钉所用的手机号",
+        icon: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="7" fill="#FF4040"/><path d="M14 6C10.7 6 8 8.7 8 12V16.5L6.5 18V19H12V16.8C12 16 12.7 15.5 13.5 15.5H14.5C15.3 15.5 16 16 16 16.8V19H21.5V18L20 16.5V12C20 8.7 17.3 6 14 6Z" fill="white"/><rect x="12.5" y="20" width="3" height="2" rx="1" fill="white"/></svg>`,
+      },
+      wecom: {
+        name: "企业微信",
+        color: "#07C160",
+        dotColor: "#07C160",
+        accountLabel: "企业微信账号",
+        accountPlaceholder: "手机号或企业邮箱",
+        accountHint: "请输入该用户的企业微信绑定手机号或邮箱",
+        icon: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="7" fill="#07C160"/><path d="M9 10H19C20.1 10 21 10.9 21 12V17C21 18.1 20.1 19 19 19H16L13.5 21.5V19H9C7.9 19 7 18.1 7 17V12C7 10.9 7.9 10 9 10Z" fill="white"/></svg>`,
+      },
+    };
+
+    /* ========== IM 映射 — 渲染函数 ========== */
+
+    function renderImMappingView() {
+      const platform = imMappingState.platform;
+      const meta = imPlatformMeta[platform];
+      const mappings = imMappingData[platform];
+
+      const platformTabs = Object.entries(imPlatformMeta).map(([key, info]) => `
+        <button class="im-platform-tab ${key === platform ? "active" : ""}" onclick="switchImPlatform('${key}')">
+          <span class="im-platform-dot" style="background:${info.dotColor};${key !== platform ? "opacity:0.35;" : ""}"></span>
+          ${info.name}
+        </button>
+      `).join("");
+
+      const bodyHtml = mappings.length === 0
+        ? renderImEmptyState(platform, meta)
+        : renderImMappingList(platform, meta, mappings);
+
+      document.getElementById("imMappingView").innerHTML = `
+        <div class="section-card" style="display:flex;flex-direction:column;gap:0;padding:0;overflow:hidden;flex:1;">
+          <div class="im-platform-tabs">${platformTabs}</div>
+          ${bodyHtml}
+        </div>
+      `;
+    }
+
+    function renderImEmptyState(platform, meta) {
+      return `
+        <div class="im-empty-state">
+          <div class="im-empty-icon" style="background:${meta.color}18;">${meta.icon}</div>
+          <div class="im-empty-status">
+            <span class="im-empty-status-dot"></span>
+            暂无映射
+          </div>
+          <div class="im-empty-title">${meta.name}用户映射尚未配置</div>
+          <div class="im-empty-desc">
+            将 BI 平台用户账号与${meta.name}账号绑定后，可实现系统消息推送和免登录访问 Data Agent 的能力。
+          </div>
+          <div class="im-empty-hints">
+            <div class="im-empty-hint-item">
+              <span class="im-empty-hint-bullet"></span>
+              添加映射后，系统通知将自动推送至用户的${meta.name}账号
+            </div>
+            <div class="im-empty-hint-item">
+              <span class="im-empty-hint-bullet"></span>
+              每个 BI 用户仅可绑定一个${meta.name}账号
+            </div>
+            <div class="im-empty-hint-item">
+              <span class="im-empty-hint-bullet"></span>
+              删除用户后，对应映射关系同步解除
+            </div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="openImMappingModal()">+ 添加映射</button>
+        </div>
+      `;
+    }
+
+    function renderImMappingList(platform, meta, mappings) {
+      const rows = mappings.map((m, idx) => `
+        <tr>
+          <td>
+            <div class="object-name">${m.biUser.name}</div>
+            <div class="object-meta">${m.biUser.meta}</div>
+          </td>
+          <td style="font-size:13px;color:var(--neutral-10);">${m.imAccount}</td>
+          <td style="font-size:13px;color:var(--neutral-9);">${m.addedAt}</td>
+          <td>
+            <button class="btn btn-danger-ghost" onclick="deleteImMapping('${platform}', ${idx})">删除</button>
+          </td>
+        </tr>
+      `).join("");
+
+      return `
+        <div class="im-table-header">
+          <div class="im-table-count">已添加 <strong>${mappings.length} 条</strong>映射关系</div>
+          <button class="btn btn-primary" onclick="openImMappingModal()">+ 添加映射</button>
+        </div>
+        <div class="im-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:30%;">BI 用户</th>
+                <th style="width:34%;">${meta.accountLabel}</th>
+                <th style="width:24%;">添加时间</th>
+                <th style="width:12%;">操作</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    /* ========== IM 映射 — 交互函数 ========== */
+
+    function switchImPlatform(platform) {
+      imMappingState.platform = platform;
+      renderImMappingView();
+    }
+
+    function openImMappingModal() {
+      const platform = imMappingState.platform;
+      const meta = imPlatformMeta[platform];
+      const mappedUserIds = new Set(imMappingData[platform].map(m => m.biUser.id));
+      const available = userManageData.user.filter(u => !mappedUserIds.has(u.id));
+
+      document.getElementById("imModalTitle").textContent = `添加${meta.name}用户映射`;
+      document.getElementById("imModalAccountLabel").textContent = meta.accountLabel;
+      const input = document.getElementById("imModalAccountInput");
+      input.placeholder = meta.accountPlaceholder;
+      input.value = "";
+      input.classList.remove("error");
+      document.getElementById("imModalAccountHint").textContent = meta.accountHint;
+      document.getElementById("imModalAccountError").style.display = "none";
+
+      const sel = document.getElementById("imModalUserSelect");
+      if (!available.length) {
+        sel.innerHTML = `<option value="">— 所有用户已完成映射 —</option>`;
+        imMappingState.modalUser = "";
+      } else {
+        sel.innerHTML = available.map(u =>
+          `<option value="${u.id}">${u.name}（${u.owner}）</option>`
+        ).join("");
+        imMappingState.modalUser = available[0].id;
+        sel.value = available[0].id;
+      }
+      imMappingState.modalAccount = "";
+
+      document.getElementById("imModalOverlay").classList.add("open");
+    }
+
+    function closeImMappingModal() {
+      document.getElementById("imModalOverlay").classList.remove("open");
+      imMappingState.modalUser = "";
+      imMappingState.modalAccount = "";
+    }
+
+    function handleImModalOverlayClick(event) {
+      if (event.target === event.currentTarget) closeImMappingModal();
+    }
+
+    function submitImMapping() {
+      const userId = document.getElementById("imModalUserSelect").value;
+      const account = document.getElementById("imModalAccountInput").value.trim();
+      const errorEl = document.getElementById("imModalAccountError");
+      const inputEl = document.getElementById("imModalAccountInput");
+
+      if (!userId) return;
+
+      if (!account) {
+        errorEl.textContent = "请输入账号";
+        errorEl.style.display = "block";
+        inputEl.classList.add("error");
+        return;
+      }
+
+      errorEl.style.display = "none";
+      inputEl.classList.remove("error");
+
+      const user = userManageData.user.find(u => u.id === userId);
+      if (!user) return;
+
+      const platform = imMappingState.platform;
+      imMappingData[platform].push({
+        biUser: { id: user.id, name: user.name, meta: `${user.source} · ${user.owner}` },
+        imAccount: account,
+        addedAt: "刚刚",
+      });
+
+      closeImMappingModal();
+      renderImMappingView();
+    }
+
+    function deleteImMapping(platform, idx) {
+      imMappingData[platform].splice(idx, 1);
+      renderImMappingView();
+    }
+
+    /* ======================================== */
+
+    function getManageSearchText(item) {
+      const memberText = (item.members || [])
+        .map(member => `${member.name} ${member.meta}`)
+        .join(" ");
+      return [item.name, item.meta, item.owner, item.biRole, memberText].join(" ").toLowerCase();
+    }
+
+    function getManageItemById(scope, id) {
+      return (userManageData[scope] || []).find(item => item.id === id) || null;
+    }
+
+    function getVisibleUserList() {
+      return getVisibleManageItems();
+    }
+
+    function isUserSelected(id) {
+      return userManageState.selectedUserIds.includes(id);
+    }
+
+    function getSelectedUserCount() {
+      return userManageState.selectedUserIds.length;
+    }
+
+    function isAllVisibleUsersSelected() {
+      const visibleIds = getVisibleUserList().map(item => item.id);
+      return !!visibleIds.length && visibleIds.every(id => isUserSelected(id));
+    }
+
+    function renderMemberPreview(members, total) {
+      const preview = (members || []).slice(0, 3).map(member =>
+        `<span class="member-pill">${member.name}</span>`
+      ).join("");
+      const remain = Math.max(parseInt(total, 10) - (members || []).slice(0, 3).length, 0);
+      const more = remain > 0 ? `<span class="member-pill strong">+${remain}</span>` : "";
+      return `<div class="member-preview">${preview}${more}</div>`;
+    }
+
+    function getVisibleManageItems() {
+      const items = userManageData[userManageState.scope] || [];
+      const keyword = userManageState.searchKeyword.trim().toLowerCase();
+      if (!keyword) return items;
+      return items.filter(item => getManageSearchText(item).includes(keyword));
+    }
+
+    function getVisibleTree() {
+      const groups = manageTreeData[userManageState.scope] || [];
+      const keyword = userManageState.searchKeyword.trim().toLowerCase();
+      if (!keyword) return groups;
+
+      return groups
+        .map(group => {
+          const groupMatch = `${group.name} ${group.meta}`.toLowerCase().includes(keyword);
+          const children = group.children.filter(child => {
+            const item = getManageItemById(userManageState.scope, child.id);
+            return groupMatch || child.name.toLowerCase().includes(keyword) || (item && getManageSearchText(item).includes(keyword));
+          });
+          return children.length || groupMatch ? { ...group, children } : null;
+        })
+        .filter(Boolean);
+    }
+
+    function getFirstVisibleTreeLeafId() {
+      const tree = getVisibleTree();
+      for (const group of tree) {
+        if (group.children && group.children[0]) {
+          return group.children[0].id;
+        }
+      }
+      return "";
+    }
+
+    function switchBusinessTab(id, el) {
+      document.querySelectorAll(".tab-item").forEach(item => item.classList.remove("active"));
+      document.querySelectorAll(".tab-body").forEach(item => item.classList.remove("active"));
+      document.getElementById("tab-" + id).classList.add("active");
+      el.classList.add("active");
+      hideAnnotationTooltip();
+    }
+
+    function getCurrentManageList() {
+      if (userManageState.scope === "user") {
+        return getVisibleManageItems();
+      }
+      const visibleIds = new Set();
+      getVisibleTree().forEach(group => {
+        group.children.forEach(child => visibleIds.add(child.id));
+      });
+      return (userManageData[userManageState.scope] || []).filter(item => visibleIds.has(item.id));
+    }
+
+    function getSelectedManageItem() {
+      const items = getCurrentManageList();
+      const selected = items.find(item => item.id === userManageState.selectedId);
+      return selected || items[0] || null;
+    }
+
+    function renderUserTableMode() {
+      const meta = manageScopeMeta[userManageState.scope];
+      document.getElementById("manageTableTitle").textContent = meta.title;
+      document.getElementById("manageTableSubtitle").textContent = meta.subtitle;
+      document.getElementById("manageSearchInput").placeholder = meta.searchPlaceholder;
+      document.getElementById("manageSearchInput").value = userManageState.searchKeyword;
+      document.getElementById("scopeHintChip").textContent = meta.hint;
+
+      const list = getCurrentManageList();
+      if (!list.length) {
+        userManageState.selectedId = "";
+        document.getElementById("manageTableWrap").innerHTML = `
+          <div class="table-empty">未找到匹配对象。可以切换管理视角，或调整搜索关键词后重试。</div>
+        `;
+        return;
+      }
+
+      if (!list.some(item => item.id === userManageState.selectedId) && list[0]) {
+        userManageState.selectedId = list[0].id;
+      }
+
+      let rows = "";
+      if (userManageState.scope === "user") {
+        const selectedUserCount = getSelectedUserCount();
+        rows = list.map(item => `
+          <tr>
+            <td><input class="table-check" type="checkbox" ${isUserSelected(item.id) ? "checked" : ""} onclick="toggleUserSelection('${item.id}', this.checked)" /></td>
+            <td>
+              <div class="object-name">${item.name}</div>
+              <div class="object-meta">${item.meta}</div>
+            </td>
+            <td>${item.owner}</td>
+            <td>${item.biRole}</td>
+            <td>
+              <select class="role-select" onchange="setUserRole('${item.id}', this.value)">
+                ${Object.entries(platformRoleMeta).map(([key, role]) => `
+                  <option value="${key}" ${item.currentRole === key ? "selected" : ""}>${role.title}</option>
+                `).join("")}
+              </select>
+            </td>
+            <td>${item.updated}</td>
+          </tr>
+        `).join("");
+        document.getElementById("manageTableWrap").innerHTML = `
+          ${selectedUserCount ? `
+            <div class="batch-toolbar">
+              <div class="batch-toolbar-left">
+                <span class="batch-count">已选择 ${selectedUserCount} 个用户</span>
+                <button class="btn" onclick="clearUserSelection()">清空选择</button>
+              </div>
+              <div class="batch-toolbar-right">
+                <select class="role-select" onchange="setBatchRole(this.value)">
+                  ${Object.entries(platformRoleMeta).map(([key, role]) => `
+                    <option value="${key}" ${userManageState.pendingBatchRole === key ? "selected" : ""}>${role.title}</option>
+                  `).join("")}
+                </select>
+                <button class="btn btn-primary" onclick="applyBatchRole()">应用到已选用户</button>
+              </div>
+            </div>
+          ` : ""}
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:6%;"><input class="table-check" type="checkbox" ${isAllVisibleUsersSelected() ? "checked" : ""} onclick="toggleSelectAllVisible(this.checked)" /></th>
+                <th style="width:28%;">用户</th>
+                <th style="width:18%;">部门</th>
+                <th style="width:18%;">身份角色</th>
+                <th style="width:22%;">Data Agent权限角色</th>
+                <th style="width:8%;">最近更新</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+      }
+    }
+
+    function renderTreeNodes(groups) {
+      return groups.map(group => `
+        <div class="tree-group">
+          <div class="tree-group-label">${group.name}<span class="object-meta" style="display:inline; margin-left:6px;">${group.meta}</span></div>
+          ${group.children.map(child => {
+            const item = getManageItemById(userManageState.scope, child.id);
+            const isActive = child.id === userManageState.selectedId;
+            return `
+              <button class="tree-node ${isActive ? "active" : ""}" onclick="selectManageItem('${child.id}')">
+                <div class="tree-node-main">
+                  <div class="tree-node-name">${child.name}</div>
+                  <div class="tree-node-meta">${child.meta}</div>
+                </div>
+                <span class="tag ${platformRoleMeta[item.currentRole].tagClass}">${platformRoleMeta[item.currentRole].title}</span>
+              </button>
+            `;
+          }).join("")}
+        </div>
+      `).join("");
+    }
+
+    function renderTreeMode() {
+      const meta = manageScopeMeta[userManageState.scope];
+      const tree = getVisibleTree();
+      const keyword = userManageState.searchKeyword.trim().toLowerCase();
+      document.getElementById("manageTableTitle").textContent = meta.title;
+      document.getElementById("manageTableSubtitle").textContent = meta.subtitle;
+      document.getElementById("manageSearchInput").placeholder = meta.searchPlaceholder;
+      document.getElementById("manageSearchInput").value = userManageState.searchKeyword;
+      document.getElementById("scopeHintChip").textContent = meta.hint;
+
+      if (!tree.length) {
+        userManageState.selectedId = "";
+        document.getElementById("manageTableWrap").innerHTML = `
+          <div class="table-empty">未找到匹配的${userManageState.scope === "department" ? "部门" : "身份角色"}或命中成员，请调整搜索条件后重试。</div>
+        `;
+        return;
+      }
+
+      const visibleLeafIds = tree.flatMap(group => group.children.map(child => child.id));
+      if (!visibleLeafIds.includes(userManageState.selectedId)) {
+        userManageState.selectedId = getFirstVisibleTreeLeafId();
+      }
+
+      const selected = getSelectedManageItem();
+      if (!selected) return;
+      const visibleMembers = !keyword
+        ? (selected.members || [])
+        : (selected.members || []).filter(member =>
+            `${member.name} ${member.meta}`.toLowerCase().includes(keyword)
+          ) || [];
+
+      const memberRows = visibleMembers.map(member => `
+        <tr>
+          <td>
+            <div class="object-name">${member.name}</div>
+            <div class="object-meta">${member.meta}</div>
+          </td>
+          <td>${userManageState.scope === "department" ? selected.name : member.meta}</td>
+          <td>${userManageState.scope === "department" ? selected.biRole : selected.name}</td>
+          <td><span class="tag ${platformRoleMeta[userManageState.pendingRole].tagClass}">${platformRoleMeta[userManageState.pendingRole].title}</span></td>
+        </tr>
+      `).join("");
+
+      const roleCards = Object.entries(platformRoleMeta).map(([key, role]) => `
+        <div class="inline-role-card ${key === userManageState.pendingRole ? "active" : ""}" onclick="chooseManageRole('${key}')">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+            <div class="inline-role-card-title">${role.title}</div>
+            <span class="tag ${role.tagClass}">${role.tag}</span>
+          </div>
+          <div class="inline-role-card-desc">${role.desc}</div>
+        </div>
+      `).join("");
+
+      document.getElementById("manageTableWrap").innerHTML = `
+        <div class="tree-workbench">
+          <aside class="tree-panel">
+            <div class="tree-panel-title">${userManageState.scope === "department" ? "部门树" : "身份角色树"}</div>
+            ${renderTreeNodes(tree)}
+          </aside>
+          <div class="tree-content">
+            <div class="tree-summary">
+              <div>
+                <div class="section-title">${selected.name}</div>
+                <div class="tree-summary-meta">${selected.meta} · ${selected.affected}</div>
+              </div>
+              <div class="member-preview">
+                <span class="member-pill strong">命中 ${selected.memberCount}</span>
+                <span class="member-pill">${platformRoleMeta[selected.currentRole].title}</span>
+              </div>
+            </div>
+
+            <div class="tree-actions">
+              <div class="tree-actions-top">
+                <div class="section-title">分配 Data Agent权限角色</div>
+                <div class="drawer-actions" style="margin-top:0;">
+                  <button class="btn" ${userManageState.pendingRole === selected.currentRole ? "disabled" : ""} onclick="resetManageRole()">取消</button>
+                  <button class="btn btn-primary" ${userManageState.pendingRole === selected.currentRole ? "disabled" : ""} onclick="saveManageRole()">保存权限分配</button>
+                </div>
+              </div>
+              <div class="inline-role-grid">${roleCards}</div>
+            </div>
+
+            <div class="hit-user-section">
+              <div class="section-header">
+                <div class="section-title">命中用户</div>
+              </div>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width:28%;">用户</th>
+                    <th style="width:24%;">${userManageState.scope === "department" ? "所属部门" : "来源部门"}</th>
+                    <th style="width:24%;">${userManageState.scope === "department" ? "命中身份角色" : "命中身份角色"}</th>
+                    <th style="width:24%;">Data Agent权限角色</th>
+                  </tr>
+                </thead>
+                <tbody>${memberRows}</tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderManageDrawer() {
+      const selected = getSelectedManageItem();
+      const cancelBtn = document.getElementById("manageCancelBtn");
+      const saveBtn = document.getElementById("manageSaveBtn");
+
+      if (!selected) {
+        document.getElementById("manageDrawerSummary").innerHTML = "";
+        document.getElementById("manageDrawerMembers").innerHTML = "";
+        document.getElementById("manageDrawerRoles").innerHTML = `
+          <div class="drawer-empty">当前没有可编辑对象，请先从左侧列表中选择一个用户、部门或身份角色。</div>
+        `;
+        cancelBtn.disabled = true;
+        saveBtn.disabled = true;
+        return;
+      }
+
+      document.getElementById("manageDrawerSummary").innerHTML = `
+        <div class="drawer-grid-item">
+          <div class="drawer-grid-label">当前对象</div>
+          <div class="drawer-grid-value">${selected.name}</div>
+        </div>
+        <div class="drawer-grid-item">
+          <div class="drawer-grid-label">BI 来源</div>
+          <div class="drawer-grid-value">${selected.source}</div>
+        </div>
+        <div class="drawer-grid-item">
+          <div class="drawer-grid-label">影响范围</div>
+          <div class="drawer-grid-value">${selected.affected}</div>
+        </div>
+        <div class="drawer-grid-item">
+          <div class="drawer-grid-label">命中人数</div>
+          <div class="drawer-grid-value">${selected.memberCount}</div>
+        </div>
+      `;
+
+      document.getElementById("manageDrawerMembers").innerHTML = (selected.members || [])
+        .map(member => `
+          <div class="member-list-item">
+            <div>
+              <div class="member-list-name">${member.name}</div>
+              <div class="member-list-meta">${member.meta}</div>
+            </div>
+            <span class="member-pill strong">${userManageState.pendingRole === "superAdmin" ? "超管" : platformRoleMeta[userManageState.pendingRole].title}</span>
+          </div>
+        `)
+        .join("");
+
+      document.getElementById("manageDrawerRoles").innerHTML = Object.entries(platformRoleMeta)
+        .map(([key, role]) => {
+          const active = key === userManageState.pendingRole;
+          return `
+            <button class="drawer-role-item ${active ? "active" : ""}" onclick="chooseManageRole('${key}')">
+              <div class="drawer-role-head">
+                <div class="drawer-role-title">${role.title}</div>
+                <span class="tag ${role.tagClass}">${role.tag}</span>
+              </div>
+              <div class="drawer-role-desc">${role.desc}</div>
+            </button>
+          `;
+        })
+        .join("");
+
+      cancelBtn.disabled = userManageState.pendingRole === selected.currentRole;
+      saveBtn.disabled = userManageState.pendingRole === selected.currentRole;
+    }
+
+    function renderUserManage() {
+      const layout = document.querySelector(".manage-layout");
+      const imView = document.getElementById("imMappingView");
+      const toolbar = document.querySelector(".manage-toolbar");
+
+      if (userManageState.scope === "im") {
+        layout.style.display = "none";
+        imView.style.display = "flex";
+        toolbar.classList.add("im-active");
+        renderImMappingView();
+        return;
+      }
+
+      layout.style.display = "";
+      imView.style.display = "none";
+      toolbar.classList.remove("im-active");
+
+      if (userManageState.scope === "user") {
+        layout.classList.add("simple-mode");
+        layout.classList.remove("tree-mode");
+        renderUserTableMode();
+        renderManageDrawer();
+      } else {
+        layout.classList.remove("simple-mode");
+        layout.classList.add("tree-mode");
+        renderTreeMode();
+      }
+    }
+
+    function switchManageScope(scope, el) {
+      userManageState.scope = scope;
+      userManageState.searchKeyword = "";
+      userManageState.selectedUserIds = [];
+      if (scope !== "im") {
+        userManageState.selectedId = scope === "user"
+          ? ((userManageData[scope] && userManageData[scope][0] && userManageData[scope][0].id) || "")
+          : getFirstVisibleTreeLeafId();
+        const selected = getManageItemById(scope, userManageState.selectedId);
+        userManageState.pendingRole = selected ? selected.currentRole : "viewer";
+      }
+      document.querySelectorAll(".scope-tab").forEach(item => item.classList.remove("active"));
+      el.classList.add("active");
+      renderUserManage();
+      hideAnnotationTooltip();
+    }
+
+    function selectManageItem(id) {
+      userManageState.selectedId = id;
+      const selected = getSelectedManageItem();
+      userManageState.pendingRole = selected ? selected.currentRole : "viewer";
+      renderUserManage();
+      hideAnnotationTooltip();
+    }
+
+    function handleManageSearch(value) {
+      userManageState.searchKeyword = value;
+      const selected = getSelectedManageItem();
+      if (selected) {
+        userManageState.pendingRole = selected.currentRole;
+      }
+      renderUserManage();
+    }
+
+    function chooseManageRole(roleKey) {
+      userManageState.pendingRole = roleKey;
+      renderUserManage();
+      hideAnnotationTooltip();
+    }
+
+    function toggleUserSelection(id, checked) {
+      if (checked) {
+        if (!isUserSelected(id)) {
+          userManageState.selectedUserIds = [...userManageState.selectedUserIds, id];
+        }
+      } else {
+        userManageState.selectedUserIds = userManageState.selectedUserIds.filter(item => item !== id);
+      }
+      renderUserManage();
+      hideAnnotationTooltip();
+    }
+
+    function toggleSelectAllVisible(checked) {
+      const visibleIds = getVisibleUserList().map(item => item.id);
+      if (checked) {
+        userManageState.selectedUserIds = Array.from(new Set([...userManageState.selectedUserIds, ...visibleIds]));
+      } else {
+        userManageState.selectedUserIds = userManageState.selectedUserIds.filter(id => !visibleIds.includes(id));
+      }
+      renderUserManage();
+      hideAnnotationTooltip();
+    }
+
+    function clearUserSelection() {
+      userManageState.selectedUserIds = [];
+      renderUserManage();
+      hideAnnotationTooltip();
+    }
+
+    function setBatchRole(roleKey) {
+      userManageState.pendingBatchRole = roleKey;
+      renderUserManage();
+      hideAnnotationTooltip();
+    }
+
+    function setUserRole(id, roleKey) {
+      const selected = getManageItemById("user", id);
+      if (!selected || selected.currentRole === roleKey) return;
+      selected.currentRole = roleKey;
+      selected.updated = "刚刚";
+      renderUserManage();
+      hideAnnotationTooltip();
+    }
+
+    function applyBatchRole() {
+      if (!userManageState.selectedUserIds.length) return;
+      userManageState.selectedUserIds.forEach(id => {
+        const selected = getManageItemById("user", id);
+        if (selected) {
+          selected.currentRole = userManageState.pendingBatchRole;
+          selected.updated = "刚刚";
+        }
+      });
+      userManageState.selectedUserIds = [];
+      renderUserManage();
+      hideAnnotationTooltip();
+    }
+
+    function resetManageRole() {
+      const selected = getSelectedManageItem();
+      if (!selected) return;
+      userManageState.pendingRole = selected.currentRole;
+      renderUserManage();
+      hideAnnotationTooltip();
+    }
+
+    function saveManageRole() {
+      const selected = getSelectedManageItem();
+      if (!selected) return;
+      selected.currentRole = userManageState.pendingRole;
+      selected.updated = "刚刚";
+      renderUserManage();
+      hideAnnotationTooltip();
+    }
+
+    const annotationTooltipLayer = document.getElementById("annotation-tooltip-layer");
+
+    function getAnnotationPlacement(marker) {
+      if (marker.classList.contains("tooltip-top")) return "top";
+      if (marker.classList.contains("tooltip-left")) return "left";
+      return "right";
+    }
+
+    function showAnnotationTooltip(marker) {
+      if (!document.body.classList.contains("demo-mode")) return;
+
+      const tipNode = marker.querySelector(".change-tooltip");
+      const text = tipNode ? tipNode.textContent.trim() : "";
+      if (!text) return;
+
+      annotationTooltipLayer.textContent = text;
+      annotationTooltipLayer.classList.add("visible");
+      positionAnnotationTooltip(marker);
+    }
+
+    function positionAnnotationTooltip(marker) {
+      if (!annotationTooltipLayer.classList.contains("visible")) return;
+
+      const rect = marker.getBoundingClientRect();
+      const placement = getAnnotationPlacement(marker);
+      const gap = 12;
+      const layerWidth = annotationTooltipLayer.offsetWidth;
+      const layerHeight = annotationTooltipLayer.offsetHeight;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      let left = rect.right + gap;
+      let top = rect.top + rect.height / 2 - layerHeight / 2;
+
+      if (placement === "top") {
+        left = rect.left + rect.width / 2 - layerWidth / 2;
+        top = rect.top - layerHeight - gap;
+      } else if (placement === "left") {
+        left = rect.left - layerWidth - gap;
+        top = rect.top + rect.height / 2 - layerHeight / 2;
+      }
+
+      if (left + layerWidth > viewportWidth - 12) {
+        left = viewportWidth - layerWidth - 12;
+      }
+      if (left < 12) {
+        left = 12;
+      }
+      if (top + layerHeight > viewportHeight - 12) {
+        top = viewportHeight - layerHeight - 12;
+      }
+      if (top < 52) {
+        top = 52;
+      }
+
+      annotationTooltipLayer.style.left = left + "px";
+      annotationTooltipLayer.style.top = top + "px";
+    }
+
+    function hideAnnotationTooltip() {
+      annotationTooltipLayer.classList.remove("visible");
+      annotationTooltipLayer.textContent = "";
+    }
+
+    document.querySelectorAll(".change-marker").forEach(marker => {
+      marker.addEventListener("mouseenter", () => showAnnotationTooltip(marker));
+      marker.addEventListener("mouseleave", hideAnnotationTooltip);
+    });
+
+    renderUserManage();
+    window.addEventListener("resize", hideAnnotationTooltip);
+    window.addEventListener("scroll", hideAnnotationTooltip, true);
+  </script>
+</body>
+</html>

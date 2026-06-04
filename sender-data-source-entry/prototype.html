@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sender 数据来源入口 · 原型</title>
+<style>
+  /* ─────────────────────────────────────────────
+     方案切换栏
+     ───────────────────────────────────────────── */
+  #variant-bar {
+    position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 9999;
+    height: 36px; background: rgba(26,26,46,0.96);
+    display: flex; align-items: center; gap: 4px; padding: 0 8px;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(9,30,64,0.16);
+    font-family: -apple-system, sans-serif;
+    backdrop-filter: blur(8px);
+  }
+  #variant-bar .label { color: #888; font-size: 12px; margin-right: 8px; }
+  .v-tab {
+    padding: 4px 14px; border-radius: 5px; border: none; cursor: pointer;
+    font-size: 12px; background: transparent; color: #aaa;
+  }
+  .v-tab.active { background: #0047FD; color: #fff; }
+  .v-tab:hover:not(.active) { background: rgba(255,255,255,0.1); color: #fff; }
+  .v-demo-toggle {
+    margin-left: 6px;
+    padding: 4px 12px; border-radius: 5px; cursor: pointer; font-size: 11px;
+    background: transparent; color: #888; border: 1px solid rgba(255,255,255,0.18);
+    transition: background 120ms, color 120ms, border-color 120ms;
+  }
+  .v-demo-toggle.active { background: rgba(255,200,0,0.12); color: #FFC107; border-color: rgba(255,193,7,0.35); }
+  .v-demo-toggle:hover:not(.active) { background: rgba(255,255,255,0.08); color: #bbb; }
+  .demo-control { display: none !important; }
+  body.demo-mode .demo-control { display: flex !important; }
+
+  /* ─────────────────────────────────────────────
+     设计 token
+     ───────────────────────────────────────────── */
+  :root {
+    --brand-1: #EAF0FF;
+    --brand-2: #D8E4FF;
+    --brand-6: #2562FF;
+    --brand-7: #0047FD;
+    --ink-1: #FFFFFF;
+    --ink-2: #F7F8FA;
+    --ink-3: #F0F1F5;
+    --ink-4: #E6E8ED;
+    --ink-6: #C3C8D4;
+    --ink-8: #8C95B0;
+    --ink-9: #5D6581;
+    --ink-10: #222D53;
+    --ink-11: #091640;
+    --green: #1E8A64;
+    --purple: #7C5CFF;
+    --bi-color: #2562FF;
+    --fr-color: #7C5CFF;
+    --shadow-card: 0 0 6px rgba(9,30,64,0.08);
+    --shadow-pop: 0 12px 32px rgba(9,30,64,0.18);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--ink-3);
+    color: var(--ink-11);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, textarea { font: inherit; }
+  button { cursor: pointer; }
+
+  /* ─────────────────────────────────────────────
+     交互说明高亮 + tooltip
+     ───────────────────────────────────────────── */
+  .annotation-target { position: relative; }
+  body.demo-mode .annotation-target {
+    outline: 2px solid #0047FD;
+    outline-offset: 4px;
+    box-shadow: 0 0 0 6px rgba(0,71,253,0.10);
+    cursor: help;
+    border-radius: 8px;
+  }
+  body.demo-mode .annotation-target.annotation-tight {
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(0,71,253,0.10);
+  }
+  #annotation-tooltip-layer {
+    position: fixed; inset: 0; z-index: 300000;
+    pointer-events: none; display: none;
+  }
+  #annotation-tooltip-layer.open { display: block; }
+  #annotation-tooltip-bubble {
+    position: fixed; left: 0; top: 0;
+    width: 260px; max-width: min(300px, calc(100vw - 24px));
+    padding: 10px 12px; border-radius: 10px;
+    background: rgba(9,22,64,0.94); color: #fff;
+    font-size: 12px; font-weight: 400; line-height: 1.6; text-align: left;
+    box-shadow: 0 8px 20px rgba(9,30,64,0.16);
+    opacity: 0; transform: translateY(4px);
+    transition: opacity 120ms ease, transform 120ms ease;
+    white-space: normal;
+  }
+  #annotation-tooltip-layer.open #annotation-tooltip-bubble { opacity: 1; transform: translateY(0); }
+
+  /* ─────────────────────────────────────────────
+     主框架
+     ───────────────────────────────────────────── */
+  .app {
+    height: 100vh;
+    min-height: 720px;
+    display: flex;
+    background: var(--ink-2);
+  }
+
+  /* 左侧栏 */
+  .sidebar {
+    width: 240px;
+    flex: 0 0 240px;
+    background: var(--ink-2);
+    border-right: 1px solid var(--ink-4);
+    display: flex;
+    flex-direction: column;
+    padding: 10px 0 0;
+  }
+  .sidebar-head {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px 12px;
+  }
+  .sidebar-home {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #FF6B6B, #FF5252);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    flex-shrink: 0;
+    position: relative;
+    cursor: pointer;
+  }
+  .sidebar-home svg { width: 16px; height: 16px; }
+  .sidebar-home::after {
+    content: "";
+    position: absolute; top: 4px; right: 4px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #FF3B3B;
+    border: 1.5px solid var(--ink-2);
+  }
+  .sidebar-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink-11);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .agent-avatar {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #fff 0%, transparent 25%),
+                radial-gradient(circle at 70% 70%, #21BFFF 0%, transparent 35%),
+                linear-gradient(135deg, #1d2a52 0%, #4b3aa0 100%);
+    flex-shrink: 0;
+    position: relative;
+  }
+  .agent-avatar::before {
+    content: "";
+    position: absolute;
+    left: 4px; right: 4px; top: 7px;
+    height: 9px;
+    border-radius: 4px;
+    background: #060B2A;
+    box-shadow: 0 0 0 1.2px rgba(33,191,255,0.5);
+  }
+  .agent-avatar::after {
+    content: "";
+    position: absolute;
+    left: 7px; top: 10px;
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 7px 0 0 #fff;
+  }
+  .sidebar-actions {
+    padding: 4px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .side-action {
+    height: 40px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-10);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 14px;
+    width: 100%;
+  }
+  .side-action svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .side-action.active { color: var(--brand-7); background: transparent; font-weight: 700; }
+  .side-action.active svg { color: var(--brand-7); }
+  .side-action:hover:not(.active) { background: var(--ink-3); }
+  .sidebar-section-label {
+    padding: 18px 16px 6px;
+    font-size: 12px;
+    color: var(--ink-8);
+    font-weight: 500;
+  }
+  .sidebar-history {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 8px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .history-item {
+    min-height: 32px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--ink-10);
+    text-align: left;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .history-item:hover { background: var(--ink-3); }
+  .sidebar-foot {
+    padding: 10px 12px;
+    border-top: 1px solid var(--ink-4);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--ink-10);
+  }
+  .sidebar-foot-num {
+    display: inline-flex;
+    width: 22px; height: 22px;
+    border-radius: 4px;
+    background: var(--ink-4);
+    color: var(--ink-10);
+    align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* 主区域 */
+  .main {
+    flex: 1;
+    min-width: 0;
+    background: var(--ink-1);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .main-topbar {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    flex-shrink: 0;
+  }
+  .toggle-sidebar {
+    width: 32px; height: 32px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--ink-10);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .toggle-sidebar:hover { background: var(--ink-3); }
+
+  .home-canvas {
+    flex: 1;
+    overflow: auto;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(124,92,255,0.15), transparent 50%),
+      radial-gradient(ellipse at 80% 0%, rgba(33,191,255,0.18), transparent 50%),
+      radial-gradient(ellipse at 50% 100%, rgba(167,255,214,0.18), transparent 60%),
+      linear-gradient(180deg, #F8F4FF 0%, #F3F8FF 45%, #F0FBFF 100%);
+    padding: 14vh 24px 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .home-center {
+    width: min(880px, calc(100% - 20px));
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 32px;
+  }
+  .hero-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 32px;
+    font-weight: 700;
+    color: #081B41;
+    align-self: flex-start;
+    margin-left: 26px;
+  }
+  .hero-title .agent-avatar {
+    width: 52px;
+    height: 52px;
+  }
+  .hero-title .agent-avatar::before { top: 14px; left: 8px; right: 8px; height: 18px; border-radius: 8px; box-shadow: 0 0 0 2.2px rgba(33,191,255,0.55); }
+  .hero-title .agent-avatar::after { left: 14px; top: 17px; width: 6px; height: 6px; box-shadow: 14px 0 0 #fff; }
+
+  /* 欢迎语 + 推荐 prompts 卡片 */
+  .hero-card {
+    background: rgba(255,255,255,0.55);
+    border: 1px solid rgba(208,219,255,0.6);
+    border-radius: 16px;
+    padding: 26px 28px 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 24px rgba(124,134,180,0.06);
+  }
+  .hero-greeting {
+    color: var(--ink-11);
+    font-size: 15px;
+    line-height: 1.7;
+    margin-bottom: 18px;
+  }
+  .prompt-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .prompt-item {
+    padding: 12px 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-top: 1px solid rgba(208,219,255,0.4);
+    color: var(--ink-10);
+    font-size: 14px;
+    cursor: pointer;
+    transition: color 120ms;
+  }
+  .prompt-item:first-child { border-top: none; }
+  .prompt-item:hover { color: var(--brand-7); }
+  .prompt-item .sparkle {
+    width: 18px; height: 18px;
+    color: var(--brand-6);
+    flex-shrink: 0;
+  }
+
+  /* 方案 D 专用：快捷资产气泡 */
+  .quick-asset-row {
+    margin: 6px auto 0;
+    width: min(880px, calc(100% - 20px));
+    display: none;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    background: linear-gradient(90deg, rgba(124,92,255,0.06), rgba(33,191,255,0.06));
+    border: 1px dashed rgba(124,92,255,0.35);
+    border-radius: 12px;
+    font-size: 13px;
+    color: var(--ink-10);
+  }
+  body[data-variant="d"] .quick-asset-row { display: flex; }
+  .quick-asset-row .lead {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--ink-9);
+    font-weight: 500;
+  }
+  .quick-asset-row .lead svg { width: 16px; height: 16px; color: var(--purple); }
+  .quick-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 14px;
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid rgba(124,92,255,0.3);
+    color: var(--ink-11);
+    font-size: 13px;
+    font-weight: 600;
+    transition: transform 120ms, box-shadow 120ms, border-color 120ms;
+  }
+  .quick-pill:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(124,92,255,0.18);
+  }
+  .quick-pill .dot {
+    width: 18px; height: 18px;
+    border-radius: 4px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .quick-pill.bi .dot { background: var(--bi-color); }
+  .quick-pill.fr .dot { background: var(--fr-color); }
+
+  /* ─────────────────────────────────────────────
+     Sender（输入框） — 共用骨架
+     ───────────────────────────────────────────── */
+  .sender {
+    margin: 8px auto 0;
+    width: min(880px, calc(100% - 20px));
+    background: rgba(255,255,255,0.95);
+    border: 1.5px solid rgba(124,134,180,0.18);
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(99,114,160,0.10);
+    padding: 14px 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    transition: border-color 160ms, box-shadow 160ms;
+  }
+  .sender:focus-within {
+    border-color: rgba(37,98,255,0.55);
+    box-shadow: 0 8px 30px rgba(37,98,255,0.14);
+  }
+
+  /* 资产条（方案 B 用） */
+  .asset-bar {
+    display: none;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-bottom: 2px;
+  }
+  body[data-variant="b"] .asset-bar { display: flex; }
+  .asset-ghost-chip {
+    height: 30px;
+    padding: 0 12px;
+    border: 1px dashed rgba(124,134,180,0.55);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.4);
+    color: var(--ink-9);
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 140ms;
+  }
+  .asset-ghost-chip:hover {
+    border-color: var(--brand-6);
+    color: var(--brand-7);
+    background: rgba(37,98,255,0.06);
+  }
+  .asset-ghost-chip .plus {
+    font-size: 14px;
+    line-height: 1;
+  }
+  .asset-ghost-chip .src-dot {
+    width: 16px; height: 16px;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .asset-ghost-chip.bi .src-dot { background: var(--bi-color); }
+  .asset-ghost-chip.fr .src-dot { background: var(--fr-color); }
+
+  .asset-chip {
+    height: 30px;
+    padding: 0 8px 0 10px;
+    border-radius: 8px;
+    background: #fff;
+    border: 1px solid var(--ink-4);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-11);
+    font-size: 13px;
+    box-shadow: 0 1px 2px rgba(9,30,64,0.04);
+  }
+  .asset-chip .src-dot {
+    width: 16px; height: 16px;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .asset-chip.bi .src-dot { background: var(--bi-color); }
+  .asset-chip.fr .src-dot { background: var(--fr-color); }
+  .asset-chip.file .src-dot { background: var(--green); }
+  .asset-chip .name { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .asset-chip .close {
+    width: 16px; height: 16px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--ink-8);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 2px;
+  }
+  .asset-chip .close:hover { background: var(--ink-3); color: var(--ink-11); }
+
+  .asset-add-mini {
+    height: 30px;
+    width: 30px;
+    border: 1px dashed rgba(124,134,180,0.5);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-9);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    line-height: 1;
+    position: relative;
+  }
+  .asset-add-mini:hover { color: var(--brand-7); border-color: var(--brand-6); }
+
+  /* sender 输入区 */
+  .sender-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    resize: none;
+    min-height: 60px;
+    outline: none;
+    color: var(--ink-11);
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 0;
+  }
+  .sender-input::placeholder { color: var(--ink-8); }
+
+  /* sender 工具栏 */
+  .sender-tools {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .sender-left-tools {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .icon-btn {
+    width: 32px; height: 32px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-9);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 140ms, color 140ms;
+  }
+  .icon-btn:hover { background: var(--ink-3); color: var(--ink-11); }
+  .icon-btn svg { width: 20px; height: 20px; }
+
+  /* 方案 C 用：ghost 文字按钮 */
+  .ghost-btn {
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--ink-4);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.6);
+    color: var(--ink-10);
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 140ms;
+  }
+  .ghost-btn:hover {
+    border-color: var(--brand-6);
+    color: var(--brand-7);
+    background: rgba(37,98,255,0.06);
+  }
+  .ghost-btn .src-dot {
+    width: 18px; height: 18px;
+    border-radius: 5px;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .ghost-btn.bi .src-dot { background: var(--bi-color); }
+  .ghost-btn.fr .src-dot { background: var(--fr-color); }
+
+  /* 发送按钮 */
+  .send-btn {
+    width: 32px; height: 32px;
+    border: none;
+    border-radius: 8px;
+    background: var(--ink-4);
+    color: var(--ink-8);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 140ms, color 140ms;
+  }
+  .send-btn.active { background: var(--brand-7); color: #fff; }
+  .send-btn svg { width: 16px; height: 16px; }
+
+  /* sender 聚合菜单（方案 A、D 用） */
+  .sender-menu {
+    position: absolute;
+    left: 0;
+    bottom: 42px;
+    width: 198px;
+    border: 1px solid var(--ink-4);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: var(--shadow-pop);
+    padding: 6px;
+    display: none;
+    z-index: 80;
+  }
+  .sender-menu.open { display: grid; gap: 2px; }
+  .sender-menu button {
+    height: 36px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--ink-10);
+    text-align: left;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .sender-menu button:hover { background: var(--brand-1); color: var(--brand-7); }
+  .sender-menu button .src-dot {
+    width: 18px; height: 18px;
+    border-radius: 5px;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .sender-menu button.file .src-dot { background: var(--green); }
+  .sender-menu button.bi .src-dot { background: var(--bi-color); }
+  .sender-menu button.fr .src-dot { background: var(--fr-color); }
+
+  /* sender 顶部资料区（方案 A / C / D 共用） */
+  .sender-files-row {
+    display: none;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-bottom: 2px;
+  }
+  .sender-files-row.has-item { display: flex; }
+  body[data-variant="b"] .asset-files-secondary { display: flex; }
+
+  .sender-foot-note {
+    text-align: center;
+    color: var(--ink-8);
+    font-size: 12px;
+    margin-top: 14px;
+  }
+
+  /* 方案差异控制 — 按 data-variant 决定显示哪些控件 */
+  /* B 方案不要单独的 ghost 按钮组、不要 + 菜单的 BI/FR 项（+ 只承载本地文件） */
+  body[data-variant="a"] .v-only-c,
+  body[data-variant="b"] .v-only-c,
+  body[data-variant="d"] .v-only-c { display: none; }
+  body[data-variant="c"] .v-only-c { display: inline-flex; }
+
+  /* 方案 B 的 + 菜单只有"本地文件"一项 */
+  body[data-variant="b"] .menu-bi,
+  body[data-variant="b"] .menu-fr,
+  body[data-variant="c"] .menu-bi,
+  body[data-variant="c"] .menu-fr { display: none; }
+
+  /* 方案 C 的 + 是纯附件按钮，点击直接走文件选择，不弹菜单 */
+
+  /* ─────────────────────────────────────────────
+     资产选择弹窗
+     ───────────────────────────────────────────── */
+  .modal-mask {
+    position: fixed; inset: 0;
+    background: rgba(9,22,64,0.32);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-mask.open { display: flex; }
+  .modal {
+    width: min(820px, calc(100vw - 40px));
+    height: min(560px, calc(100vh - 80px));
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 24px 64px rgba(9,30,64,0.28);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .modal-head {
+    height: 56px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--ink-3);
+  }
+  .modal-title { font-size: 16px; font-weight: 700; color: var(--ink-11); }
+  .modal-close {
+    width: 28px; height: 28px;
+    border: none; border-radius: 6px; background: transparent;
+    color: var(--ink-9);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .modal-close:hover { background: var(--ink-3); }
+  .modal-body {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+  .modal-tree {
+    width: 260px;
+    flex: 0 0 260px;
+    border-right: 1px solid var(--ink-3);
+    background: var(--ink-2);
+    padding: 12px;
+    overflow-y: auto;
+  }
+  .modal-search {
+    width: 100%;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--ink-4);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ink-10);
+    font-size: 13px;
+    outline: none;
+  }
+  .tree-list { margin-top: 10px; display: flex; flex-direction: column; gap: 2px; }
+  .tree-node {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 8px; border-radius: 6px;
+    font-size: 13px; color: var(--ink-10);
+    cursor: pointer;
+  }
+  .tree-node:hover { background: var(--ink-3); }
+  .tree-node.active { background: var(--brand-1); color: var(--brand-7); font-weight: 600; }
+  .tree-node input[type="checkbox"] { margin: 0; }
+  .tree-node .src-dot {
+    width: 16px; height: 16px;
+    border-radius: 4px;
+    background: var(--bi-color);
+    color: #fff; font-size: 9px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .modal[data-source="fr"] .tree-node .src-dot { background: var(--fr-color); }
+  .tree-indent { padding-left: 18px; }
+  .modal-detail {
+    flex: 1;
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: auto;
+  }
+  .detail-bar {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--ink-10);
+    font-size: 13px;
+  }
+  .detail-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--brand-1);
+    color: var(--brand-7);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .detail-preview {
+    flex: 1;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #f4f6fb 0%, #eaf2ff 100%);
+    border: 1px dashed var(--ink-4);
+    color: var(--ink-8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+  }
+  .modal[data-source="fr"] .detail-preview {
+    background: linear-gradient(135deg, #1a2540 0%, #2a3a6e 100%);
+    color: rgba(255,255,255,0.7);
+    border-color: rgba(124,92,255,0.3);
+  }
+  .modal-foot {
+    height: 60px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--ink-3);
+    background: #fff;
+  }
+  .selected-count { font-size: 13px; color: var(--ink-9); }
+  .modal-actions { display: flex; gap: 8px; }
+  .btn {
+    height: 32px;
+    padding: 0 18px;
+    border: 1px solid var(--ink-4);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ink-10);
+    font-size: 13px;
+  }
+  .btn-primary {
+    background: var(--brand-7);
+    border-color: var(--brand-7);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #003ad0; }
+
+  /* 隐藏的原生 file input */
+  .file-input-hidden { display: none; }
+
+</style>
+</head>
+<body data-variant="a">
+
+<!-- 方案切换栏 -->
+<div id="variant-bar">
+  <span class="label">方案对比:</span>
+  <button class="v-tab active" onclick="switchVariant('a', this)">A · 聚合菜单(基线)</button>
+  <button class="v-tab" onclick="switchVariant('b', this)">B · 资产条 + 附件</button>
+  <button class="v-tab" onclick="switchVariant('c', this)">C · 主次平铺</button>
+  <button class="v-tab" onclick="switchVariant('d', this)">D · 快捷气泡</button>
+  <button class="v-demo-toggle" onclick="toggleDemoMode(this)">交互说明</button>
+</div>
+
+<div class="app">
+  <!-- 左侧栏 -->
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-home" title="首页">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2.5 7.5 8 3l5.5 4.5V13a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1z"/>
+        </svg>
+      </span>
+      <div class="sidebar-title">
+        <span class="agent-avatar"></span>
+        Dora-通用智能体
+      </div>
+    </div>
+
+    <div class="sidebar-actions">
+      <button class="side-action active">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 2c-3.9 0-7 2.9-7 6.5 0 1.6.6 3 1.6 4.2L3 16l3.6-.9c.8.3 1.6.4 2.4.4 3.9 0 7-2.9 7-6.5S12.9 2 9 2z"/>
+          <path d="M6 8.5h6M9 5.5v6" />
+        </svg>
+        新聊天
+      </button>
+      <button class="side-action">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="9.5" r="6"/>
+          <path d="M9 6v3.5l2 1.5"/>
+          <path d="M6 2.5 4 4.5M12 2.5 14 4.5"/>
+        </svg>
+        定时任务
+      </button>
+    </div>
+
+    <div class="sidebar-section-label">历史会话</div>
+    <div class="sidebar-history">
+      <button class="history-item">你是谁</button>
+      <button class="history-item">根据测试样例数据生成html报告</button>
+      <button class="history-item">测试1分钟</button>
+      <button class="history-item">测试1分钟</button>
+      <button class="history-item">帮我设置一个定时任务吧</button>
+      <button class="history-item">hi</button>
+      <button class="history-item">生成一个虚拟的地图</button>
+      <button class="history-item">生成一个虚拟的饼图</button>
+      <button class="history-item">生成一个虚拟的图表</button>
+      <button class="history-item">测试消息</button>
+    </div>
+
+    <div class="sidebar-foot">
+      <span class="sidebar-foot-num">1</span>
+      <span>1(1)</span>
+      <span style="flex:1"></span>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <rect x="2" y="2" width="5" height="5" rx="1"/>
+        <rect x="9" y="2" width="5" height="5" rx="1"/>
+        <rect x="2" y="9" width="5" height="5" rx="1"/>
+        <rect x="9" y="9" width="5" height="5" rx="1"/>
+      </svg>
+      <span>管理后台</span>
+    </div>
+  </aside>
+
+  <!-- 主区域 -->
+  <section class="main">
+    <div class="main-topbar">
+      <button class="toggle-sidebar" title="折叠侧栏">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2.5" y="3.5" width="13" height="11" rx="2"/>
+          <path d="M7 3.5v11"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="home-canvas">
+      <div class="home-center">
+        <div class="hero-title">
+          <span class="agent-avatar"></span>
+          Dora-通用智能体
+        </div>
+
+        <div class="hero-card">
+          <div class="hero-greeting">
+            你好！我是Dora~你的 Data Agent 全能助手 我可以帮你做数据分析、制作可视化图表、撰写报告、生成PPT、制作网页、沉淀技能...
+          </div>
+          <div class="prompt-list">
+            <div class="prompt-item">
+              <svg class="sparkle" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 1.5l1.6 4.4L14 7.5l-4.4 1.6L8 13.5 6.4 9.1 2 7.5l4.4-1.6z"/>
+              </svg>
+              根据文件数据帮我生成商业报告
+            </div>
+            <div class="prompt-item">
+              <svg class="sparkle" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 1.5l1.6 4.4L14 7.5l-4.4 1.6L8 13.5 6.4 9.1 2 7.5l4.4-1.6z"/>
+              </svg>
+              帮我计算ROI与同比环比,拆解增长驱动因素
+            </div>
+            <div class="prompt-item">
+              <svg class="sparkle" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 1.5l1.6 4.4L14 7.5l-4.4 1.6L8 13.5 6.4 9.1 2 7.5l4.4-1.6z"/>
+              </svg>
+              帮我生成经营分析PPT
+            </div>
+            <div class="prompt-item">
+              <svg class="sparkle" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 1.5l1.6 4.4L14 7.5l-4.4 1.6L8 13.5 6.4 9.1 2 7.5l4.4-1.6z"/>
+              </svg>
+              根据我的业务流程做一个技能
+            </div>
+          </div>
+        </div>
+
+        <!-- 方案 D 专属:快捷资产气泡 -->
+        <div class="quick-asset-row annotation-target"
+             data-annotation-tooltip="方案 D: 在欢迎卡下方插入'快速接入资产'引导行,让新会话的用户一眼看到 BI/FR 入口。开始对话后此行自动隐藏,后续靠左下 + 菜单。">
+          <span class="lead">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l1 4 4 1-4 1-1 4-1-4-4-1 4-1z"/></svg>
+            快速接入资产
+          </span>
+          <button class="quick-pill bi" onclick="openAssetModal('bi')">
+            <span class="dot">BI</span>
+            FineBI 资产
+          </button>
+          <button class="quick-pill fr" onclick="openAssetModal('fr')">
+            <span class="dot">FR</span>
+            FineReport 资产
+          </button>
+        </div>
+
+        <!-- Sender (输入区) -->
+        <div class="sender">
+          <!-- B 方案:资产条 -->
+          <div class="asset-bar" id="asset-bar">
+            <!-- 空态:虚线 ghost chip -->
+            <button class="asset-ghost-chip bi annotation-target"
+                    data-annotation-tooltip="方案 B 核心:'资产条'与'附件 +' 职责分离。资产条专管结构化的 BI/FR 高频资产,本地文件走左下附件 +。"
+                    onclick="openAssetModal('bi')">
+              <span class="plus">+</span>
+              <span class="src-dot">BI</span>
+              FineBI 资产
+            </button>
+            <button class="asset-ghost-chip fr annotation-target"
+                    data-annotation-tooltip="点击后唤起 FineReport 资产选择弹窗,选定的资产以 chip 形式回插到资产条。"
+                    onclick="openAssetModal('fr')">
+              <span class="plus">+</span>
+              <span class="src-dot">FR</span>
+              FineReport 资产
+            </button>
+          </div>
+
+          <!-- 顶部资料区:本地文件 / A、C、D 方案的 BI/FR chip 落点 -->
+          <div class="sender-files-row" id="sender-files-row"></div>
+
+          <textarea class="sender-input" placeholder="在此输入任何您想查询或分析的问题"></textarea>
+
+          <div class="sender-tools">
+            <div class="sender-left-tools">
+              <!-- 通用:+ 按钮 -->
+              <button class="icon-btn annotation-target"
+                      id="plus-btn"
+                      data-annotation-tooltip=""
+                      onclick="onPlusClick(event)">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                  <path d="M10 4v12M4 10h12"/>
+                </svg>
+              </button>
+
+              <!-- 方案 C:ghost 文字按钮 -->
+              <button class="ghost-btn bi v-only-c annotation-target"
+                      data-annotation-tooltip="方案 C: BI/FR 与 + 按钮并排,3 个控件全部可见。BI/FR 是 ghost 浅色按钮、+ 是图标按钮,用视觉层级区分主次。"
+                      onclick="openAssetModal('bi')">
+                <span class="src-dot">BI</span>
+                FineBI 资产
+              </button>
+              <button class="ghost-btn fr v-only-c"
+                      onclick="openAssetModal('fr')">
+                <span class="src-dot">FR</span>
+                FineReport 资产
+              </button>
+
+              <!-- 聚合菜单(A、D 用) -->
+              <div class="sender-menu" id="sender-menu">
+                <button class="file" onclick="pickLocalFile()">
+                  <span class="src-dot">F</span>
+                  上传本地文件
+                </button>
+                <button class="bi menu-bi" onclick="openAssetModal('bi')">
+                  <span class="src-dot">BI</span>
+                  添加 FineBI 资产
+                </button>
+                <button class="fr menu-fr" onclick="openAssetModal('fr')">
+                  <span class="src-dot">FR</span>
+                  添加 FineReport 资产
+                </button>
+              </div>
+            </div>
+
+            <button class="send-btn" id="send-btn">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="sender-foot-note">内容均由AI生成,仅供参考</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- 资产选择弹窗 -->
+<div class="modal-mask" id="asset-modal">
+  <div class="modal" data-source="bi">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title">添加 FineBI 资产</div>
+      <button class="modal-close" onclick="closeAssetModal()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <path d="M4 4l8 8M12 4l-8 8"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-tree">
+        <input type="text" class="modal-search" placeholder="搜索名称" />
+        <div class="tree-list">
+          <div class="tree-node">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4l3 3 3-3"/></svg>
+            全部数据
+          </div>
+          <div class="tree-node tree-indent">
+            <input type="checkbox" checked />
+            <span class="src-dot">D</span>
+            仪表板
+          </div>
+          <div class="tree-node tree-indent active">
+            <input type="checkbox" checked />
+            <span class="src-dot">D</span>
+            分析主题B的名称…
+          </div>
+          <div class="tree-node tree-indent">
+            <input type="checkbox" />
+            <span style="display:inline-block;width:12px"></span>
+            <span style="color:var(--ink-9)">📁</span>
+            文件夹1
+          </div>
+          <div class="tree-node tree-indent" style="padding-left:36px">
+            <input type="checkbox" checked />
+            <span class="src-dot">D</span>
+            分析主题1
+          </div>
+          <div class="tree-node tree-indent" style="padding-left:36px">
+            <input type="checkbox" />
+            <span class="src-dot" style="background:var(--ink-6)">N</span>
+            节点名称2
+          </div>
+          <div class="tree-node tree-indent">
+            <input type="checkbox" />
+            <span style="display:inline-block;width:12px"></span>
+            <span style="color:var(--ink-9)">📁</span>
+            文件夹3 的名称…
+          </div>
+        </div>
+      </div>
+      <div class="modal-detail">
+        <div class="detail-bar">
+          <span class="detail-tag">
+            <span style="width:14px;height:14px;background:var(--brand-7);border-radius:3px;display:inline-block"></span>
+            BI demo_门店销售表
+          </span>
+        </div>
+        <div class="detail-preview">
+          (资产预览占位 — 此原型不复刻弹窗细节)
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <div class="selected-count">已选择资产:<strong style="color:var(--ink-11); margin-left:6px">5个</strong></div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeAssetModal()">取消</button>
+        <button class="btn btn-primary" onclick="confirmAssetModal()">确定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<input type="file" class="file-input-hidden" id="file-input" />
+
+<!-- 顶层 tooltip layer -->
+<div id="annotation-tooltip-layer" aria-hidden="true">
+  <div id="annotation-tooltip-bubble"></div>
+</div>
+
+<script>
+  /* ───────── 方案切换 ───────── */
+  function switchVariant(id, el) {
+    document.body.setAttribute('data-variant', id);
+    document.querySelectorAll('.v-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    closeSenderMenu();
+    updatePlusAnnotation();
+  }
+
+  function updatePlusAnnotation() {
+    const variant = document.body.getAttribute('data-variant');
+    const plus = document.getElementById('plus-btn');
+    const map = {
+      a: "方案 A 基线: + 聚合菜单 — 本地文件、BI 资产、FR 资产 平级展示。最简洁但 BI/FR 藏一层,高频操作打折扣。",
+      b: "方案 B: + 按钮在此只承载'本地文件'附件,BI/FR 走输入框顶部的'资产条'。职责分离是这个方案的核心。",
+      c: "方案 C: + 按钮只承载本地文件附件,BI/FR 已平铺在右侧 ghost 按钮中。点击直接唤起文件选择器。",
+      d: "方案 D: + 聚合菜单同方案 A(含 3 项),保证用户在快捷气泡隐藏后仍可访问 BI/FR。"
+    };
+    plus.dataset.annotationTooltip = map[variant] || '';
+  }
+
+  /* ───────── 演示模式 ───────── */
+  function toggleDemoMode(el) {
+    document.body.classList.toggle('demo-mode');
+    el.classList.toggle('active');
+    if (!document.body.classList.contains('demo-mode')) hideAnnotationTooltip();
+  }
+
+  /* ───────── sender 聚合菜单 ───────── */
+  function onPlusClick(event) {
+    event.stopPropagation();
+    const variant = document.body.getAttribute('data-variant');
+    // B 和 C 方案: + 只承载本地文件,直接打开文件选择
+    if (variant === 'b' || variant === 'c') {
+      pickLocalFile();
+      return;
+    }
+    // A 和 D 方案: 打开聚合菜单
+    const menu = document.getElementById('sender-menu');
+    menu.classList.toggle('open');
+  }
+  function closeSenderMenu() {
+    document.getElementById('sender-menu').classList.remove('open');
+  }
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.sender-left-tools')) closeSenderMenu();
+  });
+
+  /* ───────── 本地文件 ───────── */
+  function pickLocalFile() {
+    closeSenderMenu();
+    addFileChip({ src: 'file', name: '销售数据_2024Q4.xlsx', removable: true });
+  }
+
+  /* ───────── 资产弹窗 ───────── */
+  let pendingSource = null;
+  function openAssetModal(source) {
+    closeSenderMenu();
+    pendingSource = source;
+    const mask = document.getElementById('asset-modal');
+    const modal = mask.querySelector('.modal');
+    modal.dataset.source = source;
+    document.getElementById('modal-title').textContent =
+      source === 'bi' ? '添加 FineBI 资产' : '添加 FineReport 资产';
+    mask.classList.add('open');
+  }
+  function closeAssetModal() {
+    document.getElementById('asset-modal').classList.remove('open');
+    pendingSource = null;
+  }
+  function confirmAssetModal() {
+    const source = pendingSource;
+    const variant = document.body.getAttribute('data-variant');
+    // 模拟:确认一个资产
+    const sample = source === 'bi'
+      ? { src: 'bi', name: '门店销售表_2024' }
+      : { src: 'fr', name: '集团决策报表' };
+    if (variant === 'b') {
+      addAssetToBar(sample);
+    } else {
+      addFileChip({ ...sample, removable: true });
+    }
+    closeAssetModal();
+  }
+
+  /* ───────── chip 渲染 ───────── */
+  function addFileChip({ src, name, removable }) {
+    const row = document.getElementById('sender-files-row');
+    const chip = document.createElement('div');
+    chip.className = 'asset-chip ' + src;
+    chip.innerHTML = `
+      <span class="src-dot">${ src === 'bi' ? 'BI' : src === 'fr' ? 'FR' : 'F' }</span>
+      <span class="name">${ name }</span>
+      ${ removable ? '<button class="close" aria-label="移除">×</button>' : '' }
+    `;
+    chip.querySelector('.close')?.addEventListener('click', () => {
+      chip.remove();
+      if (!row.children.length) row.classList.remove('has-item');
+    });
+    row.appendChild(chip);
+    row.classList.add('has-item');
+  }
+
+  // 方案 B 的资产条
+  function addAssetToBar({ src, name }) {
+    const bar = document.getElementById('asset-bar');
+    // 移除当前 src 对应的 ghost chip,替换为实色 chip
+    const ghost = bar.querySelector('.asset-ghost-chip.' + src);
+    if (ghost) ghost.remove();
+    const chip = document.createElement('div');
+    chip.className = 'asset-chip ' + src;
+    chip.innerHTML = `
+      <span class="src-dot">${ src === 'bi' ? 'BI' : 'FR' }</span>
+      <span class="name">${ name }</span>
+      <button class="close">×</button>
+    `;
+    chip.querySelector('.close').addEventListener('click', () => {
+      chip.remove();
+      // 重新插回 ghost chip
+      const reGhost = document.createElement('button');
+      reGhost.className = 'asset-ghost-chip ' + src;
+      reGhost.innerHTML = `
+        <span class="plus">+</span>
+        <span class="src-dot">${ src === 'bi' ? 'BI' : 'FR' }</span>
+        ${ src === 'bi' ? 'FineBI 资产' : 'FineReport 资产' }
+      `;
+      reGhost.onclick = () => openAssetModal(src);
+      bar.appendChild(reGhost);
+    });
+    // 插在 mini + 之前(若存在)
+    bar.insertBefore(chip, bar.querySelector('.asset-add-mini'));
+    // 若资产条已有项且当前是首次注入,追加一个 mini + 按钮
+    if (!bar.querySelector('.asset-add-mini')) {
+      const mini = document.createElement('button');
+      mini.className = 'asset-add-mini annotation-target';
+      mini.dataset.annotationTooltip = "资产条已有项后,引导态收敛为一个紧凑的 + 按钮,点击展开 BI/FR 二级菜单,避免重复占位。";
+      mini.textContent = '+';
+      mini.onclick = (e) => {
+        e.stopPropagation();
+        // 简化处理:直接打开 BI 弹窗;真实交互应该弹气泡选 BI/FR
+        const popoverChoice = confirm('选择资产类型:\n确定 = FineBI 资产\n取消 = FineReport 资产');
+        openAssetModal(popoverChoice ? 'bi' : 'fr');
+      };
+      bar.appendChild(mini);
+    }
+  }
+
+  /* ───────── 发送按钮态 ───────── */
+  const senderInput = document.querySelector('.sender-input');
+  const sendBtn = document.getElementById('send-btn');
+  senderInput.addEventListener('input', () => {
+    sendBtn.classList.toggle('active', senderInput.value.trim().length > 0);
+  });
+
+  /* ───────── 交互说明 tooltip ───────── */
+  let activeAnnotationTarget = null;
+  function getLayer() { return document.getElementById('annotation-tooltip-layer'); }
+  function getBubble() { return document.getElementById('annotation-tooltip-bubble'); }
+  function getPlacement(t) { return (t && t.dataset.annotationPlacement) || 'right'; }
+  function hideAnnotationTooltip() {
+    activeAnnotationTarget = null;
+    const layer = getLayer(), bubble = getBubble();
+    if (!layer || !bubble) return;
+    layer.classList.remove('open');
+    bubble.textContent = '';
+  }
+  function syncAnnotationTooltipPosition() {
+    if (!activeAnnotationTarget || !document.body.classList.contains('demo-mode')) {
+      hideAnnotationTooltip(); return;
+    }
+    const layer = getLayer(), bubble = getBubble();
+    const rect = activeAnnotationTarget.getBoundingClientRect();
+    if (!rect.width && !rect.height) { hideAnnotationTooltip(); return; }
+    bubble.style.left = '0px'; bubble.style.top = '0px';
+    const bRect = bubble.getBoundingClientRect();
+    const gap = 12, pad = 12;
+    const place = getPlacement(activeAnnotationTarget);
+    let left = rect.right + gap;
+    let top = rect.top + rect.height/2 - bRect.height/2;
+    if (place === 'top') {
+      left = rect.left + rect.width/2 - bRect.width/2;
+      top = rect.top - bRect.height - gap;
+      if (top < pad) top = rect.bottom + gap;
+    } else if (place === 'left') {
+      left = rect.left - bRect.width - gap;
+      if (left < pad) left = rect.right + gap;
+    } else if (place === 'bottom') {
+      left = rect.left + rect.width/2 - bRect.width/2;
+      top = rect.bottom + gap;
+    }
+    if (left + bRect.width > window.innerWidth - pad) left = window.innerWidth - bRect.width - pad;
+    if (left < pad) left = pad;
+    if (top + bRect.height > window.innerHeight - pad) top = window.innerHeight - bRect.height - pad;
+    if (top < pad) top = pad;
+    bubble.style.left = Math.round(left) + 'px';
+    bubble.style.top = Math.round(top) + 'px';
+  }
+  function showAnnotationTooltip(target) {
+    if (!target || !document.body.classList.contains('demo-mode')) return;
+    const text = target.dataset.annotationTooltip || '';
+    if (!text) return;
+    activeAnnotationTarget = target;
+    getBubble().textContent = text;
+    getLayer().classList.add('open');
+    syncAnnotationTooltipPosition();
+  }
+  function initAnnotationTooltips() {
+    const layer = getLayer();
+    if (!layer || layer.dataset.inited === 'true') return;
+    document.addEventListener('pointerover', e => {
+      const t = e.target.closest('.annotation-target');
+      if (t) showAnnotationTooltip(t);
+    });
+    document.addEventListener('pointerout', e => {
+      if (!activeAnnotationTarget) return;
+      const nx = e.relatedTarget && e.relatedTarget.closest ? e.relatedTarget.closest('.annotation-target') : null;
+      if (nx === activeAnnotationTarget) return;
+      hideAnnotationTooltip();
+    });
+    window.addEventListener('scroll', syncAnnotationTooltipPosition, true);
+    window.addEventListener('resize', syncAnnotationTooltipPosition);
+    layer.dataset.inited = 'true';
+  }
+  initAnnotationTooltips();
+  updatePlusAnnotation();
+</script>
+</body>
+</html>

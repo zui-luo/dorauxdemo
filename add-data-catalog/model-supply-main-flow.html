@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>模型供数对 Dora 主流程的影响</title>
+    <style>
+      :root {
+        --bg: #f7f8fa;
+        --panel: #ffffff;
+        --ink: #1f2329;
+        --muted: #646a73;
+        --line: #dee0e3;
+        --blue: #336df4;
+        --blue-soft: #eaf0ff;
+        --green: #158a5c;
+        --green-soft: #e9f7f1;
+        --orange: #b86e00;
+        --orange-soft: #fff3dd;
+        --red: #b42318;
+        --red-soft: #fff0ee;
+        --purple: #6b43d9;
+        --purple-soft: #f1edff;
+        --shadow: 0 8px 24px rgba(31, 35, 41, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+          "Microsoft YaHei", sans-serif;
+      }
+
+      .page {
+        width: min(1280px, calc(100vw - 48px));
+        margin: 0 auto;
+        padding: 36px 0 48px;
+      }
+
+      .hero {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 24px;
+      }
+
+      .eyebrow {
+        color: var(--blue);
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 30px;
+        line-height: 38px;
+        letter-spacing: 0;
+      }
+
+      .summary {
+        max-width: 520px;
+        margin: 10px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 22px;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        padding: 6px 10px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+
+      .dot.blue {
+        background: var(--blue);
+      }
+
+      .dot.green {
+        background: var(--green);
+      }
+
+      .dot.orange {
+        background: var(--orange);
+      }
+
+      .dot.red {
+        background: var(--red);
+      }
+
+      .canvas {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background:
+          linear-gradient(var(--line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--line) 1px, transparent 1px), #fff;
+        background-size: 24px 24px;
+        box-shadow: var(--shadow);
+        padding: 28px;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: 1fr 56px 1.2fr 56px 1.2fr 56px 1.1fr;
+        gap: 0;
+        align-items: stretch;
+      }
+
+      .stage {
+        min-height: 520px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.92);
+        padding: 18px;
+      }
+
+      .stage-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .stage-title h2 {
+        margin: 0;
+        font-size: 17px;
+        line-height: 24px;
+      }
+
+      .stage-tag {
+        border-radius: 999px;
+        padding: 3px 8px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .stage-tag.blue {
+        color: var(--blue);
+        background: var(--blue-soft);
+      }
+
+      .stage-tag.green {
+        color: var(--green);
+        background: var(--green-soft);
+      }
+
+      .stage-tag.orange {
+        color: var(--orange);
+        background: var(--orange-soft);
+      }
+
+      .stage-tag.red {
+        color: var(--red);
+        background: var(--red-soft);
+      }
+
+      .node {
+        position: relative;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 13px 14px;
+        margin-bottom: 12px;
+      }
+
+      .node.strong {
+        border-color: rgba(51, 109, 244, 0.4);
+        background: var(--blue-soft);
+      }
+
+      .node.green {
+        border-color: rgba(21, 138, 92, 0.35);
+        background: var(--green-soft);
+      }
+
+      .node.orange {
+        border-color: rgba(184, 110, 0, 0.35);
+        background: var(--orange-soft);
+      }
+
+      .node.red {
+        border-color: rgba(180, 35, 24, 0.32);
+        background: var(--red-soft);
+      }
+
+      .node-title {
+        margin: 0 0 6px;
+        font-size: 14px;
+        line-height: 20px;
+        font-weight: 650;
+      }
+
+      .node-desc {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 18px;
+      }
+
+      .sub-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        min-height: 24px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.78);
+        border: 1px solid var(--line);
+        padding: 3px 9px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .arrow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        font-size: 28px;
+        font-weight: 300;
+      }
+
+      .decision {
+        border-style: dashed;
+        border-color: rgba(107, 67, 217, 0.35);
+        background: var(--purple-soft);
+      }
+
+      .matrix {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 22px;
+      }
+
+      .matrix-card {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+        padding: 16px;
+      }
+
+      .matrix-card h3 {
+        margin: 0 0 10px;
+        font-size: 15px;
+      }
+
+      .matrix-card ul {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 21px;
+      }
+
+      .callout {
+        margin-top: 22px;
+        border: 1px solid rgba(51, 109, 244, 0.28);
+        border-radius: 10px;
+        background: var(--blue-soft);
+        padding: 16px 18px;
+      }
+
+      .callout-title {
+        margin: 0 0 6px;
+        font-size: 15px;
+        font-weight: 650;
+      }
+
+      .callout p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 21px;
+      }
+
+      @media (max-width: 1080px) {
+        .hero {
+          display: block;
+        }
+
+        .legend {
+          justify-content: flex-start;
+          margin-top: 16px;
+        }
+
+        .flow {
+          grid-template-columns: 1fr;
+          gap: 14px;
+        }
+
+        .arrow {
+          transform: rotate(90deg);
+        }
+
+        .stage {
+          min-height: auto;
+        }
+
+        .matrix {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div>
+          <div class="eyebrow">Dora 数据中心 × 模型供数</div>
+          <h1>模型供数接入主流程影响图</h1>
+          <p class="summary">
+            “指标模型数据集”不是普通表资产。它会把 Dora 的添加流程从“选一个数据”升级为“选一个已治理、带语义约束的供数对象”。
+          </p>
+        </div>
+        <div class="legend" aria-label="图例">
+          <span class="legend-item"><span class="dot blue"></span>主流程</span>
+          <span class="legend-item"><span class="dot green"></span>可复用能力</span>
+          <span class="legend-item"><span class="dot orange"></span>需要设计拍板</span>
+          <span class="legend-item"><span class="dot red"></span>异常 / 风险</span>
+        </div>
+      </header>
+
+      <section class="canvas" aria-label="模型供数主流程影响图">
+        <div class="flow">
+          <section class="stage">
+            <div class="stage-title">
+              <h2>1. BI 侧供数对象</h2>
+              <span class="stage-tag blue">来源</span>
+            </div>
+            <div class="node strong">
+              <p class="node-title">模型指标集</p>
+              <p class="node-desc">由语义模型发布而来，包含数据集、指标、维度、计算字段。</p>
+              <div class="sub-list">
+                <span class="pill">整体可添加</span>
+                <span class="pill">内部资源可查看</span>
+                <span class="pill">继承 BI 权限</span>
+              </div>
+            </div>
+            <div class="node">
+              <p class="node-title">数据目录数据集</p>
+              <p class="node-desc">SQL 数据集、数据库表、发布的自助数据集、Excel 数据集统一进入“数据集”。</p>
+            </div>
+            <div class="node red">
+              <p class="node-title">前置约束</p>
+              <p class="node-desc">无权限、未发布、原资产删除、模型关系不满足时，需要在添加前或预览区明确暴露。</p>
+            </div>
+          </section>
+
+          <div class="arrow">→</div>
+
+          <section class="stage">
+            <div class="stage-title">
+              <h2>2. 添加到 Dora 数据中心</h2>
+              <span class="stage-tag orange">入口重构</span>
+            </div>
+            <div class="node orange">
+              <p class="node-title">添加入口分流</p>
+              <p class="node-desc">建议从“添加数据”进入后，先选“BI 数据目录”，再选数据集 / 模型指标集。</p>
+            </div>
+            <div class="node decision">
+              <p class="node-title">关键设计问题</p>
+              <p class="node-desc">模型指标集在树中是“可展开但只允许整体勾选”，还是“叶子项 + 右侧详情”？</p>
+            </div>
+            <div class="node green">
+              <p class="node-title">可复用现有能力</p>
+              <p class="node-desc">树搜索、多选、已添加禁用、右侧预览、重名校验、添加成功反馈。</p>
+            </div>
+            <div class="node red">
+              <p class="node-title">拦截点</p>
+              <p class="node-desc">模型指标转表不支持、权限不足、资产不可用时，不应等到 Agent 使用时才暴露。</p>
+            </div>
+          </section>
+
+          <div class="arrow">→</div>
+
+          <section class="stage">
+            <div class="stage-title">
+              <h2>3. 数据中心管理</h2>
+              <span class="stage-tag green">工作台升级</span>
+            </div>
+            <div class="node strong">
+              <p class="node-title">从“预览区”变成“资产理解区”</p>
+              <p class="node-desc">右侧不只看数据，还要看结构、口径、关系、详情、语义信息。</p>
+            </div>
+            <div class="node">
+              <p class="node-title">模型指标集详情</p>
+              <p class="node-desc">整体概览 + 内部数据集 / 指标 / 计算字段详情，需要有清晰切换方式。</p>
+            </div>
+            <div class="node">
+              <p class="node-title">Dora 展示规则</p>
+              <p class="node-desc">添加来源只在导入阶段展示；进入 Dora 后只展示“数据集 / 模型指标集”等数据类型。</p>
+            </div>
+            <div class="node red">
+              <p class="node-title">删除与失效</p>
+              <p class="node-desc">Dora 删除、BI 原资产删除、权限变化，需要在树、详情、Agent 配置里保持一致状态。</p>
+            </div>
+          </section>
+
+          <div class="arrow">→</div>
+
+          <section class="stage">
+            <div class="stage-title">
+              <h2>4. Agent / Skill 消费</h2>
+              <span class="stage-tag blue">使用约束</span>
+            </div>
+            <div class="node strong">
+              <p class="node-title">混合数据选择</p>
+              <p class="node-desc">Excel、数据集、模型指标集、分析主题、仪表板可以混合进入 Agent 数据范围。</p>
+            </div>
+            <div class="node orange">
+              <p class="node-title">按能力筛选</p>
+              <p class="node-desc">Skill 配置需要展示“支持哪些类型 / 不支持原因”，不能只按目录路径分组。</p>
+            </div>
+            <div class="node">
+              <p class="node-title">问数与口径</p>
+              <p class="node-desc">模型指标集不仅用于取数，还要支持回答指标来源、计算口径、负责人等问题。</p>
+            </div>
+            <div class="node red">
+              <p class="node-title">使用时异常</p>
+              <p class="node-desc">会话侧可以保留“提问时提示缺失”，但配置侧必须提前标红和解释。</p>
+            </div>
+          </section>
+        </div>
+
+        <div class="matrix">
+          <article class="matrix-card">
+            <h3>主流程新增节点</h3>
+            <ul>
+              <li>BI 数据目录入口</li>
+              <li>模型指标集整体选择</li>
+              <li>结构 / 口径 / 关系预览</li>
+              <li>Skill 支持类型判断</li>
+            </ul>
+          </article>
+          <article class="matrix-card">
+            <h3>需要交互拍板</h3>
+            <ul>
+              <li>顶部菜单分流还是弹窗分流</li>
+              <li>内部资源可展开但不可选的表达方式</li>
+              <li>详情区用 Tab、侧栏还是二级导航</li>
+              <li>失效数据是否提供一键清理</li>
+            </ul>
+          </article>
+          <article class="matrix-card">
+            <h3>当前代码可复用</h3>
+            <ul>
+              <li>数据中心树搜索 / 筛选 / 多选</li>
+              <li>右侧预览容器</li>
+              <li>Agent 数据源分组展示</li>
+              <li>Skill 配置抽屉的数据过滤逻辑</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="callout">
+          <p class="callout-title">一句话结论</p>
+          <p>
+            模型供数会让 Dora 主流程从“把 BI 资产添加进来”升级为“把 BI 已治理语义资产添加进来，并在添加、管理、消费三个阶段持续解释它的结构、能力和异常状态”。
+          </p>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

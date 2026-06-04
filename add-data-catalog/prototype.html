@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>添加数据目录 · 原型</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand-1: #eef4ff;
+      --brand-2: #dce7ff;
+      --brand-6: #2562ff;
+      --brand-7: #0047fd;
+      --green-1: #e8f7ef;
+      --green-6: #16a765;
+      --orange-1: #fff5dc;
+      --orange-6: #d98200;
+      --red-1: #fff0f0;
+      --red-6: #d93030;
+      --purple-1: #f3efff;
+      --purple-6: #7254d9;
+      --cyan-1: #e8f8f6;
+      --cyan-6: #13a89e;
+      --neutral-0: #ffffff;
+      --neutral-1: #f6f8fb;
+      --neutral-2: #eef1f6;
+      --neutral-3: #e1e6ef;
+      --neutral-4: #d2d9e6;
+      --neutral-6: #a7b0c1;
+      --neutral-7: #7c879c;
+      --neutral-8: #5f6b82;
+      --neutral-9: #334155;
+      --neutral-10: #111827;
+      --shadow-pop: 0 20px 60px rgba(9, 30, 64, 0.18);
+      --shadow-soft: 0 8px 24px rgba(9, 30, 64, 0.08);
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      min-height: 100vh;
+      overflow: hidden;
+      background: var(--neutral-1);
+      color: var(--neutral-9);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+      font-size: 14px;
+    }
+
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    svg { display: block; }
+
+    #variant-bar {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 8px;
+      border-radius: 8px;
+      background: rgba(26, 26, 46, 0.96);
+      box-shadow: 0 8px 24px rgba(9, 30, 64, 0.16);
+      backdrop-filter: blur(8px);
+    }
+
+    #variant-bar .label {
+      margin: 0 8px 0 4px;
+      color: #888;
+      font-size: 12px;
+    }
+
+    .v-tab {
+      height: 24px;
+      padding: 0 14px;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      color: #aaa;
+      font-size: 12px;
+    }
+
+    .v-tab.active { background: var(--brand-7); color: #fff; }
+
+    .v-demo-toggle {
+      height: 24px;
+      padding: 0 12px;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 4px;
+      background: transparent;
+      color: #777;
+      font-size: 11px;
+    }
+
+    .v-demo-toggle.active {
+      border-color: rgba(255,193,7,0.35);
+      background: rgba(255,200,0,0.12);
+      color: #ffc107;
+    }
+
+    .demo-control { display: none !important; }
+    body.demo-mode .demo-control { display: flex !important; }
+
+    .demo-popover {
+      position: fixed;
+      top: 52px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9998;
+      gap: 6px;
+      padding: 8px;
+      border: 1px solid rgba(9, 30, 64, 0.12);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(8px);
+    }
+
+    .demo-popover button {
+      height: 28px;
+      padding: 0 10px;
+      border: 1px solid var(--neutral-3);
+      border-radius: 6px;
+      background: var(--neutral-0);
+      color: var(--neutral-8);
+      font-size: 12px;
+    }
+
+    .demo-popover button.active {
+      border-color: var(--brand-6);
+      background: var(--brand-1);
+      color: var(--brand-7);
+    }
+
+    .variant { display: none; }
+    .variant.active { display: contents; }
+
+    .app {
+      height: 100vh;
+      padding: 12px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .management-sidebar {
+      width: 248px;
+      height: 100%;
+      flex-shrink: 0;
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      background: var(--neutral-1);
+    }
+
+    .brand-row {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 8px;
+      color: var(--neutral-10);
+    }
+
+    .brand-title {
+      font-size: 20px;
+      line-height: 28px;
+      font-weight: 650;
+    }
+
+    .icon-button {
+      width: 30px;
+      height: 30px;
+      border: none;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--neutral-8);
+      background: transparent;
+    }
+
+    .icon-button:hover { background: var(--neutral-2); color: var(--neutral-10); }
+    .icon { width: 18px; height: 18px; flex-shrink: 0; }
+
+    .menu-groups {
+      flex: 1;
+      min-height: 0;
+      padding-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .menu-divider {
+      height: 1px;
+      margin: 8px 4px;
+      background: var(--neutral-3);
+    }
+
+    .menu-item {
+      height: 46px;
+      padding: 0 14px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--neutral-8);
+    }
+
+    .menu-item.active {
+      background: #e7ebf2;
+      color: var(--neutral-10);
+      font-weight: 650;
+    }
+
+    .workspace {
+      flex: 1;
+      min-width: 0;
+      height: 100%;
+      display: flex;
+      overflow: hidden;
+      border-radius: 8px;
+      background: var(--neutral-0);
+      box-shadow: 0 0 0 1px rgba(9, 30, 64, 0.03);
+    }
+
+    .data-tree-panel {
+      position: relative;
+      width: 294px;
+      height: 100%;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--neutral-3);
+      background: var(--neutral-0);
+    }
+
+    .tree-header {
+      height: 56px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--neutral-3);
+    }
+
+    .tree-title {
+      color: var(--neutral-10);
+      font-size: 16px;
+      font-weight: 650;
+    }
+
+    .tree-add {
+      margin-left: auto;
+      background: var(--brand-7);
+      color: #fff;
+    }
+
+    .tree-add:hover { background: var(--brand-6); color: #fff; }
+
+    .add-menu {
+      position: absolute;
+      top: 48px;
+      right: 12px;
+      z-index: 30;
+      width: 236px;
+      padding: 8px;
+      display: none;
+      border: 1px solid var(--neutral-3);
+      border-radius: 8px;
+      background: var(--neutral-0);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .add-menu.open { display: block; }
+
+    .add-menu button {
+      width: 100%;
+      height: 42px;
+      padding: 0 10px;
+      border: none;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: transparent;
+      color: var(--neutral-9);
+      text-align: left;
+    }
+
+    .add-menu button:hover { background: var(--neutral-1); }
+    .add-menu .primary { color: var(--brand-7); font-weight: 650; }
+
+    .tree-body {
+      flex: 1;
+      min-height: 0;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .search-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .search-box {
+      height: 36px;
+      flex: 1;
+      min-width: 0;
+      padding: 0 10px;
+      border: 1px solid var(--neutral-4);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--neutral-6);
+      background: var(--neutral-0);
+    }
+
+    .tree-root {
+      height: 34px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--neutral-10);
+      font-weight: 650;
+    }
+
+    .tree-list {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      padding-top: 8px;
+    }
+
+    .tree-node {
+      height: 34px;
+      padding-right: 8px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--neutral-9);
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .tree-node.level-1 { padding-left: 4px; }
+    .tree-node.level-2 { padding-left: 28px; }
+    .tree-node.active {
+      background: var(--brand-2);
+      color: var(--neutral-10);
+      font-weight: 650;
+    }
+
+    .tree-node.deleted {
+      color: var(--red-6);
+      background: var(--red-1);
+    }
+
+    .tree-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .type-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .type-icon svg { width: 14px; height: 14px; }
+    .icon-folder { color: #d98200; }
+    .icon-dataset { color: var(--cyan-6); background: var(--cyan-1); }
+    .icon-metric { color: var(--purple-6); background: var(--purple-1); }
+    .icon-subject { color: var(--green-6); background: var(--green-1); }
+    .icon-dashboard { color: var(--brand-7); background: var(--brand-1); }
+    .icon-excel { color: var(--green-6); background: var(--green-1); }
+    .icon-deleted { color: var(--red-6); background: var(--red-1); }
+
+    .preview-shell {
+      flex: 1;
+      min-width: 0;
+      height: 100%;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      background: var(--neutral-0);
+    }
+
+    .preview-header {
+      min-height: 74px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-bottom: 1px solid var(--neutral-3);
+    }
+
+    .preview-title-wrap {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .preview-title-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .preview-title {
+      color: var(--neutral-10);
+      font-size: 18px;
+      font-weight: 650;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tag-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      color: var(--neutral-7);
+      font-size: 12px;
+    }
+
+    .tag {
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      background: var(--neutral-2);
+      color: var(--neutral-8);
+      font-size: 12px;
+    }
+
+    .tag.brand { background: var(--brand-1); color: var(--brand-7); }
+    .tag.green { background: var(--green-1); color: var(--green-6); }
+    .tag.red { background: var(--red-1); color: var(--red-6); }
+
+    .header-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+    }
+
+    .ghost-button,
+    .primary-button,
+    .danger-button {
+      height: 34px;
+      padding: 0 14px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-weight: 550;
+    }
+
+    .ghost-button {
+      border: 1px solid var(--neutral-3);
+      background: var(--neutral-0);
+      color: var(--neutral-8);
+    }
+
+    .primary-button {
+      border: 1px solid var(--brand-7);
+      background: var(--brand-7);
+      color: #fff;
+    }
+
+    .primary-button:disabled {
+      border-color: var(--neutral-4);
+      background: var(--neutral-3);
+      color: var(--neutral-7);
+      cursor: not-allowed;
+    }
+
+    .danger-button {
+      border: 1px solid var(--red-6);
+      background: var(--red-6);
+      color: #fff;
+    }
+
+    .preview-body {
+      flex: 1;
+      min-height: 0;
+      padding-top: 18px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) 320px;
+      gap: 18px;
+      overflow: hidden;
+    }
+
+    .panel {
+      min-height: 0;
+      border: 1px solid var(--neutral-3);
+      border-radius: 8px;
+      background: var(--neutral-0);
+      overflow: auto;
+    }
+
+    .panel-header {
+      height: 48px;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--neutral-3);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--neutral-10);
+      font-weight: 650;
+      background: var(--neutral-0);
+    }
+
+    .panel-content {
+      min-width: 0;
+      padding: 16px;
+    }
+
+    .field-table {
+      width: 100%;
+      min-width: 620px;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .field-table th,
+    .field-table td {
+      height: 36px;
+      padding: 0 10px;
+      border-bottom: 1px solid var(--neutral-2);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .field-table th {
+      color: var(--neutral-7);
+      font-weight: 550;
+      background: var(--neutral-1);
+    }
+
+    .field-table td { color: var(--neutral-9); }
+
+    .metric-cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .metric-card {
+      min-height: 92px;
+      padding: 14px;
+      border: 1px solid var(--neutral-3);
+      border-radius: 8px;
+      background: linear-gradient(180deg, #fbfcff 0%, #fff 100%);
+    }
+
+    .metric-card .label { color: var(--neutral-7); font-size: 12px; }
+    .metric-card .value { margin-top: 10px; color: var(--neutral-10); font-size: 20px; font-weight: 750; }
+    .metric-card .desc { margin-top: 6px; color: var(--neutral-7); font-size: 12px; }
+
+    .meta-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      color: var(--neutral-8);
+      font-size: 13px;
+    }
+
+    .meta-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .meta-item span:first-child { color: var(--neutral-7); }
+    .meta-item span:last-child { color: var(--neutral-9); text-align: right; }
+
+    .warning-box {
+      margin-top: 14px;
+      padding: 12px;
+      border: 1px solid #ffd9d9;
+      border-radius: 8px;
+      background: var(--red-1);
+      color: var(--red-6);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 32px;
+      background: rgba(17, 24, 39, 0.28);
+    }
+
+    .modal-mask.hidden { display: none; }
+
+    .catalog-dialog {
+      width: 1152px;
+      height: 720px;
+      max-width: calc(100vw - 64px);
+      max-height: calc(100vh - 80px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-radius: 8px;
+      background: var(--neutral-0);
+      box-shadow: var(--shadow-pop);
+    }
+
+    .dialog-header {
+      height: 64px;
+      flex-shrink: 0;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--neutral-3);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .dialog-title {
+      color: var(--neutral-10);
+      font-size: 18px;
+      font-weight: 650;
+    }
+
+    .dialog-subtitle {
+      color: var(--neutral-7);
+      font-size: 12px;
+    }
+
+    .dialog-close { margin-left: auto; }
+
+    .catalog-body {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 344px minmax(0, 1fr);
+    }
+
+    .catalog-left {
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--neutral-3);
+      background: #fbfcff;
+    }
+
+    .type-tabs {
+      flex-shrink: 0;
+      padding: 12px 14px 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      border-bottom: 1px solid var(--neutral-3);
+    }
+
+    .type-tab {
+      height: 30px;
+      padding: 0 10px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--neutral-8);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .type-tab.active {
+      border-color: var(--brand-6);
+      background: var(--brand-1);
+      color: var(--brand-7);
+      font-weight: 650;
+    }
+
+    .catalog-search {
+      flex-shrink: 0;
+      margin: 12px 14px;
+      height: 36px;
+      padding: 0 10px;
+      border: 1px solid var(--neutral-4);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--neutral-0);
+      color: var(--neutral-6);
+    }
+
+    .catalog-search input {
+      width: 100%;
+      min-width: 0;
+      border: none;
+      outline: none;
+      color: var(--neutral-9);
+      background: transparent;
+    }
+
+    .asset-list {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 0 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .asset-row {
+      min-height: 78px;
+      padding: 12px 10px;
+      border: 1px solid var(--neutral-3);
+      border-radius: 8px;
+      display: grid;
+      grid-template-columns: 18px 1fr;
+      gap: 10px;
+      background: var(--neutral-0);
+      cursor: pointer;
+    }
+
+    .asset-row.focused {
+      border-color: var(--brand-6);
+      box-shadow: 0 0 0 3px rgba(0, 71, 253, 0.08);
+    }
+
+    .asset-row.disabled {
+      background: var(--neutral-1);
+      color: var(--neutral-6);
+      cursor: default;
+    }
+
+    .asset-row input { margin-top: 3px; }
+
+    .asset-main {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .asset-title-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .asset-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--neutral-10);
+      font-weight: 650;
+    }
+
+    .asset-path {
+      color: var(--neutral-7);
+      font-size: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .asset-meta {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .catalog-right {
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .catalog-preview {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .asset-detail-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .asset-detail-title {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .asset-detail-title strong {
+      color: var(--neutral-10);
+      font-size: 18px;
+      line-height: 26px;
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 16px;
+      min-height: 0;
+      flex: 1;
+    }
+
+    .mini-relation {
+      height: 176px;
+      padding: 14px;
+      border: 1px solid var(--neutral-3);
+      border-radius: 8px;
+      background:
+        linear-gradient(to right, rgba(225,230,239,0.55) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(225,230,239,0.55) 1px, transparent 1px);
+      background-size: 22px 22px;
+      position: relative;
+    }
+
+    .relation-node {
+      position: absolute;
+      min-width: 118px;
+      height: 46px;
+      padding: 0 10px;
+      border: 1px solid var(--brand-6);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      color: var(--neutral-9);
+      font-size: 12px;
+      font-weight: 650;
+      box-shadow: 0 6px 14px rgba(0, 71, 253, 0.08);
+    }
+
+    .relation-node.a { left: 20px; top: 24px; }
+    .relation-node.b { right: 20px; top: 24px; }
+    .relation-node.c { left: 50%; bottom: 20px; transform: translateX(-50%); }
+    .relation-line {
+      position: absolute;
+      height: 1px;
+      background: var(--brand-6);
+      opacity: 0.65;
+    }
+    .relation-line.ab { left: 142px; right: 142px; top: 47px; }
+    .relation-line.ac { left: 138px; width: 135px; top: 91px; transform: rotate(28deg); transform-origin: left center; }
+    .relation-line.bc { right: 138px; width: 135px; top: 91px; transform: rotate(-28deg); transform-origin: right center; }
+
+    .selected-footer {
+      height: 64px;
+      flex-shrink: 0;
+      padding: 10px 22px;
+      border-top: 1px solid var(--neutral-3);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #fbfcff;
+    }
+
+    .selected-text {
+      color: var(--neutral-8);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .selected-chips {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      gap: 6px;
+      overflow: auto;
+      padding-bottom: 2px;
+    }
+
+    .chip {
+      height: 26px;
+      max-width: 180px;
+      padding: 0 8px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--brand-1);
+      color: var(--brand-7);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .chip span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .empty-state,
+    .permission-state {
+      height: 100%;
+      min-height: 420px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 10px;
+      color: var(--neutral-7);
+      text-align: center;
+    }
+
+    body.scenario-permission .asset-list,
+    body.scenario-permission .catalog-preview {
+      display: none;
+    }
+
+    body.scenario-permission .permission-state {
+      display: flex;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      top: 58px;
+      z-index: 5000;
+      min-width: 260px;
+      height: 40px;
+      padding: 0 14px;
+      border-radius: 8px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: rgba(17, 24, 39, 0.92);
+      color: #fff;
+      transform: translateX(-50%);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .toast.open { display: flex; }
+
+    .annotation-target { position: relative; }
+
+    body.demo-mode .annotation-target {
+      outline: 2px solid var(--brand-7);
+      outline-offset: 4px;
+      box-shadow: 0 0 0 6px rgba(0,71,253,0.10);
+      cursor: help;
+    }
+
+    body.demo-mode .annotation-target.annotation-tight {
+      outline-offset: 2px;
+      box-shadow: 0 0 0 4px rgba(0,71,253,0.10);
+    }
+
+    #annotation-tooltip-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 300000;
+      pointer-events: none;
+      display: none;
+    }
+
+    #annotation-tooltip-layer.open { display: block; }
+
+    #annotation-tooltip-bubble {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 268px;
+      max-width: min(300px, calc(100vw - 24px));
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(9, 22, 64, 0.94);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+      box-shadow: 0 8px 20px rgba(9,30,64,0.16);
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 120ms ease, transform 120ms ease;
+    }
+
+    #annotation-tooltip-layer.open #annotation-tooltip-bubble {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div id="variant-bar">
+    <span class="label">添加数据目录</span>
+    <button class="v-tab active" type="button">PRD 对齐原型</button>
+    <button id="demoToggle" class="v-demo-toggle" type="button">交互说明</button>
+  </div>
+
+  <div class="demo-control demo-popover" aria-label="原型状态切换">
+    <button class="active" type="button" data-scenario="standard">标准导入</button>
+    <button type="button" data-scenario="permission">权限不足</button>
+    <button type="button" data-scenario="deleted">BI 源删除</button>
+    <button type="button" data-scenario="success">添加成功</button>
+  </div>
+
+  <div id="variant-a" class="variant active">
+    <main class="app">
+      <aside class="management-sidebar">
+        <div class="brand-row">
+          <button class="icon-button" type="button" aria-label="返回">
+            <svg class="icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 4.5 7 10l5.5 5.5"/><path d="M7.5 10H17"/></svg>
+          </button>
+          <div class="brand-title">Data Agent</div>
+        </div>
+
+        <nav class="menu-groups" aria-label="Data Agent 管理导航">
+          <div class="menu-item">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="10" x="4" y="8" rx="2"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/></svg>
+            <span>Agent</span>
+          </div>
+          <div class="menu-divider"></div>
+          <div class="menu-item">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v8"/><path d="m16 6-4 4-4-4"/><path d="M4 14a8 8 0 0 0 16 0"/></svg>
+            <span>技能</span>
+          </div>
+          <div class="menu-item active">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 8 4.5-8 4.5-8-4.5L12 3Z"/><path d="m4 12 8 4.5 8-4.5"/><path d="m4 16.5 8 4.5 8-4.5"/></svg>
+            <span>数据</span>
+          </div>
+          <div class="menu-item">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/><path d="M8 7h7M8 11h5"/></svg>
+            <span>知识库</span>
+          </div>
+          <div class="menu-item">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 16-9 5-9-5"/><path d="m12 3 9 5-9 5-9-5 9-5Z"/></svg>
+            <span>模型</span>
+          </div>
+        </nav>
+      </aside>
+
+      <section class="workspace">
+        <aside class="data-tree-panel">
+          <header class="tree-header">
+            <span class="tree-title">数据</span>
+            <button class="icon-button" type="button" aria-label="刷新">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-9 9 9.6 9.6 0 0 1-6.7-2.7"/><path d="M3 12a9 9 0 0 1 9-9 9.6 9.6 0 0 1 6.7 2.7"/><path d="M3 17v2h2"/><path d="M21 7V5h-2"/></svg>
+            </button>
+            <button id="treeAddButton" class="icon-button tree-add annotation-target annotation-tight" type="button" aria-label="添加数据" data-annotation-placement="left" data-annotation-tooltip="新增数据仍从数据中心顶部 + 发起，BI 数据目录作为一个添加来源进入。">
+              <svg class="icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>
+            </button>
+          </header>
+
+          <div id="addMenu" class="add-menu">
+            <button class="primary" type="button" id="openCatalogFromMenu">
+              <span class="type-icon icon-dataset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3Z"/><path d="M4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></span>
+              BI 数据目录资产
+            </button>
+            <button type="button"><span class="type-icon icon-excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg></span>本地 Excel</button>
+            <button type="button"><span class="type-icon icon-subject"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h6M8 16h4"/></svg></span>BI 分析主题</button>
+            <button type="button"><span class="type-icon icon-dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 17v-5M12 17V7M16 17v-8"/></svg></span>BI 仪表板</button>
+          </div>
+
+          <div class="tree-body">
+            <div class="search-row annotation-target" data-annotation-tooltip="树搜索继续用于查找已加入 Dora 的数据资产，来源细分不在这里展示。">
+              <div class="search-box">
+                <svg class="icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.2"/><path d="m12.5 12.5 3.5 3.5"/></svg>
+                <span>搜索名称</span>
+              </div>
+              <button class="icon-button" type="button" aria-label="筛选">
+                <svg class="icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 5h12l-4.6 5.2V15l-2.8 1v-5.8L4 5Z"/></svg>
+              </button>
+            </div>
+
+            <div class="tree-root">
+              <span class="type-icon icon-dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 8 4.5-8 4.5-8-4.5L12 3Z"/><path d="m4 12 8 4.5 8-4.5"/></svg></span>
+              <span>全部数据</span>
+            </div>
+
+            <div class="tree-list annotation-target" data-annotation-tooltip="新增后树中只显示 Dora 数据类型：Excel、分析主题、仪表板、数据集、模型指标集。">
+              <div class="tree-node level-1"><span>⌄</span><span class="icon-folder"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h5l2 2h9v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"/></svg></span><span class="tree-name">经营分析</span></div>
+              <div class="tree-node level-2 active" id="treeMetricNode"><span class="type-icon icon-metric"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17 10 9l4 4 6-8"/><path d="M4 21h16"/></svg></span><span class="tree-name">经营核心指标集</span></div>
+              <div class="tree-node level-2"><span class="type-icon icon-dataset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3Z"/><path d="M4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7"/></svg></span><span class="tree-name">门店销售明细宽表</span></div>
+              <div class="tree-node level-2" id="treeDeletedNode"><span class="type-icon icon-dataset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3Z"/><path d="M4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7"/></svg></span><span class="tree-name">历史渠道成本明细</span></div>
+              <div class="tree-node level-2"><span class="type-icon icon-subject"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h6M8 16h4"/></svg></span><span class="tree-name">通信行业客服工单分析</span></div>
+              <div class="tree-node level-2"><span class="type-icon icon-dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 17v-5M12 17V7M16 17v-8"/></svg></span><span class="tree-name">全平台运营总览</span></div>
+              <div class="tree-node level-2"><span class="type-icon icon-excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg></span><span class="tree-name">门店目标拆解.xlsx</span></div>
+            </div>
+          </div>
+        </aside>
+
+        <section class="preview-shell">
+          <header class="preview-header annotation-target" data-annotation-tooltip="Dora 使用阶段只展示数据类型，不展示 SQL 数据集、数据库表等来源细分。">
+            <span class="type-icon icon-metric" id="previewIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17 10 9l4 4 6-8"/><path d="M4 21h16"/></svg></span>
+            <div class="preview-title-wrap">
+              <div class="preview-title-line">
+                <div class="preview-title" id="previewTitle">经营核心指标集</div>
+                <span class="tag brand" id="previewTypeTag">模型指标集</span>
+                <span class="tag red" id="deletedTag" hidden>BI 数据已删除</span>
+              </div>
+              <div class="tag-row" id="previewSubtitle">已加入 Dora 数据中心 · 可被 Agent 和 Skill 选择</div>
+            </div>
+            <div class="header-actions">
+              <button class="ghost-button" type="button">语义配置</button>
+              <button class="ghost-button annotation-target annotation-tight" type="button" data-annotation-placement="left" data-annotation-tooltip="删除已被 Agent 或 Skill 引用的数据时，需要在确认中提示影响范围。">删除</button>
+              <button class="primary-button" type="button" id="openCatalogButton">添加数据</button>
+            </div>
+          </header>
+
+          <div class="preview-body" id="normalPreview">
+            <section class="panel">
+              <div class="panel-header"><span>模型指标集预览</span><span class="tag green">动态维度 + 指标</span></div>
+              <div class="panel-content">
+                <div class="metric-cards">
+                  <div class="metric-card"><div class="label">销售额</div><div class="value">9,470.05万</div><div class="desc">来自指标中心</div></div>
+                  <div class="metric-card"><div class="label">推广 ROI</div><div class="value">3.02</div><div class="desc">负责人：陈晓</div></div>
+                  <div class="metric-card"><div class="label">成交客户数</div><div class="value">112.06万</div><div class="desc">口径：支付成功客户</div></div>
+                </div>
+                <table class="field-table">
+                  <thead><tr><th>资源</th><th>类型</th><th>说明</th><th>配置</th></tr></thead>
+                  <tbody>
+                    <tr><td>订单明细</td><td>数据集</td><td>销售订单与退款明细</td><td>字段语义</td></tr>
+                    <tr><td>销售额</td><td>指标</td><td>支付金额 - 退款金额</td><td>数据格式</td></tr>
+                    <tr><td>推广 ROI</td><td>计算字段</td><td>净销售额 / 投放金额</td><td>读取模型指标类型</td></tr>
+                    <tr><td>店铺</td><td>维度</td><td>店铺名称与归属平台</td><td>字段别名</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <aside class="panel">
+              <div class="panel-header"><span>数据详情</span></div>
+              <div class="panel-content">
+                <div class="meta-list">
+                  <div class="meta-item"><span>Dora 类型</span><span>模型指标集</span></div>
+                  <div class="meta-item"><span>引用状态</span><span>3 个 Agent，2 个 Skill</span></div>
+                  <div class="meta-item"><span>权限继承</span><span>BI 查看和使用权限</span></div>
+                  <div class="meta-item"><span>更新方式</span><span>预加载更新</span></div>
+                  <div class="meta-item"><span>指标配置</span><span>数据格式可配置，指标类型读取模型</span></div>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <div class="preview-body" id="deletedPreview" hidden>
+            <section class="panel">
+              <div class="panel-header"><span>数据不可用</span><span class="tag red">源资产失效</span></div>
+              <div class="panel-content">
+                <div class="warning-box">BI 数据已删除。该数据仍保留在 Dora 数据中心用于提示引用关系，但无法继续预览或被新增使用。</div>
+                <table class="field-table" style="margin-top:14px;">
+                  <thead><tr><th>影响位置</th><th>对象</th><th>处理建议</th></tr></thead>
+                  <tbody>
+                    <tr><td>Agent 后台配置</td><td>经营分析助手</td><td>重新选择可用数据</td></tr>
+                    <tr><td>Skill 数据范围</td><td>例行经营报告</td><td>替换数据或删除引用</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <aside class="panel">
+              <div class="panel-header"><span>失效说明</span></div>
+              <div class="panel-content">
+                <div class="meta-list">
+                  <div class="meta-item"><span>Dora 类型</span><span>数据集</span></div>
+                  <div class="meta-item"><span>当前状态</span><span style="color:var(--red-6)">BI 数据已删除</span></div>
+                  <div class="meta-item"><span>前台会话</span><span>提问相关内容时说明数据缺失</span></div>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div id="catalogModal" class="modal-mask">
+    <section class="catalog-dialog" role="dialog" aria-modal="true" aria-labelledby="catalogTitle">
+      <header class="dialog-header">
+        <span class="type-icon icon-dataset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3Z"/><path d="M4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7"/></svg></span>
+        <div>
+          <div id="catalogTitle" class="dialog-title">添加 BI 数据目录资产</div>
+          <div class="dialog-subtitle">只展示当前用户有 BI 使用或管理权限的数据，可搜索并多选添加。</div>
+        </div>
+        <button class="icon-button dialog-close" type="button" id="closeCatalogButton" aria-label="关闭">
+          <svg class="icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l10 10M15 5 5 15"/></svg>
+        </button>
+      </header>
+
+      <div class="catalog-body">
+        <aside class="catalog-left">
+          <div class="type-tabs annotation-target" data-annotation-tooltip="数据目录导入支持数据集、模型指标集，并保留现有分析主题、仪表板、Excel。">
+            <button class="type-tab active" type="button" data-type="dataset">数据集</button>
+            <button class="type-tab" type="button" data-type="metric">模型指标集</button>
+            <button class="type-tab" type="button" data-type="subject">分析主题</button>
+            <button class="type-tab" type="button" data-type="dashboard">仪表板</button>
+            <button class="type-tab" type="button" data-type="excel">Excel</button>
+          </div>
+          <label class="catalog-search annotation-target" data-annotation-tooltip="搜索在当前类型下即时过滤，保留可识别的数据目录路径。">
+            <svg class="icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.2"/><path d="m12.5 12.5 3.5 3.5"/></svg>
+            <input id="assetSearch" type="text" value="" placeholder="搜索资产名称" />
+          </label>
+          <div id="assetList" class="asset-list annotation-target" data-annotation-tooltip="列表支持多选；已添加资产可查看详情但不可重复勾选。"></div>
+          <div class="permission-state">
+            <span class="type-icon icon-deleted"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 2.8 17a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></span>
+            <strong>暂无可添加的数据目录资产</strong>
+            <span>需要同时具备 Dora 数据中心权限和 BI 数据目录具体数据的使用或管理权限。</span>
+          </div>
+        </aside>
+
+        <section class="catalog-right">
+          <div id="catalogPreview" class="catalog-preview annotation-target" data-annotation-placement="left" data-annotation-tooltip="右侧预览随当前聚焦资产变化，展示结构、详情、权限与配置差异。"></div>
+          <div class="selected-footer annotation-target" data-annotation-placement="top" data-annotation-tooltip="确认前汇总所有已选资产；无可添加资产时确认按钮置灰。">
+            <div class="selected-text" id="selectedCount">已选 0 项</div>
+            <div class="selected-chips" id="selectedChips"></div>
+            <button class="ghost-button" type="button" id="cancelCatalogButton">取消</button>
+            <button class="primary-button" type="button" id="confirmAddButton">确认添加</button>
+          </div>
+        </section>
+      </div>
+    </section>
+  </div>
+
+  <div id="toast" class="toast">
+    <svg class="icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 6 8.5 13.5 4 9"/></svg>
+    <span>已添加 2 个数据目录资产</span>
+  </div>
+
+  <div id="annotation-tooltip-layer" aria-hidden="true">
+    <div id="annotation-tooltip-bubble"></div>
+  </div>
+
+  <script>
+    const assetsByType = {
+      dataset: [
+        { id: 'ds-sales', name: '门店销售明细宽表', source: 'SQL 数据集', path: '数据目录 / 经营分析 / 销售', meta: '字段 42 · 今日已更新', selected: true, status: '可添加', desc: '复用 BI 数据预览，展示字段类型、原始名、字段别名、字段描述。' },
+        { id: 'ds-store', name: '门店主数据', source: '数据库表', path: '数据目录 / 公共维表', meta: '字段 18 · 近 1 小时更新', selected: false, status: '可添加', desc: '作为数据集加入 Dora，使用阶段不展示数据库表来源。' },
+        { id: 'ds-self', name: '会员复购自助数据集', source: '被发布的自助数据集', path: '数据目录 / 会员分析', meta: '字段 31 · 昨日更新', selected: false, status: '可添加', desc: '自助数据集发布到数据目录后，统一作为数据集添加。' },
+        { id: 'ds-added', name: '历史渠道成本明细', source: 'Excel 数据集', path: '数据目录 / 历史归档', meta: '已加入数据中心', selected: false, status: '已添加', disabled: true, desc: '已添加资产允许查看详情，不可重复勾选。' }
+      ],
+      metric: [
+        { id: 'mt-core', name: '经营核心指标集', source: '模型指标集', path: '数据目录 / 指标中心 / 经营', meta: '指标 12 · 计算字段 5 · 数据集 3', selected: true, status: '可添加', desc: '整体添加模型指标集，不支持只选择其中某个指标、计算字段或数据集。' },
+        { id: 'mt-finance', name: '财务利润指标集', source: '模型指标集', path: '数据目录 / 指标中心 / 财务', meta: '指标 9 · 计算字段 3 · 数据集 2', selected: false, status: '可添加', desc: '问数可回答指标值，也可追溯计算口径、来源、负责人等详情。' },
+        { id: 'mt-table', name: '渠道转化指标集', source: '模型指标转表', path: '数据目录 / 指标中心 / 渠道', meta: '暂不支持接入', selected: false, status: '类型不支持', disabled: true, desc: '模型指标转表能力如果成本高，选择阶段直接禁止接入。' }
+      ],
+      subject: [
+        { id: 'sb-work', name: '通信行业客服工单分析', source: '我的分析', path: 'BI 我的分析 / 客服', meta: '主题字段 36', selected: false, status: '可添加', desc: '保留现有分析主题接入与预览能力。' }
+      ],
+      dashboard: [
+        { id: 'db-overview', name: '全平台运营总览', source: '目录发布仪表板', path: 'BI 目录 / 经营看板', meta: '12 个组件', selected: false, status: '可添加', desc: '保留现有仪表板接入和预览能力。' }
+      ],
+      excel: [
+        { id: 'xl-target', name: '门店目标拆解.xlsx', source: '本地上传 Excel', path: 'Dora 上传文件', meta: '6 个工作表', selected: false, status: '可添加', desc: 'Excel 数据继续沿用现有字段配置和表格预览。' }
+      ]
+    };
+
+    const typeLabels = {
+      dataset: '数据集',
+      metric: '模型指标集',
+      subject: '分析主题',
+      dashboard: '仪表板',
+      excel: 'Excel 数据'
+    };
+
+    let currentType = 'dataset';
+    let focusedAssetId = 'ds-sales';
+    let activeAnnotationTarget = null;
+
+    function iconForType(type) {
+      if (type === 'metric') return '<span class="type-icon icon-metric"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17 10 9l4 4 6-8"/><path d="M4 21h16"/></svg></span>';
+      if (type === 'subject') return '<span class="type-icon icon-subject"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h6M8 16h4"/></svg></span>';
+      if (type === 'dashboard') return '<span class="type-icon icon-dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 17v-5M12 17V7M16 17v-8"/></svg></span>';
+      if (type === 'excel') return '<span class="type-icon icon-excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg></span>';
+      return '<span class="type-icon icon-dataset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3Z"/><path d="M4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7"/></svg></span>';
+    }
+
+    function getFocusedAsset() {
+      return assetsByType[currentType].find(asset => asset.id === focusedAssetId) || assetsByType[currentType][0];
+    }
+
+    function getSelectedAssets() {
+      return Object.keys(assetsByType)
+        .flatMap(type => assetsByType[type].map(asset => ({ ...asset, type })))
+        .filter(asset => asset.selected && !asset.disabled);
+    }
+
+    function renderAssetList() {
+      const list = document.getElementById('assetList');
+      const search = document.getElementById('assetSearch').value.trim().toLowerCase();
+      const assets = assetsByType[currentType].filter(asset => !search || asset.name.toLowerCase().includes(search) || asset.path.toLowerCase().includes(search));
+      list.innerHTML = '';
+
+      assets.forEach(asset => {
+        const row = document.createElement('div');
+        row.tabIndex = 0;
+        row.setAttribute('role', 'button');
+        row.className = 'asset-row' + (asset.id === focusedAssetId ? ' focused' : '') + (asset.disabled ? ' disabled' : '');
+        row.innerHTML = `
+          <input type="checkbox" ${asset.selected ? 'checked' : ''} ${asset.disabled ? 'disabled' : ''} aria-label="${asset.name}" />
+          <span class="asset-main">
+            <span class="asset-title-line">
+              ${iconForType(currentType)}
+              <span class="asset-name">${asset.name}</span>
+            </span>
+            <span class="asset-path">${asset.path}</span>
+            <span class="asset-meta">
+              <span class="tag">${asset.source}</span>
+              <span class="tag ${asset.status === '已添加' || asset.status === '类型不支持' ? 'red' : 'green'}">${asset.status}</span>
+            </span>
+          </span>
+        `;
+        row.addEventListener('click', event => {
+          focusedAssetId = asset.id;
+          if (event.target.tagName === 'INPUT' && !asset.disabled) {
+            asset.selected = event.target.checked;
+          }
+          renderAll();
+        });
+        list.appendChild(row);
+      });
+
+      if (!assets.length) {
+        list.innerHTML = '<div class="empty-state" style="display:flex;"><strong>未找到匹配资产</strong><span>请调整关键字或切换数据类型。</span></div>';
+      }
+    }
+
+    function renderCatalogPreview() {
+      const asset = getFocusedAsset();
+      const typeLabel = typeLabels[currentType];
+      const details = currentType === 'metric'
+        ? `
+          <div class="mini-relation">
+            <div class="relation-line ab"></div><div class="relation-line ac"></div><div class="relation-line bc"></div>
+            <div class="relation-node a">订单明细</div>
+            <div class="relation-node b">投放成本</div>
+            <div class="relation-node c">门店维表</div>
+          </div>
+          <table class="field-table">
+            <thead><tr><th>组成项</th><th>类型</th><th>说明</th></tr></thead>
+            <tbody>
+              <tr><td>销售额</td><td>指标</td><td>可问数，也可问口径</td></tr>
+              <tr><td>推广 ROI</td><td>计算字段</td><td>读取语义模型指标类型</td></tr>
+              <tr><td>订单明细</td><td>数据集</td><td>参与整体指标集，不单独添加</td></tr>
+            </tbody>
+          </table>
+        `
+        : `
+          <table class="field-table">
+            <thead><tr><th>字段类型</th><th>原始名</th><th>字段别名</th><th>字段描述</th></tr></thead>
+            <tbody>
+              <tr><td>维度</td><td>shop_name</td><td>店铺</td><td>成交所属店铺</td></tr>
+              <tr><td>维度</td><td>platform</td><td>平台</td><td>天猫、京东、抖音等</td></tr>
+              <tr><td>指标</td><td>pay_amount</td><td>支付金额</td><td>支付成功订单金额</td></tr>
+              <tr><td>指标</td><td>refund_amount</td><td>退款金额</td><td>已确认退款金额</td></tr>
+            </tbody>
+          </table>
+        `;
+
+      document.getElementById('catalogPreview').innerHTML = `
+        <div class="asset-detail-head">
+          ${iconForType(currentType)}
+          <div class="asset-detail-title">
+            <strong>${asset.name}</strong>
+            <div class="tag-row">
+              <span class="tag brand">${typeLabel}</span>
+              <span class="tag">${asset.source}</span>
+              <span class="tag ${asset.status === '可添加' ? 'green' : 'red'}">${asset.status}</span>
+            </div>
+          </div>
+        </div>
+        <div class="preview-grid">
+          <section class="panel">
+            <div class="panel-header"><span>${currentType === 'metric' ? '整体指标集详情' : '表结构预览'}</span></div>
+            <div class="panel-content">${details}</div>
+          </section>
+          <aside class="panel">
+            <div class="panel-header"><span>添加规则</span></div>
+            <div class="panel-content">
+              <div class="meta-list">
+                <div class="meta-item"><span>Dora 展示</span><span>${typeLabel}</span></div>
+                <div class="meta-item"><span>权限要求</span><span>Dora 权限 + BI 使用权限</span></div>
+                <div class="meta-item"><span>来源</span><span>${asset.source}</span></div>
+                <div class="meta-item"><span>说明</span><span>${asset.desc}</span></div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      `;
+    }
+
+    function renderSelectedFooter() {
+      const selected = getSelectedAssets();
+      document.getElementById('selectedCount').textContent = `已选 ${selected.length} 项`;
+      document.getElementById('selectedChips').innerHTML = selected.map(asset => `<span class="chip">${iconForType(asset.type)}<span>${asset.name}</span></span>`).join('');
+      document.getElementById('confirmAddButton').disabled = selected.length === 0;
+    }
+
+    function renderAll() {
+      renderAssetList();
+      renderCatalogPreview();
+      renderSelectedFooter();
+    }
+
+    function setScenario(scenario) {
+      document.body.classList.remove('scenario-permission');
+      document.querySelectorAll('.demo-popover button').forEach(button => button.classList.toggle('active', button.dataset.scenario === scenario));
+      const modal = document.getElementById('catalogModal');
+      const toast = document.getElementById('toast');
+      const deletedNode = document.getElementById('treeDeletedNode');
+      const metricNode = document.getElementById('treeMetricNode');
+      const normalPreview = document.getElementById('normalPreview');
+      const deletedPreview = document.getElementById('deletedPreview');
+      const deletedTag = document.getElementById('deletedTag');
+
+      toast.classList.remove('open');
+      deletedNode.classList.remove('deleted', 'active');
+      metricNode.classList.add('active');
+      normalPreview.hidden = false;
+      deletedPreview.hidden = true;
+      deletedTag.hidden = true;
+      document.getElementById('previewTitle').textContent = '经营核心指标集';
+      document.getElementById('previewTypeTag').textContent = '模型指标集';
+      document.getElementById('previewSubtitle').textContent = '已加入 Dora 数据中心 · 可被 Agent 和 Skill 选择';
+      modal.classList.remove('hidden');
+
+      if (scenario === 'permission') {
+        document.body.classList.add('scenario-permission');
+      }
+      if (scenario === 'deleted') {
+        modal.classList.add('hidden');
+        metricNode.classList.remove('active');
+        deletedNode.classList.add('deleted', 'active');
+        normalPreview.hidden = true;
+        deletedPreview.hidden = false;
+        deletedTag.hidden = false;
+        document.getElementById('previewTitle').textContent = '历史渠道成本明细';
+        document.getElementById('previewTypeTag').textContent = '数据集';
+        document.getElementById('previewSubtitle').textContent = '源 BI 资产已删除 · Agent 后台引用处标红提示';
+      }
+      if (scenario === 'success') {
+        modal.classList.add('hidden');
+        toast.classList.add('open');
+      }
+    }
+
+    function openCatalog() {
+      document.getElementById('catalogModal').classList.remove('hidden');
+      document.body.classList.remove('scenario-permission');
+    }
+
+    function closeCatalog() {
+      document.getElementById('catalogModal').classList.add('hidden');
+      hideAnnotationTooltip();
+    }
+
+    function getAnnotationTooltipLayer() {
+      return document.getElementById('annotation-tooltip-layer');
+    }
+
+    function getAnnotationTooltipBubble() {
+      return document.getElementById('annotation-tooltip-bubble');
+    }
+
+    function hideAnnotationTooltip() {
+      activeAnnotationTarget = null;
+      const layer = getAnnotationTooltipLayer();
+      const bubble = getAnnotationTooltipBubble();
+      if (!layer || !bubble) return;
+      layer.classList.remove('open');
+      bubble.textContent = '';
+      bubble.style.left = '0px';
+      bubble.style.top = '0px';
+    }
+
+    function syncAnnotationTooltipPosition() {
+      if (!activeAnnotationTarget || !document.body.classList.contains('demo-mode')) {
+        hideAnnotationTooltip();
+        return;
+      }
+      const layer = getAnnotationTooltipLayer();
+      const bubble = getAnnotationTooltipBubble();
+      if (!layer || !bubble) return;
+      const rect = activeAnnotationTarget.getBoundingClientRect();
+      bubble.style.left = '0px';
+      bubble.style.top = '0px';
+      const bubbleRect = bubble.getBoundingClientRect();
+      const gap = 12;
+      const padding = 12;
+      const placement = activeAnnotationTarget.dataset.annotationPlacement || 'right';
+      let left = rect.right + gap;
+      let top = rect.top + rect.height / 2 - bubbleRect.height / 2;
+      if (placement === 'left') {
+        left = rect.left - bubbleRect.width - gap;
+        if (left < padding) left = rect.right + gap;
+      }
+      if (placement === 'top') {
+        left = rect.left + rect.width / 2 - bubbleRect.width / 2;
+        top = rect.top - bubbleRect.height - gap;
+        if (top < padding) top = rect.bottom + gap;
+      }
+      if (left + bubbleRect.width > window.innerWidth - padding) left = window.innerWidth - bubbleRect.width - padding;
+      if (left < padding) left = padding;
+      if (top + bubbleRect.height > window.innerHeight - padding) top = window.innerHeight - bubbleRect.height - padding;
+      if (top < padding) top = padding;
+      bubble.style.left = `${Math.round(left)}px`;
+      bubble.style.top = `${Math.round(top)}px`;
+    }
+
+    function showAnnotationTooltip(target) {
+      if (!target || !document.body.classList.contains('demo-mode')) return;
+      const text = target.dataset.annotationTooltip || '';
+      if (!text) return;
+      const layer = getAnnotationTooltipLayer();
+      const bubble = getAnnotationTooltipBubble();
+      if (!layer || !bubble) return;
+      activeAnnotationTarget = target;
+      bubble.textContent = text;
+      layer.classList.add('open');
+      syncAnnotationTooltipPosition();
+    }
+
+    document.getElementById('demoToggle').addEventListener('click', event => {
+      document.body.classList.toggle('demo-mode');
+      event.currentTarget.classList.toggle('active');
+      hideAnnotationTooltip();
+    });
+
+    document.querySelectorAll('.demo-popover button').forEach(button => {
+      button.addEventListener('click', () => setScenario(button.dataset.scenario));
+    });
+
+    document.getElementById('treeAddButton').addEventListener('click', () => {
+      document.getElementById('addMenu').classList.toggle('open');
+    });
+    document.getElementById('openCatalogFromMenu').addEventListener('click', openCatalog);
+    document.getElementById('openCatalogButton').addEventListener('click', openCatalog);
+    document.getElementById('closeCatalogButton').addEventListener('click', closeCatalog);
+    document.getElementById('cancelCatalogButton').addEventListener('click', closeCatalog);
+    document.getElementById('confirmAddButton').addEventListener('click', () => setScenario('success'));
+
+    document.querySelectorAll('.type-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        currentType = tab.dataset.type;
+        document.querySelectorAll('.type-tab').forEach(item => item.classList.toggle('active', item === tab));
+        focusedAssetId = assetsByType[currentType][0].id;
+        document.getElementById('assetSearch').value = '';
+        renderAll();
+      });
+    });
+
+    document.getElementById('assetSearch').addEventListener('input', renderAssetList);
+
+    document.addEventListener('pointerover', event => {
+      const target = event.target.closest('.annotation-target');
+      if (target) showAnnotationTooltip(target);
+    });
+
+    document.addEventListener('pointerout', event => {
+      if (!activeAnnotationTarget) return;
+      const next = event.relatedTarget && event.relatedTarget.closest ? event.relatedTarget.closest('.annotation-target') : null;
+      if (next === activeAnnotationTarget) return;
+      hideAnnotationTooltip();
+    });
+
+    document.addEventListener('focusin', event => {
+      const target = event.target.closest('.annotation-target');
+      if (target) showAnnotationTooltip(target);
+    });
+
+    window.addEventListener('scroll', syncAnnotationTooltipPosition, true);
+    window.addEventListener('resize', syncAnnotationTooltipPosition);
+
+    renderAll();
+  </script>
+</body>
+</html>

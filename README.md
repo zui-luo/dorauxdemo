@@ -11,9 +11,13 @@
 | 原型 | 描述 | 文件 |
 |------|------|------|
 | UX Demo 工作流说明 | 解释基于代码库、AGENTS 与 Skill 的原型协作工作流 | `workflow-explainer.html` |
-| 自定义技能入口 · 跳转方案 | 前后台通过页面覆盖切换 | `custom-skill-entry/prototype.html` |
-| 自定义技能入口 · 新 Tab 方案 | 前后台通过模拟浏览器 Tab 切换 | `custom-skill-entry/prototype-newtab.html` |
+| Dora 新架构设计 · 跳转方案 | 前后台通过页面覆盖切换 | `dora-new-architecture-design/dora-new-architecture-design-overlay.html` |
+| Dora 自定义技能专项 | 只验证自定义技能的前台生成、Agent 内隔离、当前会话挂载与后台“我的”沉淀 | `dora-custom-skills/prototype.html` |
+| Dora 新架构设计 · 新 Tab 方案 | 前后台通过模拟浏览器 Tab 切换 | `dora-new-architecture-design/dora-new-architecture-design-new-tab.html` |
 | ChatBI 迁移工具 | 独立迁移小工具，5 步线性流程 | `chatbi-migration/prototype.html` |
+| ChatBI → Dora 迁移工具 Demo | 三段式迁移工作台，覆盖预检扫描、目标 Agent 确认、执行报告与旧服务收尾 | `chatbi-dora-migration-tool/prototype.html` |
+| 添加数据目录 | 后台配置页中通过向导添加数据目录 | `add-data-catalog/prototype.html` |
+| 通用管理 · 权限管理 Tab | 复刻后台通用管理页面框架，新增一个空白权限管理 Tab | `permission-management-tab/prototype.html` |
 
 ---
 
@@ -29,12 +33,24 @@ uxdemo/
 ├── templates/
 │   ├── variant-bar.html             # 切换栏模板
 │   └── interaction-spec-template.md # 交互文档模板
-├── custom-skill-entry/
-│   ├── prototype.html               # 跳转方案原型
-│   ├── prototype-newtab.html        # 新 Tab 方案原型
+├── dora-new-architecture-design/
+│   ├── dora-new-architecture-design-overlay.html         # 跳转方案原型
+│   ├── dora-new-architecture-design-new-tab.html         # 新 Tab 方案原型
+│   └── dora-new-architecture-design-interaction-spec.md  # 交互逻辑文档
+├── dora-custom-skills/
+│   ├── prototype.html               # Dora 自定义技能专项原型
 │   └── interaction-spec.md          # 交互逻辑文档
-└── chatbi-migration/
-    ├── prototype.html               # 迁移工具原型
+├── permission-management-tab/
+│   ├── prototype.html               # 通用管理 · 权限管理 Tab
+│   └── interaction-spec.md          # 交互逻辑文档
+├── chatbi-migration/
+│   ├── prototype.html               # 迁移工具原型
+│   └── interaction-spec.md          # 交互逻辑文档
+├── chatbi-dora-migration-tool/
+│   ├── prototype.html               # ChatBI → Dora 迁移工具 Demo 原型
+│   └── interaction-spec.md          # 交互逻辑文档
+└── add-data-catalog/
+    ├── prototype.html               # 添加数据目录原型
     └── interaction-spec.md          # 交互逻辑文档
 ```
 

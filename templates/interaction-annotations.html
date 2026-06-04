@@ -1,0 +1,237 @@
+<!-- ══════════════════════════════════════════
+     交互说明标注模板 — 复制到 prototype.html 中使用
+     目标：开启顶部“交互说明”后，高亮目标元素或语义容器；
+           hover / focus 高亮区域时，说明气泡始终渲染到页面最上层。
+           高亮和演示控件只做浮层叠加，不改变业务页面布局。
+     前置：页面需要已有 variant-bar.html 中的“交互说明”按钮和 toggleDemoMode()
+     ══════════════════════════════════════════ -->
+
+<!-- 1. 在 <style> 中加入以下 CSS -->
+<style>
+  /*
+   * demo-control 仍由 variant-bar 控制：
+   * .demo-control { display: none !important; }
+   * body.demo-mode .demo-control { display: flex !important; }
+   */
+
+  .annotation-target {
+    position: relative;
+  }
+
+  body.demo-mode .annotation-target {
+    outline: 2px solid #0047FD;
+    outline-offset: 4px;
+    box-shadow: 0 0 0 6px rgba(0,71,253,0.10);
+    cursor: help;
+  }
+
+  body.demo-mode .annotation-target.annotation-tight {
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(0,71,253,0.10);
+  }
+
+  #annotation-tooltip-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 300000;
+    pointer-events: none;
+    display: none;
+  }
+
+  #annotation-tooltip-layer.open {
+    display: block;
+  }
+
+  #annotation-tooltip-bubble {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 260px;
+    max-width: min(300px, calc(100vw - 24px));
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(9,22,64,0.94);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.6;
+    text-align: left;
+    box-shadow: 0 8px 20px rgba(9,30,64,0.16);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 120ms ease, transform 120ms ease;
+    white-space: normal;
+  }
+
+  #annotation-tooltip-layer.open #annotation-tooltip-bubble {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+
+<!-- 2. 在 <body> 末尾补一个页面顶层 tooltip layer -->
+<div id="annotation-tooltip-layer" aria-hidden="true">
+  <div id="annotation-tooltip-bubble"></div>
+</div>
+
+<!-- 3. 推荐写法：高亮语义容器，说明文案写在 data-annotation-tooltip 上 -->
+<div class="annotation-target" data-annotation-tooltip="说明这里当前是什么设计，以及为什么需要关注。">
+  <!-- 业务 UI -->
+</div>
+
+<!-- 4. 常用位置变体：适合右侧边缘、底部工具栏等位置 -->
+<button class="annotation-target annotation-tight" data-annotation-placement="left" data-annotation-tooltip="说明显示在目标左侧。">
+  操作按钮
+</button>
+
+<!-- 5. 在 <script> 中加入以下 JS -->
+<script>
+  let activeAnnotationTarget = null;
+
+  function getAnnotationTooltipLayer() {
+    return document.getElementById('annotation-tooltip-layer');
+  }
+
+  function getAnnotationTooltipBubble() {
+    return document.getElementById('annotation-tooltip-bubble');
+  }
+
+  function getAnnotationTooltipPlacement(target) {
+    return target && target.dataset.annotationPlacement ? target.dataset.annotationPlacement : 'right';
+  }
+
+  function hideAnnotationTooltip() {
+    activeAnnotationTarget = null;
+    const layer = getAnnotationTooltipLayer();
+    const bubble = getAnnotationTooltipBubble();
+    if (!layer || !bubble) return;
+    layer.classList.remove('open');
+    bubble.textContent = '';
+    bubble.style.left = '0px';
+    bubble.style.top = '0px';
+  }
+
+  function syncAnnotationTooltipPosition() {
+    if (!activeAnnotationTarget || !document.body.classList.contains('demo-mode')) {
+      hideAnnotationTooltip();
+      return;
+    }
+
+    const layer = getAnnotationTooltipLayer();
+    const bubble = getAnnotationTooltipBubble();
+    if (!layer || !bubble) return;
+
+    const targetRect = activeAnnotationTarget.getBoundingClientRect();
+    if (!targetRect.width && !targetRect.height) {
+      hideAnnotationTooltip();
+      return;
+    }
+
+    bubble.style.left = '0px';
+    bubble.style.top = '0px';
+    const bubbleRect = bubble.getBoundingClientRect();
+    const gap = 12;
+    const viewportPadding = 12;
+    const placement = getAnnotationTooltipPlacement(activeAnnotationTarget);
+
+    let left = targetRect.right + gap;
+    let top = targetRect.top + targetRect.height / 2 - bubbleRect.height / 2;
+
+    if (placement === 'top') {
+      left = targetRect.left + targetRect.width / 2 - bubbleRect.width / 2;
+      top = targetRect.top - bubbleRect.height - gap;
+      if (top < viewportPadding) top = targetRect.bottom + gap;
+    } else if (placement === 'left') {
+      left = targetRect.left - bubbleRect.width - gap;
+      if (left < viewportPadding) left = targetRect.right + gap;
+    } else if (placement === 'bottom') {
+      left = targetRect.left + targetRect.width / 2 - bubbleRect.width / 2;
+      top = targetRect.bottom + gap;
+    }
+
+    if (left + bubbleRect.width > window.innerWidth - viewportPadding) {
+      left = window.innerWidth - bubbleRect.width - viewportPadding;
+    }
+    if (left < viewportPadding) left = viewportPadding;
+    if (top + bubbleRect.height > window.innerHeight - viewportPadding) {
+      top = window.innerHeight - bubbleRect.height - viewportPadding;
+    }
+    if (top < viewportPadding) top = viewportPadding;
+
+    bubble.style.left = Math.round(left) + 'px';
+    bubble.style.top = Math.round(top) + 'px';
+  }
+
+  function showAnnotationTooltip(target) {
+    if (!target || !document.body.classList.contains('demo-mode')) return;
+    const text = target.dataset.annotationTooltip || '';
+    if (!text) return;
+    const layer = getAnnotationTooltipLayer();
+    const bubble = getAnnotationTooltipBubble();
+    if (!layer || !bubble) return;
+    activeAnnotationTarget = target;
+    bubble.textContent = text;
+    layer.classList.add('open');
+    syncAnnotationTooltipPosition();
+  }
+
+  function initAnnotationTooltips() {
+    const layer = getAnnotationTooltipLayer();
+    const bubble = getAnnotationTooltipBubble();
+    if (!layer || !bubble || layer.dataset.inited === 'true') return;
+
+    document.addEventListener('pointerover', event => {
+      const target = event.target.closest('.annotation-target');
+      if (target) showAnnotationTooltip(target);
+    });
+
+    document.addEventListener('pointerout', event => {
+      if (!activeAnnotationTarget) return;
+      const nextTarget = event.relatedTarget;
+      const nextAnnotation = nextTarget && nextTarget.closest ? nextTarget.closest('.annotation-target') : null;
+      if (nextAnnotation === activeAnnotationTarget) return;
+      hideAnnotationTooltip();
+    });
+
+    document.addEventListener('focusin', event => {
+      const target = event.target.closest('.annotation-target');
+      if (target) showAnnotationTooltip(target);
+    });
+
+    document.addEventListener('focusout', event => {
+      const nextAnnotation = event.relatedTarget && event.relatedTarget.closest
+        ? event.relatedTarget.closest('.annotation-target')
+        : null;
+      if (!nextAnnotation) hideAnnotationTooltip();
+    });
+
+    document.addEventListener('click', event => {
+      const target = event.target.closest('.annotation-target');
+      if (target) {
+        showAnnotationTooltip(target);
+        return;
+      }
+      hideAnnotationTooltip();
+    });
+
+    window.addEventListener('scroll', syncAnnotationTooltipPosition, true);
+    window.addEventListener('resize', syncAnnotationTooltipPosition);
+    layer.dataset.inited = 'true';
+  }
+
+  /*
+   * 页面初始化时调用一次。
+   * toggleDemoMode() 关闭说明时，也要调用 hideAnnotationTooltip() 收掉顶层浮层。
+   */
+  initAnnotationTooltips();
+</script>
+
+<!--
+标注原则：
+- 高亮最能表达语义归属的目标元素或容器；小图标高亮点击热区，大模块高亮语义容器
+- tooltip 必须渲染在页面顶层浮层，不能依附在被裁切容器里
+- 只标入口变化、流程变化、状态变化、方案差异、异常分支等关键评审点
+- 不标纯视觉细节，例如颜色、圆角、阴影、间距微调
+- 每个高亮对象只写一句简短结果态说明
+- 关闭“交互说明”后，高亮与 tooltip 必须完全不可见
+-->

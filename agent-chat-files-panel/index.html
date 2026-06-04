@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agent Chat Files Panel · 静态包</title>
+  <link rel="stylesheet" href="./app.css" />
+</head>
+<body>
+  <div id="variant-bar">
+    <span class="label">包内视图：</span>
+    <button class="v-tab active" data-view="dora">Dora</button>
+    <button class="v-tab" data-view="experts">专家</button>
+    <button class="v-tab" data-view="space">资源库</button>
+    <div class="variant-spacer"></div>
+    <button class="v-demo-toggle" id="layoutToggle">交互说明</button>
+  </div>
+
+  <div class="app-shell">
+    <aside class="nav-rail">
+      <div class="rail-logo" title="Dora">
+        <svg viewBox="0 0 24 24" fill="none">
+          <defs>
+            <linearGradient id="railLogoG" x1="0" y1="0" x2="24" y2="24">
+              <stop offset="0%" stop-color="#6FB9FF"/>
+              <stop offset="100%" stop-color="#2562FF"/>
+            </linearGradient>
+          </defs>
+          <path d="M12 2C12 2 5 9 5 14.5C5 18.6 8.1 22 12 22C15.9 22 19 18.6 19 14.5C19 9 12 2 12 2Z" fill="url(#railLogoG)"/>
+        </svg>
+      </div>
+      <button class="rail-item is-active" data-view="dora">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 10l7-6 7 6"/><path d="M5 9v8h10v-8"/></svg>
+        Dora
+      </button>
+      <button class="rail-item" data-view="experts">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="7" r="3"/><path d="M4 17c0-3 2.7-5 6-5s6 2 6 5"/></svg>
+        专家
+      </button>
+      <button class="rail-item" data-view="space">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="11" y="3" width="6" height="6" rx="1"/><rect x="3" y="11" width="6" height="6" rx="1"/><rect x="11" y="11" width="6" height="6" rx="1"/></svg>
+        空间
+      </button>
+      <div class="rail-spacer"></div>
+      <div class="rail-user">N</div>
+    </aside>
+
+    <aside class="module-panel">
+      <section class="module-panel-view is-active" data-panel="dora">
+        <header class="panel-head">
+          <div class="panel-title">
+            <span class="panel-badge">D</span>
+            Dora
+          </div>
+          <button class="panel-mini-btn">收起</button>
+        </header>
+        <button class="panel-primary">+ 新会话</button>
+        <div class="panel-section-title">最近会话</div>
+        <div class="panel-list">
+          <button class="panel-list-item is-active">ROI 同比环比拆解</button>
+          <button class="panel-list-item">经营分析会材料整理</button>
+          <button class="panel-list-item">销售预测系统规则调整</button>
+          <button class="panel-list-item">客户反馈归因分析</button>
+        </div>
+      </section>
+
+      <section class="module-panel-view" data-panel="experts">
+        <header class="panel-head">
+          <div class="panel-title">
+            <span class="panel-badge">E</span>
+            专家 Agent
+          </div>
+          <button class="panel-mini-btn">去创建</button>
+        </header>
+        <button class="panel-primary">智能问数</button>
+        <div class="panel-section-title">常用专家</div>
+        <div class="panel-grid">
+          <button class="panel-card">智能问数</button>
+          <button class="panel-card">智能报告</button>
+          <button class="panel-card">经营分析</button>
+          <button class="panel-card">数据建模</button>
+        </div>
+      </section>
+
+      <section class="module-panel-view" data-panel="space">
+        <header class="panel-head">
+          <div class="panel-title">
+            <span class="panel-badge">S</span>
+            资源库
+          </div>
+          <button class="panel-mini-btn">筛选</button>
+        </header>
+        <div class="panel-section-title">最近常用</div>
+        <div class="panel-list">
+          <button class="panel-list-item is-active">销售预测系统.html</button>
+          <button class="panel-list-item">客户反馈明细.xlsx</button>
+          <button class="panel-list-item">2025年9月生产经营分析会</button>
+        </div>
+      </section>
+    </aside>
+
+    <main class="workspace">
+      <div class="combined-stage">
+        <div class="inner-variant-bar">
+          <span class="label">方案对比：</span>
+          <button class="v-tab">默认方案</button>
+          <button class="v-tab">方案2：过程前置</button>
+          <button class="v-tab">方案3：产物直出</button>
+          <button class="v-tab active">方案4：素色过程</button>
+          <div class="variant-spacer"></div>
+          <button class="v-demo-toggle">交互说明</button>
+        </div>
+
+        <div class="combined-body">
+          <aside class="inner-rail">
+            <div class="inner-logo"></div>
+            <button class="inner-rail-item"><span>⌂</span><em>首页</em></button>
+            <button class="inner-rail-item is-active"><span>◌</span><em>Agent</em></button>
+            <button class="inner-rail-item"><span>◫</span><em>空间</em></button>
+            <div class="inner-spacer"></div>
+            <div class="inner-user">N</div>
+          </aside>
+
+          <aside class="inner-panel">
+            <div class="inner-panel-head">
+              <div class="panel-title"><span class="panel-badge">D</span>Dora</div>
+              <button class="panel-mini-btn">收起</button>
+            </div>
+            <button class="panel-primary is-selected">+ 新聊天</button>
+            <div class="panel-section-title">分身</div>
+            <div class="panel-list">
+              <button class="panel-list-item is-active">企业微信–未命名Agent_01</button>
+              <button class="panel-list-item">钉钉–未命名Agent_01</button>
+              <button class="panel-list-item">飞书–未命名Agent_01</button>
+            </div>
+            <div class="panel-section-title">历史会话</div>
+            <div class="panel-list">
+              <button class="panel-list-item">你以后每天晚上8:00给我发一份...</button>
+              <button class="panel-list-item is-active">请帮我分析这份客户反馈 Excel</button>
+              <button class="panel-list-item">江苏省销售额</button>
+              <button class="panel-list-item">去年门店销售额最高的商品...</button>
+            </div>
+          </aside>
+
+          <section class="inner-chat">
+            <header class="inner-chat-head">
+              <div class="chat-head-left">
+                <span class="panel-badge">D</span>
+                <div>
+                  <div class="chat-title">请帮我分析这份客户反馈 Excel</div>
+                  <div class="chat-subtitle">未命名Agent_01</div>
+                </div>
+              </div>
+              <div class="chat-head-actions">
+                <button class="icon-btn">⤴</button>
+                <button class="icon-btn">▣<span class="folder-badge">3</span></button>
+              </div>
+            </header>
+
+            <div class="inner-chat-body">
+              <div class="msg-user">
+                <div class="user-file-pill">
+                  <span class="mini-icon">XLSX</span>
+                  <div>
+                    <div class="file-meta-name">客户反馈明细.xlsx</div>
+                    <div class="file-meta-size">161.17 KB</div>
+                  </div>
+                </div>
+                <div class="bubble">请帮我分析这份客户反馈 Excel，找出主要问题，并生成一份汇报 PPT。</div>
+              </div>
+
+              <div class="agent-reply">
+                <div class="agent-row">
+                  <span class="agent-avatar"></span>
+                  <span class="agent-name">未命名Agent_01</span>
+                </div>
+                <div class="result-slot">已识别 <strong>7 个字段</strong>：客户名称、反馈类型、满意度、问题描述、日期、渠道、处理状态。</div>
+                <div class="exec-panel muted">
+                  <div class="exec-header">
+                    <span class="exec-title">执行过程</span>
+                    <span class="exec-state">进行中</span>
+                  </div>
+                  <div class="exec-body">
+                    <div class="exec-node">
+                      <div class="exec-node-title">理解任务意图</div>
+                      <div class="exec-node-detail">识别为「数据分析 + 报告生成」复合任务</div>
+                    </div>
+                    <div class="exec-node is-running">
+                      <div class="exec-node-title">编写分类器代码</div>
+                      <div class="exec-node-detail">return (cat, sent)</div>
+                    </div>
+                    <div class="exec-node">
+                      <div class="exec-node-title">执行分类计算</div>
+                      <div class="exec-node-detail">classification_result.csv</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="wait-line is-visible">
+                  <span class="wait-time">26s</span>
+                  <span class="wait-text">数据量较大，请您耐心等待...</span>
+                </div>
+                <div class="final-actions">
+                  <button>复制</button>
+                  <button>重新生成</button>
+                  <button>分享</button>
+                </div>
+              </div>
+
+              <div class="demo-control demo-control-bar">
+                <span>客户反馈剧本（DeerFlow 7 阶段 / ~43s）</span>
+              </div>
+            </div>
+
+            <div class="inner-chat-footer">
+              <div class="chat-input-box">
+                <textarea placeholder="试试输入「给我 genui」回车追加一条 GenUI 消息 · 或输入 @ 引用会话文件"></textarea>
+                <button class="send-btn is-active">↑</button>
+              </div>
+              <p class="chat-disclaimer">内容均由AI生成，仅供参考</p>
+            </div>
+          </section>
+
+          <aside class="inner-files">
+            <header class="files-header">
+              <div class="files-tabs">
+                <button class="files-tab is-active">资料<span class="tab-count">1</span></button>
+                <button class="files-tab">产出<span class="tab-count">0</span></button>
+              </div>
+              <button class="icon-btn">×</button>
+            </header>
+            <div class="files-toolbar">
+              <div class="toolbar-group">
+                <button class="btn-pill is-primary">上传文件</button>
+                <button class="btn-pill">平台数据</button>
+              </div>
+              <button class="btn-upload">上传</button>
+            </div>
+            <div class="files-list">
+              <div class="file-row">
+                <div class="file-icon xlsx">XLSX</div>
+                <div class="file-info">
+                  <div class="file-name">客户反馈明细.xlsx</div>
+                  <div class="file-size">161.17 KB · 用户上传</div>
+                </div>
+                <div class="file-actions">
+                  <button class="btn-attach">添加到对话</button>
+                  <button class="file-icon-action">↓</button>
+                  <button class="file-icon-action is-danger">🗑</button>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
