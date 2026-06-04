@@ -22,6 +22,7 @@
     <button class="v-tab v-tab-b" onclick="switchBVariant('product-live', this)">方案3：产物直出</button>
     <button class="v-tab v-tab-b" onclick="switchBVariant('muted-process', this)">方案4：素色过程</button>
     <button class="v-tab v-tab-b active" onclick="switchBVariant('ppt-only-live', this)">方案5：只出PPT</button>
+    <button class="v-tab v-tab-b" onclick="switchBVariant('thinking-framework', this)">方案6：思考框架</button>
   </div>
   <div style="flex:1;"></div>
   <button class="v-demo-toggle" onclick="openScenarioGuide()">交互说明</button>
@@ -139,25 +140,10 @@
           <h1>专家 Agent</h1>
           <button class="primary-btn">去创建</button>
         </div>
-        <div class="filters">
-          <button class="select-pill">全部 ▾</button>
-          <div class="search-box"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="#8C95B0" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input placeholder="搜索名称/描述" /></div>
+        <div class="expert-toolbar">
+          <div class="search-box expert-search"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="#8C95B0" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input placeholder="搜索名称/描述" /></div>
         </div>
-        <div class="agent-grid">
-          <div class="agent-card annotated has-unread" data-agent-type="smart-data" data-unread="2" onclick="openConversation('smart-data')">
-            <div class="agent-card-head"><div class="agent-logo"><span class="avatar-letter" data-avatar-tone="blue">问</span></div><h3>智能问数</h3></div>
-            <p>面向经营分析、指标归因和同比环比拆解的专家 Agent。</p>
-            <div class="agent-meta">最近编辑：2026/02/12</div>
-            <button class="agent-ask-btn" onclick="event.stopPropagation(); openConversation('smart-data')">去提问</button>
-            <span class="change-marker demo-control" data-change-tooltip="点击专家 Agent 可进入对应会话。" data-change-placement="top">5</span>
-            <span class="unread-dot" aria-hidden="true"></span>
-          </div>
-          <div class="agent-card annotated has-unread" data-agent-type="report" data-unread="1" onclick="openConversation('report')"><div class="agent-card-head"><div class="agent-logo"><span class="avatar-letter" data-avatar-tone="orange">报</span></div><h3>智能报告</h3></div><p>可生成报告、PPT、HTML 原型与结构化结论。</p><div class="agent-meta">最近编辑：2026/02/12</div><button class="agent-ask-btn" onclick="event.stopPropagation(); openConversation('report')">去提问</button><span class="unread-dot" aria-hidden="true"></span></div>
-          <div class="agent-card" data-agent-type="analysis" onclick="openConversation('analysis')"><div class="agent-card-head"><div class="agent-logo"><span class="avatar-letter" data-avatar-tone="teal">析</span></div><h3>经营分析助手</h3></div><p>围绕销售、客户、产品与区域展开分析。</p><div class="agent-meta">最近编辑：2026/02/10</div><button class="agent-ask-btn" onclick="event.stopPropagation(); openConversation('analysis')">去提问</button></div>
-          <div class="agent-card" data-agent-type="modeling" onclick="openConversation('modeling')"><div class="agent-card-head"><div class="agent-logo"><span class="avatar-letter" data-avatar-tone="violet">模</span></div><h3>数据建模顾问</h3></div><p>辅助定义指标、维度、口径和数据模型。</p><div class="agent-meta">最近编辑：2026/02/08</div><button class="agent-ask-btn" onclick="event.stopPropagation(); openConversation('modeling')">去提问</button></div>
-          <div class="agent-card" data-agent-type="finance" onclick="openConversation('finance')"><div class="agent-card-head"><div class="agent-logo"><span class="avatar-letter" data-avatar-tone="green">财</span></div><h3>财务小助手</h3></div><p>处理预算、预测、费用结构与异常波动。</p><div class="agent-meta">最近编辑：2026/02/07</div><button class="agent-ask-btn" onclick="event.stopPropagation(); openConversation('finance')">去提问</button></div>
-          <div class="agent-card" data-agent-type="marketing" onclick="openConversation('marketing')"><div class="agent-card-head"><div class="agent-logo"><span class="avatar-letter" data-avatar-tone="rose">营</span></div><h3>营销策略助手</h3></div><p>输出营销策略、客户分层和活动复盘。</p><div class="agent-meta">最近编辑：2026/02/05</div><button class="agent-ask-btn" onclick="event.stopPropagation(); openConversation('marketing')">去提问</button></div>
-        </div>
+        <div class="expert-list" id="expertAgentGrid"></div>
       </div>
     </section>
 
@@ -197,10 +183,8 @@
         <section class="conv-chat">
           <header class="conv-chat-head">
             <button class="conversation-sidebar-toggle" onclick="expandConversationSidebar()" title="展开会话侧栏">☰</button>
-            <span class="agent-avatar"><span class="avatar-letter" data-avatar-tone="blue">问</span></span>
             <div class="conv-chat-titles">
               <div class="conversation-title" id="conversationTitle">Dora 会话</div>
-              <div class="conversation-subtitle" id="conversationSubtitle">全能助手 · 通用任务</div>
             </div>
             <div class="conversation-trace-pill" id="conversationTracePill" hidden></div>
             <div class="conversation-header-spacer"></div>
@@ -242,7 +226,10 @@
                   <span class="exec-title" id="execTitle">准备中....</span>
                   <button class="exec-toggle" type="button" tabindex="-1"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5l4 4 4-4"/></svg></button>
                 </header>
-                <div class="exec-body"><ul class="exec-timeline" id="execTimeline"></ul></div>
+                <div class="exec-body">
+                  <div class="exec-framework-inline" id="execFrameworkInline" hidden></div>
+                  <ul class="exec-timeline" id="execTimeline"></ul>
+                </div>
               </div>
 
               <div class="wait-line" id="waitLine" hidden>

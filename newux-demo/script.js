@@ -67,7 +67,9 @@ const avatarSources = {
   analysis: 'analysis-agent',
   modeling: 'modeling-agent',
   finance: 'finance-agent',
-  marketing: 'marketing-agent'
+  marketing: 'marketing-agent',
+  risk: 'risk-agent',
+  ops: 'ops-agent'
 };
 
 const AVATAR_PROFILES = {
@@ -82,6 +84,8 @@ const AVATAR_PROFILES = {
   'modeling-agent': { initial: '模', tone: 'violet' },
   'finance-agent': { initial: '财', tone: 'green' },
   'marketing-agent': { initial: '营', tone: 'rose' },
+  'risk-agent': { initial: '险', tone: 'rose' },
+  'ops-agent': { initial: '效', tone: 'teal' },
   'product-agent': { initial: '产', tone: 'orange' },
   'design-agent': { initial: '设', tone: 'violet' }
 };
@@ -492,7 +496,7 @@ function matchesOutputFilter(file) {
 }
 
 function getVisibleOutputFilesForScenario() {
-  if (currentBVariant !== 'ppt-only-live') return FILE_PANEL_STATE.output;
+  if (!isPptOnlyLiveVariant()) return FILE_PANEL_STATE.output;
   return FILE_PANEL_STATE.output.filter(file => file.type === 'ppt' || file.type === 'pptx' || file.name === '客户反馈分析汇报.pptx');
 }
 
@@ -1198,6 +1202,17 @@ const moduleState = {
   space: { page: 'home' }
 };
 
+const expertCardItems = [
+  { type: 'smart-data', createdByMe: true, name: '智能问数', desc: '面向经营分析、指标归因和同比环比拆解的专家 Agent。', meta: '最近编辑：2026/02/12', logo: avatarSources.smartData, starred: true },
+  { type: 'report', createdByMe: true, name: '智能报告', desc: '可生成报告、PPT、HTML 原型与结构化结论。', meta: '最近编辑：2026/02/12', logo: avatarSources.report, starred: true },
+  { type: 'analysis', createdByMe: true, name: '经营分析助手', desc: '围绕销售、客户、产品与区域展开分析。', meta: '最近编辑：2026/02/10', logo: avatarSources.analysis, starred: false },
+  { type: 'finance', createdByMe: true, name: '财务小助手', desc: '处理预算、预测、费用结构与异常波动。', meta: '最近编辑：2026/02/07', logo: avatarSources.finance, starred: false },
+  { type: 'modeling', createdByMe: false, name: '数据建模顾问', desc: '辅助定义指标、维度、口径和数据模型。', meta: '最近编辑：2026/02/08', logo: avatarSources.modeling, starred: true },
+  { type: 'marketing', createdByMe: false, name: '营销策略助手', desc: '输出营销策略、客户分层和活动复盘。', meta: '最近编辑：2026/02/05', logo: avatarSources.marketing, starred: false },
+  { type: 'risk', createdByMe: false, name: '风险预警专家', desc: '监控经营指标、现金流、客户流失和供应链风险。', meta: '最近编辑：2026/02/03', logo: 'risk-agent', starred: false },
+  { type: 'ops', createdByMe: false, name: '运营提效顾问', desc: '拆解流程瓶颈、门店效率和人效优化机会。', meta: '最近编辑：2026/02/01', logo: 'ops-agent', starred: false }
+];
+
 const expertUnreadItems = [
   { type: 'smart-data', label: '智能问数', summary: '经营指标归因分析', count: 2, latest: '本周经营指标归因分析' },
   { type: 'report', label: '智能报告', summary: '报告生成任务已完成', count: 1, latest: '经营分析PPT生成' }
@@ -1273,6 +1288,26 @@ const conversationConfigs = {
     history: '营销活动复盘',
     userText: '帮我复盘这次营销活动，看看哪些客户群体转化最好。',
     agentName: '营销策略助手'
+  },
+  risk: {
+    returnView: 'experts',
+    sidebarCollapsed: false,
+    sideAgent: '风险预警专家',
+    title: '风险预警专家会话',
+    subtitle: '专家 Agent · 风险监控与预警',
+    history: '经营风险巡检',
+    userText: '帮我检查本周经营指标里有哪些风险信号。',
+    agentName: '风险预警专家'
+  },
+  ops: {
+    returnView: 'experts',
+    sidebarCollapsed: false,
+    sideAgent: '运营提效顾问',
+    title: '运营提效顾问会话',
+    subtitle: '专家 Agent · 流程与人效优化',
+    history: '门店运营效率诊断',
+    userText: '帮我看一下门店运营效率，有哪些环节可以提效。',
+    agentName: '运营提效顾问'
   }
 };
 
@@ -1282,7 +1317,9 @@ const agentSwitchOptions = [
   { type: 'analysis', logo: avatarSources.analysis, name: '经营分析助手', desc: '经营表现诊断与风险识别' },
   { type: 'modeling', logo: avatarSources.modeling, name: '数据建模顾问', desc: '指标、维度、口径和模型设计' },
   { type: 'finance', logo: avatarSources.finance, name: '财务小助手', desc: '预算、费用结构与异常波动' },
-  { type: 'marketing', logo: avatarSources.marketing, name: '营销策略助手', desc: '客户分层与活动复盘' }
+  { type: 'marketing', logo: avatarSources.marketing, name: '营销策略助手', desc: '客户分层与活动复盘' },
+  { type: 'risk', logo: avatarSources.risk, name: '风险预警专家', desc: '风险监控与预警' },
+  { type: 'ops', logo: avatarSources.ops, name: '运营提效顾问', desc: '流程与人效优化' }
 ];
 
 
@@ -1312,16 +1349,19 @@ function switchBVariant(id, el, opts = {}) {
 }
 
 function isProcessTopLikeVariant() {
-  return currentBVariant === 'process-top' || currentBVariant === 'product-live' || currentBVariant === 'muted-process' || currentBVariant === 'ppt-only-live';
+  return currentBVariant === 'process-top' || currentBVariant === 'product-live' || currentBVariant === 'muted-process' || currentBVariant === 'ppt-only-live' || currentBVariant === 'thinking-framework';
 }
 function shouldStreamResult() {
-  return currentBVariant === 'product-live' || currentBVariant === 'muted-process' || currentBVariant === 'ppt-only-live';
+  return currentBVariant === 'product-live' || currentBVariant === 'muted-process' || currentBVariant === 'ppt-only-live' || currentBVariant === 'thinking-framework';
 }
 function isLiveOutputVariant() {
-  return currentBVariant === 'product-live' || currentBVariant === 'muted-process' || currentBVariant === 'ppt-only-live';
+  return currentBVariant === 'product-live' || currentBVariant === 'muted-process' || currentBVariant === 'ppt-only-live' || currentBVariant === 'thinking-framework';
 }
 function isPptOnlyLiveVariant() {
-  return currentBVariant === 'ppt-only-live';
+  return currentBVariant === 'ppt-only-live' || currentBVariant === 'thinking-framework';
+}
+function isThinkingFrameworkVariant() {
+  return currentBVariant === 'thinking-framework';
 }
 
 function toggleVariantGroups(showB) {
@@ -1591,6 +1631,70 @@ function markExpertConversationRead(type) {
   clearExpertUnread(type);
 }
 
+function getFavoriteExperts() {
+  return expertCardItems.filter(item => item.starred);
+}
+
+function getCreatedExperts() {
+  return expertCardItems.filter(item => item.createdByMe);
+}
+
+function buildExpertCard(item, index, section = 'all', highlightType = '') {
+  const unread = getExpertUnreadCount(item.type);
+  const unreadClass = unread > 0 ? ' has-unread' : '';
+  const annotatedClass = index === 0 && section === 'all' ? ' annotated' : '';
+  const highlightClass = section === 'favorite' && item.type === highlightType ? ' is-just-favorited' : '';
+  const favoriteLabel = item.starred ? '取消收藏' : '收藏';
+  return `
+    <div class="agent-card${annotatedClass}${unreadClass}${highlightClass}" data-agent-type="${item.type}" data-unread="${unread > 0 ? unread : ''}" onclick="openConversation('${item.type}')">
+      <button class="agent-fav-btn ${item.starred ? 'is-favorite' : ''}" title="${favoriteLabel}" aria-label="${favoriteLabel}" onclick="event.stopPropagation(); toggleExpertFavorite('${item.type}')">
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6l2.2 4.45 4.9.72-3.55 3.45.84 4.88L10 13.78 5.61 16.1l.84-4.88L2.9 7.77l4.9-.72L10 2.6Z"/></svg>
+      </button>
+      <div class="agent-card-head"><div class="agent-logo">${avatarImg(item.logo, item.name)}</div><h3>${item.name}</h3></div>
+      <p>${item.desc}</p>
+      <div class="agent-meta">${item.meta}</div>
+      <button class="agent-ask-btn" onclick="event.stopPropagation(); openConversation('${item.type}')">去提问</button>
+      ${index === 0 && section === 'all' ? '<span class="change-marker demo-control" data-change-tooltip="所有专家是全量专家池；点击星标会同步加入上方收藏栏。" data-change-placement="top">5</span>' : ''}
+      <span class="unread-dot" aria-hidden="true"></span>
+    </div>`;
+}
+
+function buildExpertSection(title, items, emptyText, section, highlightType = '') {
+  return `
+    <section class="expert-card-section">
+      <div class="expert-section-title">${title}<span>${items.length}</span></div>
+      ${items.length
+        ? `<div class="agent-grid">${items.map((item, index) => buildExpertCard(item, index, section, highlightType)).join('')}</div>`
+        : `<div class="expert-empty-state">${emptyText}</div>`}
+    </section>`;
+}
+
+function renderExpertCards(highlightType = '') {
+  const grid = $('expertAgentGrid');
+  if (!grid) return;
+  const favoriteItems = getFavoriteExperts();
+  const createdItems = getCreatedExperts();
+  grid.innerHTML = [
+    buildExpertSection('我收藏的', favoriteItems, '暂无收藏专家，点击任意卡片右上角星标即可加入这里', 'favorite', highlightType),
+    buildExpertSection('我创建的', createdItems, '暂无我创建的专家', 'created'),
+    buildExpertSection('所有专家', expertCardItems, '暂无专家', 'all')
+  ].join('');
+  if (highlightType) {
+    setTimeout(() => {
+      grid.querySelectorAll('.is-just-favorited').forEach(card => card.classList.remove('is-just-favorited'));
+    }, 760);
+  }
+}
+
+function toggleExpertFavorite(type) {
+  const item = expertCardItems.find(agent => agent.type === type);
+  if (!item) return;
+  item.starred = !item.starred;
+  showToast(item.starred ? `已收藏 ${item.name}` : `已取消收藏 ${item.name}`);
+  renderExpertCards(item.starred ? item.type : '');
+  refreshExpertUnreadState();
+}
+
 function syncExpertCardUnreadState() {
   document.querySelectorAll('.agent-card[data-agent-type]').forEach(card => {
     const count = getExpertUnreadCount(card.dataset.agentType);
@@ -1667,7 +1771,6 @@ function applyConversationConfig(type, config, activeRailView) {
   const isDoraConversation = currentConversationType === 'dora';
   $('conversationSideAgent').textContent = config.sideAgent;
   $('conversationTitle').textContent = config.title;
-  $('conversationSubtitle').textContent = config.subtitle;
   if (!currentSourceTrace) $('conversationHistoryTitle').textContent = config.history;
   $('conversationUserText').textContent = config.userText;
   $('conversationAgentName').textContent = config.agentName || config.sideAgent;
@@ -2714,6 +2817,21 @@ const SCENARIO_STEPS = [
   { id: 'archive', time: 72800, label: '整理完整交付包', desc: 'PPT 之外，我会把报告、明细表和结构化结果一起准备好，方便不同同学直接使用。' }
 ];
 
+const THINKING_SCENARIO_STEPS = [
+  { id: 'intent', time: 800, label: '识别任务场景', desc: '我先判断这不是单纯做 PPT，而是“客户反馈归因 + 管理层汇报”的数据分析任务。' },
+  { id: 'plan', time: 2200, label: '选择分析框架', desc: '我会为这次任务选择“目标定义 → 信号识别 → 维度拆解 → 归因判断 → 行动闭环”的分析路径。' },
+  { id: 'read', time: 4000, label: '校准分析口径', desc: '先确认样本范围、字段含义和可用指标，避免后面用错口径或拿噪声下结论。' },
+  { id: 'code', time: 6200, label: '建立判断规则', desc: '把业务语义、情绪倾向和阈值规则结合起来，形成可解释的分类判断标准。' },
+  { id: 'run', time: 10000, label: '识别关键经营信号', desc: '不只统计数量，而是识别哪些问题超过阈值、影响面更大、值得管理层优先关注。' },
+  { id: 'chart', time: 27500, label: '拆解影响路径', desc: '按客户、地区、渠道和时间继续拆，判断问题是全局性还是局部集中。' },
+  { id: 'ppt', time: 34400, label: '组织汇报逻辑', desc: '把分析判断整理成管理层能快速理解的结构：结论、证据、原因、行动。' },
+  { id: 'archive', time: 72800, label: '沉淀追踪口径', desc: '把后续追踪指标和复盘口径一起放进材料，形成下一轮分析闭环。' }
+];
+
+function getScenarioSteps() {
+  return isThinkingFrameworkVariant() ? THINKING_SCENARIO_STEPS : SCENARIO_STEPS;
+}
+
 let scenarioGuideOpen = false;
 let scenarioGuidePanel = null;
 
@@ -2748,7 +2866,7 @@ function ensureScenarioGuidePanel() {
 function renderScenarioGuide() {
   const list = $('scenarioGuideList');
   if (!list) return;
-  list.innerHTML = SCENARIO_STEPS.map(step => `
+  list.innerHTML = getScenarioSteps().map(step => `
     <button class="scenario-guide-item" onclick="jumpToScenarioStep('${step.id}')">
       <span class="scenario-guide-time">${Math.floor(step.time / 1000)}s</span>
       <span class="scenario-guide-copy">
@@ -2774,7 +2892,7 @@ function closeScenarioGuide() {
 }
 
 function jumpToScenarioStep(stepId) {
-  const step = SCENARIO_STEPS.find(item => item.id === stepId);
+  const step = getScenarioSteps().find(item => item.id === stepId);
   if (!step) return;
   closeScenarioGuide();
   playScenario(step.time);
@@ -2835,7 +2953,9 @@ function followStreamingReply() {
 
 async function setExecTitle(text) {
   const el = $('execTitle');
+  if (!el) return;
   el.classList.add('is-fading'); await sleep(220);
+  if (!$('execTitle')) return;
   el.textContent = text; el.classList.remove('is-fading');
 }
 
@@ -2933,13 +3053,65 @@ function setWaitCarousel(messages = CAROUSEL_MSGS) {
   }, 2200);
 }
 
-function markPanelAsLiveProgress() {
+function renderThinkingFrameworkHeader() {
+  const panel = $('execPanel');
+  const slot = $('execFrameworkInline');
+  if (!panel || !slot || panel.classList.contains('has-framework-head')) return;
+  panel.classList.add('has-framework-head');
+  slot.hidden = false;
+  slot.innerHTML = `
+    <div class="exec-framework-card">
+      <div class="exec-framework-head">
+        <span>分析框架</span>
+        <strong>客户反馈归因闭环</strong>
+        <p class="exec-framework-status" id="frameworkStatusText">先判断优先级，再组织证据链。</p>
+      </div>
+      <div class="exec-framework-strip">
+        <span data-framework-step="0" class="is-active"><b>01</b><em>目标定义</em><small>关注什么</small></span>
+        <span data-framework-step="1"><b>02</b><em>信号识别</em><small>发生了什么</small></span>
+        <span data-framework-step="2"><b>03</b><em>维度拆解</em><small>问题在哪</small></span>
+        <span data-framework-step="3"><b>04</b><em>归因判断</em><small>原因是什么</small></span>
+        <span data-framework-step="4"><b>05</b><em>行动闭环</em><small>怎么改善</small></span>
+      </div>
+    </div>
+  `;
+}
+
+function updateThinkingFrameworkStatus(text, activeStep, doneAll = false) {
+  const status = $('frameworkStatusText');
+  if (status) status.textContent = text;
+  if (!Number.isFinite(activeStep) && !doneAll) return;
+  document.querySelectorAll('[data-framework-step]').forEach(step => {
+    const index = Number(step.dataset.frameworkStep);
+    step.classList.toggle('is-done', doneAll || index < activeStep);
+    step.classList.toggle('is-active', !doneAll && index === activeStep);
+  });
+}
+
+function resetExecHeader() {
+  const panel = $('execPanel');
+  const header = panel?.querySelector('.exec-header');
+  if (!panel || !header) return;
+  panel.classList.remove('has-framework-head');
+  const slot = $('execFrameworkInline');
+  if (slot) {
+    slot.hidden = true;
+    slot.innerHTML = '';
+  }
+  header.innerHTML = `
+    <span class="exec-title" id="execTitle">准备中....</span>
+    <button class="exec-toggle" type="button" tabindex="-1"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5l4 4 4-4"/></svg></button>
+  `;
+}
+
+function markPanelAsLiveProgress(label) {
   if (liveOutputProgressShown) return;
   liveOutputProgressShown = true;
-  setExecTitle(`已完成 ${actionCount} 个动作 · 产物生成中`);
+  setExecTitle(label || `已完成 ${actionCount} 个动作 · 产物生成中`);
 }
 
 function togglePanel() { $('execPanel').classList.toggle('is-collapsed'); }
+
 function foldPanelWithSummary(secondsUsed) {
   setExecTitle(`已完成 ${actionCount} 个动作 · 耗时 ${secondsUsed} 秒`);
   $('execPanel').classList.add('is-collapsed');
@@ -3105,6 +3277,42 @@ function renderInScenarioGenUI() {
   iframe.addEventListener('load', reveal);
   iframe.srcdoc = GENUI_DASHBOARD_SRC;
   setTimeout(reveal, 900);
+}
+
+function renderThinkingGenUI() {
+  const slot = $('genuiSlot');
+  slot.hidden = false;
+  slot.innerHTML = `
+    <div class="thinking-genui-card">
+      <div class="thinking-genui-head">
+        <div>
+          <span class="genui-kicker">GenUI · 可交互洞察</span>
+          <strong>客户反馈归因看板</strong>
+        </div>
+      </div>
+      <div class="thinking-genui-grid">
+        <div class="thinking-genui-chart">
+          <div class="chart-title">问题类型影响面</div>
+          <div class="bar-row"><span>物流配送</span><div><i style="width: 84%"></i></div><strong>42%</strong></div>
+          <div class="bar-row"><span>客户服务</span><div><i style="width: 56%"></i></div><strong>28%</strong></div>
+          <div class="bar-row"><span>产品质量</span><div><i style="width: 36%"></i></div><strong>18%</strong></div>
+          <div class="bar-row"><span>价格体验</span><div><i style="width: 24%"></i></div><strong>12%</strong></div>
+        </div>
+        <div class="thinking-genui-metrics">
+          <div><span>核心判断</span><strong>物流优先</strong><p>同时满足高占比、广影响、低满意度三个条件。</p></div>
+          <div><span>建议动作</span><strong>SLA 复盘</strong><p>先压物流，再统一客服处理口径。</p></div>
+        </div>
+      </div>
+      <div class="thinking-genui-evidence">
+        <span>证据链</span>
+        <a onclick="openPreview('xlsx','客户反馈明细.xlsx')">客户反馈明细.xlsx</a>
+        <a onclick="openPreview('xlsx','反馈分类结果.xlsx')">反馈分类结果.xlsx</a>
+        <a onclick="openPreview('json','analysis_result.json')">analysis_result.json</a>
+      </div>
+    </div>
+  `;
+  requestAnimationFrame(() => slot.classList.add('is-visible'));
+  scrollToBottom();
 }
 
 async function showLeadPill(text, holdMs = 1400) {
@@ -3414,7 +3622,7 @@ function resetScenario() {
   if (outputTab) outputTab.classList.remove('is-output-updated');
   if (outputsCount) delete outputsCount.dataset.delta;
   $('execTimeline').innerHTML = '';
-  $('execTitle').textContent = '准备中....';
+  resetExecHeader();
   $('execPanel').classList.remove('is-collapsed');
   const slot = $('resultSlot');
   slot.classList.add('is-empty'); slot.classList.remove('is-fading', 'is-final'); slot.classList.add('is-interim');
@@ -3435,6 +3643,90 @@ function playScenario(startAt = 0) {
   scenarioStartedAt = Date.now();
   const isProductLiveScenario = isLiveOutputVariant();
   const isPptOnlyScenario = isPptOnlyLiveVariant();
+  const isThinkingScenario = isThinkingFrameworkVariant();
+  const copy = isThinkingScenario ? {
+    startTitle: '正在识别任务场景....',
+    opening: `
+      <p>收到。我会先锁定这次任务的分析框架，再沿着证据链推进判断；过程区只保留关键推进状态，避免让您在一堆动作里找重点。</p>
+    `,
+    n1Stage: '场景识别',
+    n1Title: '识别任务场景',
+    n1Detail: '已识别为客户反馈归因场景，重点是解释满意度和复购风险背后的原因。',
+    n2Title: '选择分析框架',
+    n2Stage: '方法选择',
+    n2Detail: '采用“目标 → 信号 → 维度 → 归因 → 行动”的路径推进，后续动作都围绕这个框架展开。',
+    n3Title: '校准分析口径',
+    n3Stage: '口径校准',
+    n3Detail: '确认样本范围、字段含义、时间窗口和可用指标，先把口径对齐再下判断。',
+    firstFinding: '口径校准完成：样本覆盖 1,247 条客户反馈，可以做归因分析。接下来我会重点看影响面、集中度和可干预性。',
+    n4Title: '建立判断规则',
+    n4Stage: '判断规则',
+    n4Detail: '把业务关键词、语义倾向和阈值规则结合起来，确保每个结论都能追溯依据。',
+    n5Title: '识别关键经营信号',
+    n5Stage: '信号识别',
+    n5Detail: '区分零散噪声和真正值得管理层关注的经营信号。',
+    wait1: '我正在区分“高频反馈”和“真正值得行动的经营信号”...',
+    wait2: '我已经看到物流问题比较突出，正在判断它是全局问题还是局部集中...',
+    waitCarousel: ['正在校验异常信号是否稳定...','正在按客户、地区和渠道拆影响路径...','正在判断哪些原因具备可干预性...','我会把结论整理成管理层能直接判断的口径...'],
+    categoryFinding: '信号识别完成：物流配送暂列第一优先，但我不会只按占比下结论，会继续确认它是全局问题还是局部场景拉高。',
+    n5bTitle: '拆解影响路径',
+    n5bStage: '维度拆解',
+    n5bDetail: '沿客户、地区、渠道和时间拆解，判断问题集中在哪些人群和业务链路。',
+    n6Title: '形成汇报证据',
+    n6Stage: '证据组织',
+    n6Detail: '把关键判断对应的证据准备好：先证明问题存在，再说明影响范围和行动优先级。',
+    pptTitle: '组织管理层汇报逻辑',
+    pptStage: '汇报结构',
+    pptDetail: '我会按“结论 → 证据 → 原因 → 行动 → 追踪”的逻辑组织 PPT，让管理层先看到判断，再看到依据和下一步怎么推进。',
+    pptWait1: 'PPT 这一步我会更重视逻辑结构，不只是排版。正在组织结论页、证据页和行动页，预计还需 50s...',
+    pptWait2: '我还在继续生成，不是卡住了。现在主要是在把分析判断转成管理层汇报口径...',
+    pptCarousel: ['正在打磨结论先行的汇报结构...','正在把证据图表放到对应判断后面...','正在补齐原因解释和行动建议...','PPT 正在生成中，请您稍候...'],
+    finalSummary: `
+        <p>我已经把这次客户反馈归因整理成 <strong>结论 → 证据 → 原因 → 行动 → 追踪</strong> 的汇报结构。核心判断是：<strong>物流配送是第一优先经营信号</strong>，它不是单纯“反馈最多”，而是同时满足占比高、影响面广、满意度拉低明显三个条件。</p>
+        <p>汇报材料已生成 <a class="file-link pptx" onclick="openPreview('pptx','客户反馈分析汇报.pptx')">客户反馈分析汇报.pptx</a>。我也把关键判断做成了一张可交互洞察卡，您可以在下方直接看问题占比、证据链和建议动作；需要核对来源时，可以打开 <a class="file-link xlsx" onclick="openPreview('xlsx','客户反馈明细.xlsx')">客户反馈明细.xlsx</a>${citation('客户反馈明细.xlsx · 原始反馈表', 1)}、<a class="file-link xlsx" onclick="openPreview('xlsx','反馈分类结果.xlsx')">反馈分类结果.xlsx</a>${citation('反馈分类结果.xlsx · Agent 清洗结果', 2)} 或 <a class="file-link json" onclick="openPreview('json','analysis_result.json')">analysis_result.json</a>${citation('analysis_result.json · 归因判断', 3)}。</p>
+      `
+  } : {
+    startTitle: '我先确认这次要交付什么....',
+    opening: '收到，我先帮您把这批反馈跑一遍。<br>我会先看数据结构和字段质量，再把反馈按问题类型归类，最后整理成一份适合汇报的 PPT。过程中我会把关键发现同步给您，方便您不用等到最后才知道进展。',
+    n1Stage: '任务确认',
+    n1Title: '先确认您的目标',
+    n1Detail: '我理解这次不是单纯做统计，而是要把“问题发现、结论汇报、可交付材料”一起做出来。',
+    n2Title: '把工作排好顺序',
+    n2Stage: '工作安排',
+    n2Detail: '我会先看数据，再归类问题、复核重点，最后整理成 PPT 和配套产物。',
+    n3Title: '检查反馈数据',
+    n3Stage: '数据检查',
+    n3Detail: '我先把客户反馈明细读进来，确认字段、行数和可分析范围。',
+    firstFinding: '我先看了一下数据结构：这份表里能用来分析的关键字段比较完整，包括客户、反馈类型、满意度、问题描述、日期、渠道和处理状态。可以继续往下做。',
+    n4Title: '准备归类规则',
+    n4Stage: '归类规则',
+    n4Detail: '我会把关键词和描述语义结合起来看，尽量减少只靠关键词带来的误判。',
+    n5Title: '逐条归类 1,247 条反馈',
+    n5Stage: '归类复核',
+    n5Detail: '我会先做一轮归类，再把明显集中的部分单独复核。',
+    wait1: '这批反馈量不小，我正在稳稳处理...',
+    wait2: '我已经看到几个集中问题，再多跑一层交叉分析...',
+    waitCarousel: CAROUSEL_MSGS,
+    categoryFinding: '初步归类结果出来了：问题主要集中在 <strong>3 类</strong>。物流配送占比最高，大约 42%；客户服务占 28%；产品质量占 18%。我接下来会继续看这些问题分别影响哪些客户和地区。',
+    n5bTitle: '找出重点客户和高频场景',
+    n5bStage: '重点复核',
+    n5bDetail: '我会把反馈更集中的客户、地区和渠道单独拎出来，方便后续安排整改优先级。',
+    n6Title: '整理图表和汇报素材',
+    n6Stage: '汇报素材',
+    n6Detail: '我把问题分布、满意度趋势和 Top 客户做成图表，后面会直接放进 PPT。',
+    pptTitle: '撰写汇报 PPT',
+    pptStage: '汇报成稿',
+    pptDetail: '我按“结论先行”的方式组织，不做流水账，先给您放结论，再展开原因和行动建议。',
+    pptWait1: 'PPT 这一步会稍微久一点，我正在排版结论页和图表页，预计还需 50s...',
+    pptWait2: '我还在继续生成，不是卡住了。现在主要是在补图表和备注...',
+    pptCarousel: ['正在排版结论页和问题拆解页...','正在把关键发现整理成汇报口径...','正在补齐图表、备注和行动建议...','PPT 正在生成中，请您稍候...'],
+    finalSummary: `
+        <p>这批客户反馈一共 <strong>1,247</strong> 条，我已经按问题类型、满意度和客户影响范围做了一轮整理。整体满意度均值为 <strong>3.6</strong>（满分 5），低于上季度的 3.9。原始数据来自 <a class="file-link xlsx" onclick="openPreview('xlsx','客户反馈明细.xlsx')">客户反馈明细.xlsx</a>${citation('客户反馈明细.xlsx · 原始反馈表', 1)}。</p>
+        <p>主要问题集中在 <strong>3 类</strong>：<strong>物流配送</strong>占比最高（42%），其次是 <strong>客户服务</strong>（28%）和 <strong>产品质量</strong>（18%）。我建议先把物流链路放到第一优先级，因为它占比最高、影响面也最大${citation('反馈分类结果.xlsx · Agent 清洗结果', 2)}。</p>
+        <div class="inline-img" data-caption="图 1 · 反馈类型分布">📊 反馈类型分布饼图</div>
+        <p>我已经把汇报材料整理成 <a class="file-link pptx" onclick="openPreview('pptx','客户反馈分析汇报.pptx')">客户反馈分析汇报.pptx</a>，并同步准备了 <a class="file-link docx" onclick="openPreview('docx','反馈分析报告.docx')">Word</a> / <a class="file-link pdf" onclick="openPreview('pdf','反馈分析报告.pdf')">PDF</a>、<a class="file-link xlsx" onclick="openPreview('xlsx','反馈分类结果.xlsx')">XLSX</a> / <a class="file-link csv" onclick="openPreview('csv','反馈分类明细.csv')">CSV</a> / <a class="file-link json" onclick="openPreview('json','analysis_result.json')">JSON</a>，您可以直接点开右侧会话文件区域预览。</p>
+      `
+  };
   const PPT_START = 34400;
   const PPT_DONE = 64400;
   const GENUI_START = PPT_DONE + 800;
@@ -3453,24 +3745,36 @@ function playScenario(startAt = 0) {
     scenarioTimers.push(setTimeout(fn, Math.max(0, ms - startAt)));
   };
 
-  schedule(300, () => { showWaitLine(); setExecTitle('我先确认这次要交付什么....'); });
-  schedule(600, () => setResult('收到，我先帮您把这批反馈跑一遍。<br>我会先看数据结构和字段质量，再把反馈按问题类型归类，最后整理成一份适合汇报的 PPT。过程中我会把关键发现同步给您，方便您不用等到最后才知道进展。'));
+  schedule(300, () => { showWaitLine(); setExecTitle(copy.startTitle); });
+  schedule(600, () => setResult(copy.opening));
 
   let n1;
-  schedule(800, () => { n1 = addActionNode({ stage: { cls: 'coordinator', label: '任务确认' }, title: '先确认您的目标', detail: '我理解这次不是单纯做统计，而是要把“问题发现、结论汇报、可交付材料”一起做出来。' }); });
+  schedule(800, () => { n1 = addActionNode({ stage: { cls: 'coordinator', label: copy.n1Stage }, title: copy.n1Title, detail: copy.n1Detail }); });
 
   let n2;
-  schedule(2000, () => { completeNode(n1); setExecTitle('我把工作顺序先排好....'); });
-  schedule(2200, () => { n2 = addActionNode({ stage: { cls: 'planner', label: '工作安排' }, title: '把工作排好顺序', detail: '我会先看数据，再归类问题、复核重点，最后整理成 PPT 和配套产物。', files: [{ name: 'plan.md', kind: 'code' }] }); });
+  schedule(2000, () => {
+    completeNode(n1);
+    if (isThinkingScenario) updateThinkingFrameworkStatus('已识别为客户反馈归因任务', 0);
+    setExecTitle(isThinkingScenario ? '正在校准分析框架....' : '我把工作顺序先排好....');
+  });
+  schedule(2200, () => { n2 = addActionNode({ stage: { cls: 'planner', label: copy.n2Stage }, title: copy.n2Title, detail: copy.n2Detail, files: [{ name: isThinkingScenario ? 'analysis_framework.md' : 'plan.md', kind: 'code' }] }); });
 
   let n3;
-  schedule(3800, () => { completeNode(n2); setExecTitle('我先把数据摸清楚....'); });
-  schedule(4000, () => { n3 = addActionNode({ stage: { cls: 'researcher', label: '数据检查' }, title: '检查反馈数据', detail: '我先把客户反馈明细读进来，确认字段、行数和可分析范围。', files: [{ name: '客户反馈明细.xlsx', kind: 'data', role: 'input' }, { name: 'schema.json', kind: 'data' }] }); });
-  schedule(5500, () => completeNode(n3));
-  schedule(5700, () => setResult('我先看了一下数据结构：这份表里能用来分析的关键字段比较完整，包括客户、反馈类型、满意度、问题描述、日期、渠道和处理状态。可以继续往下做。'));
+  schedule(3800, () => {
+    completeNode(n2);
+    if (isThinkingScenario) renderThinkingFrameworkHeader();
+    if (isThinkingScenario) updateThinkingFrameworkStatus('框架已锁定：目标 → 信号 → 归因 → 行动', 0);
+    setExecTitle(isThinkingScenario ? '正在校准分析口径....' : '我先把数据摸清楚....');
+  });
+  schedule(4000, () => { n3 = addActionNode({ stage: { cls: 'researcher', label: copy.n3Stage }, title: copy.n3Title, detail: copy.n3Detail, files: [{ name: '客户反馈明细.xlsx', kind: 'data', role: 'input' }, { name: 'schema.json', kind: 'data' }] }); });
+  schedule(5500, () => {
+    completeNode(n3);
+    if (isThinkingScenario) updateThinkingFrameworkStatus('口径已对齐，继续判断影响面', 1);
+  });
+  schedule(5700, () => setResult(copy.firstFinding));
 
   let n4;
-  schedule(6200, () => { setExecTitle('我在准备问题归类规则....'); n4 = addActionNode({ stage: { cls: 'coder', label: '归类规则' }, title: '准备归类规则', detail: '我会把关键词和描述语义结合起来看，尽量减少只靠关键词带来的误判。', files: [{ name: 'classifier.py', kind: 'code' }], code: '' }); });
+  schedule(6200, () => { setExecTitle(isThinkingScenario ? '我在建立可解释的判断规则....' : '我在准备问题归类规则....'); n4 = addActionNode({ stage: { cls: 'coder', label: copy.n4Stage }, title: copy.n4Title, detail: copy.n4Detail, files: [{ name: 'classifier.py', kind: 'code' }], code: '' }); });
   schedule(6400, () => appendCode(n4, [
     '# 关键词词典 + 情感倾向 双通道',
     "kw = load_keywords('物流|客服|质量|价格')",
@@ -3483,41 +3787,55 @@ function playScenario(startAt = 0) {
   ], 320));
 
   let n5;
-  schedule(9800, () => completeNode(n4));
-  schedule(10000, () => { setExecTitle('我开始逐条归类并复核....'); n5 = addActionNode({ stage: { cls: 'coder', label: '归类复核' }, title: '逐条归类 1,247 条反馈', detail: '我会先做一轮归类，再把明显集中的部分单独复核。', files: [{ name: 'classification_result.csv', kind: 'data' }] }); });
+  schedule(9800, () => {
+    completeNode(n4);
+    if (isThinkingScenario) updateThinkingFrameworkStatus('规则已建立，结论可追溯', 1);
+  });
+  schedule(10000, () => { setExecTitle(isThinkingScenario ? '我开始识别关键经营信号....' : '我开始逐条归类并复核....'); n5 = addActionNode({ stage: { cls: 'coder', label: copy.n5Stage }, title: copy.n5Title, detail: copy.n5Detail, files: [{ name: 'classification_result.csv', kind: 'data' }] }); });
 
-  schedule(13000, () => setWaitText('这批反馈量不小，我正在稳稳处理...'));
-  schedule(18000, () => setWaitText('我已经看到几个集中问题，再多跑一层交叉分析...'));
-  schedule(25000, () => setWaitCarousel());
+  schedule(13000, () => setWaitText(copy.wait1));
+  schedule(18000, () => setWaitText(copy.wait2));
+  schedule(25000, () => setWaitCarousel(copy.waitCarousel));
 
-  schedule(27000, () => { clearWaitText(); setResult('初步归类结果出来了：问题主要集中在 <strong>3 类</strong>。物流配送占比最高，大约 42%；客户服务占 28%；产品质量占 18%。我接下来会继续看这些问题分别影响哪些客户和地区。'); completeNode(n5); });
+  schedule(27000, () => {
+    clearWaitText();
+    setResult(copy.categoryFinding);
+    completeNode(n5);
+    if (isThinkingScenario) updateThinkingFrameworkStatus('物流配送暂列第一优先', 2);
+  });
 
   let n5b;
   schedule(27500, () => {
-    setExecTitle('我继续看哪些客户影响更大....');
+    setExecTitle(isThinkingScenario ? '我继续拆解影响路径....' : '我继续看哪些客户影响更大....');
     n5b = addActionNode({
-      stage: { cls: 'researcher', label: '重点复核' },
-      title: '找出重点客户和高频场景',
-      detail: '我会把反馈更集中的客户、地区和渠道单独拎出来，方便后续安排整改优先级。',
+      stage: { cls: 'researcher', label: copy.n5bStage },
+      title: copy.n5bTitle,
+      detail: copy.n5bDetail,
       files: [{ name: '反馈数_2025Q2.json', kind: 'data' }]
     });
   });
   schedule(28100, () => renderChart(n5b));
-  schedule(31600, () => completeNode(n5b));
+  schedule(31600, () => {
+    completeNode(n5b);
+    if (isThinkingScenario) updateThinkingFrameworkStatus('影响路径已拆解', 3);
+  });
 
   let n6;
   schedule(32000, () => {
     collapseChart(n5b);
-    setExecTitle('我开始整理图表和汇报素材....');
-    n6 = addActionNode({ stage: { cls: 'reporter', label: '汇报素材' }, title: '整理图表和汇报素材', detail: '我把问题分布、满意度趋势和 Top 客户做成图表，后面会直接放进 PPT。', files: [{ name: '分类分布.png', kind: 'img', role: 'deliver' }, { name: '满意度趋势.png', kind: 'img', role: 'deliver' }, { name: 'Top 客户.png', kind: 'img', role: 'deliver' }] });
+    setExecTitle(isThinkingScenario ? '我开始组织判断所需的证据....' : '我开始整理图表和汇报素材....');
+    n6 = addActionNode({ stage: { cls: 'reporter', label: copy.n6Stage }, title: copy.n6Title, detail: copy.n6Detail, files: [{ name: '分类分布.png', kind: 'img', role: 'deliver' }, { name: '满意度趋势.png', kind: 'img', role: 'deliver' }, { name: 'Top 客户.png', kind: 'img', role: 'deliver' }] });
   });
-  schedule(34000, () => completeNode(n6));
+  schedule(34000, () => {
+    completeNode(n6);
+    if (isThinkingScenario) updateThinkingFrameworkStatus('证据链已准备好', 3);
+  });
 
   let n7;
-  schedule(PPT_START, () => { setExecTitle('我开始撰写汇报 PPT....'); n7 = addActionNode({ stage: { cls: 'reporter', label: '汇报成稿' }, title: '撰写汇报 PPT', detail: '我按“结论先行”的方式组织，不做流水账，先给您放结论，再展开原因和行动建议。', files: [{ name: 'ppt_generator.py', kind: 'code' }, { name: '客户反馈分析汇报.pptx', role: 'deliver' }], code: '' }); });
+  schedule(PPT_START, () => { setExecTitle(isThinkingScenario ? '我开始组织管理层汇报逻辑....' : '我开始撰写汇报 PPT....'); n7 = addActionNode({ stage: { cls: 'reporter', label: copy.pptStage }, title: copy.pptTitle, detail: copy.pptDetail, files: [{ name: 'ppt_generator.py', kind: 'code' }, { name: '客户反馈分析汇报.pptx', role: 'deliver' }], code: '' }); });
   schedule(PPT_START + 50, () => {
     if (isProductLiveScenario) {
-      markPanelAsLiveProgress();
+      markPanelAsLiveProgress(isThinkingScenario ? '正在生成汇报材料....' : undefined);
       renderLiveOutputsStage('ppt-start');
     }
   });
@@ -3532,9 +3850,9 @@ function playScenario(startAt = 0) {
 
   schedule(PPT_START + 300, () => openPreview('pptx', '客户反馈分析汇报.pptx', { progressive: true }));
   PPT_SLIDES.forEach((s, i) => { schedule(PPT_START + 800 + i * (isProductLiveScenario ? 3500 : 700), () => appendPptSlideProgressive()); });
-  schedule(PPT_START + 1600, () => { if (isProductLiveScenario) setWaitText('PPT 这一步会稍微久一点，我正在排版结论页和图表页，预计还需 50s...'); });
-  schedule(PPT_START + 9600, () => { if (isProductLiveScenario) setWaitText('我还在继续生成，不是卡住了。现在主要是在补图表和备注...'); });
-  schedule(PPT_START + 17600, () => { if (isProductLiveScenario) setWaitCarousel(['正在排版结论页和问题拆解页...','正在把关键发现整理成汇报口径...','正在补齐图表、备注和行动建议...','PPT 正在生成中，请您稍候...']); });
+  schedule(PPT_START + 1600, () => { if (isProductLiveScenario) setWaitText(copy.pptWait1); });
+  schedule(PPT_START + 9600, () => { if (isProductLiveScenario) setWaitText(copy.pptWait2); });
+  schedule(PPT_START + 17600, () => { if (isProductLiveScenario) setWaitCarousel(copy.pptCarousel); });
 
   schedule(PPT_DONE, () => {
     completeNode(n7);
@@ -3605,17 +3923,18 @@ function playScenario(startAt = 0) {
   });
 
   if (isProductLiveScenario) {
-    schedule(GENUI_START, () => showLeadPill('我再补一张可交互看板，方便您快速查看分布', 1200));
-    schedule(GENUI_RENDER, () => renderInScenarioGenUI());
+    if (!isThinkingScenario) {
+      schedule(GENUI_START, () => showLeadPill('我再补一张可交互看板，方便您快速查看分布', 1200));
+      schedule(GENUI_RENDER, () => renderInScenarioGenUI());
+    }
     schedule(SUMMARY_START, () => {
       hideWaitLine();
-      setResult(`
-        <p>这批客户反馈一共 <strong>1,247</strong> 条，我已经按问题类型、满意度和客户影响范围做了一轮整理。整体满意度均值为 <strong>3.6</strong>（满分 5），低于上季度的 3.9。原始数据来自 <a class="file-link xlsx" onclick="openPreview('xlsx','客户反馈明细.xlsx')">客户反馈明细.xlsx</a>${citation('客户反馈明细.xlsx · 原始反馈表', 1)}。</p>
-        <p>主要问题集中在 <strong>3 类</strong>：<strong>物流配送</strong>占比最高（42%），其次是 <strong>客户服务</strong>（28%）和 <strong>产品质量</strong>（18%）。我建议先把物流链路放到第一优先级，因为它占比最高、影响面也最大${citation('反馈分类结果.xlsx · Agent 清洗结果', 2)}。</p>
-        <div class="inline-img" data-caption="图 1 · 反馈类型分布">📊 反馈类型分布饼图</div>
-        <p>我已经把汇报材料整理成 <a class="file-link pptx" onclick="openPreview('pptx','客户反馈分析汇报.pptx')">客户反馈分析汇报.pptx</a>，并同步准备了 <a class="file-link docx" onclick="openPreview('docx','反馈分析报告.docx')">Word</a> / <a class="file-link pdf" onclick="openPreview('pdf','反馈分析报告.pdf')">PDF</a>、<a class="file-link xlsx" onclick="openPreview('xlsx','反馈分类结果.xlsx')">XLSX</a> / <a class="file-link csv" onclick="openPreview('csv','反馈分类明细.csv')">CSV</a> / <a class="file-link json" onclick="openPreview('json','analysis_result.json')">JSON</a>，您可以直接点开右侧会话文件区域预览。</p>
-      `, { isFinal: true });
+      setResult(copy.finalSummary, { isFinal: true });
+      if (isThinkingScenario) updateThinkingFrameworkStatus('分析闭环已完成', 4, true);
     });
+    if (isThinkingScenario) {
+      schedule(SUMMARY_START + 700, () => renderThinkingGenUI());
+    }
     if (isPptOnlyScenario) {
       schedule(FINAL_OUTPUTS, () => {
         const finalItems = [
@@ -3867,6 +4186,7 @@ function init() {
   toggleVariantGroups(false);
 
   // 初始化未读
+  renderExpertCards();
   refreshExpertUnreadState();
 
   // 初始化资源库 mock 资产
