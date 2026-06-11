@@ -1144,6 +1144,9 @@
       padding: 8px 14px 220px;
       background: linear-gradient(180deg, #fff 0%, #F7F8FA 100%);
     }
+    .chat-screen.share-mode .chat-body {
+      padding-bottom: 260px;
+    }
     .chat-screen.expert-conversation .chat-body {
       padding-bottom: 150px;
     }
@@ -1199,6 +1202,318 @@
       border-bottom-right-radius: 6px;
     }
     .message.agent .bubble { border-bottom-left-radius: 6px; }
+    .share-top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: -8px -14px 10px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.94);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--ink-3);
+    }
+    .share-top-bar strong {
+      color: var(--ink-11);
+      font-size: 15px;
+    }
+    .share-top-bar button {
+      border: none;
+      background: transparent;
+      color: var(--brand-7);
+      font-size: 13px;
+      font-weight: 800;
+      padding: 6px 0;
+    }
+    .share-turn {
+      position: relative;
+      display: grid;
+      gap: 8px;
+      margin: 12px 0;
+      padding-left: 30px;
+    }
+    .chat-screen:not(.share-mode) .share-turn {
+      padding-left: 0;
+    }
+    .share-turn.selected {
+      padding: 10px 10px 10px 30px;
+      margin-left: -8px;
+      margin-right: -8px;
+      border-radius: 16px;
+      background: rgba(37, 98, 255, 0.06);
+    }
+    .share-check {
+      position: absolute;
+      left: 0;
+      top: 12px;
+      width: 22px;
+      height: 22px;
+      border: 1px solid var(--ink-6);
+      border-radius: 999px;
+      background: #fff;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .share-turn.selected .share-check {
+      background: var(--brand-7);
+      border-color: var(--brand-7);
+    }
+    .share-turn.selected .share-check::after { content: "✓"; }
+    .share-turn .message,
+    .share-turn .work-panel,
+    .share-turn .output-grid {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+    .share-turn .work-panel,
+    .share-turn .output-grid {
+      margin-left: 41px;
+    }
+    .share-panel {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 20;
+      display: none;
+      gap: 14px;
+      padding: 14px 16px calc(16px + var(--safe-bottom));
+      border-radius: 24px 24px 0 0;
+      background: rgba(255,255,255,0.96);
+      border-top: 1px solid rgba(218, 221, 229, 0.9);
+      box-shadow: 0 -14px 40px rgba(9, 30, 64, 0.12);
+      backdrop-filter: blur(18px);
+    }
+    .share-panel.open {
+      display: grid;
+    }
+    .share-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .share-panel-head strong {
+      color: var(--ink-11);
+      font-size: 16px;
+    }
+    .share-panel-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 999px;
+      background: var(--ink-2);
+      color: var(--ink-9);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .share-settings-row,
+    .share-actions-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .share-settings-row.single {
+      grid-template-columns: 1fr;
+    }
+    .share-actions-row.single {
+      grid-template-columns: 1fr;
+    }
+    .share-settings-row.stacked {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .share-setting,
+    .share-action {
+      min-width: 0;
+      border: 1px solid var(--ink-4);
+      border-radius: 14px;
+      background: #fff;
+      color: var(--ink-10);
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .share-setting.scope-setting {
+      justify-content: flex-start;
+    }
+    .share-setting-copy {
+      min-width: 0;
+      flex: 1;
+      display: grid;
+      gap: 2px;
+    }
+    .share-setting-copy small {
+      color: var(--ink-8);
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .share-setting-copy strong {
+      color: inherit;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .share-setting-chevron {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      color: var(--ink-8);
+    }
+    .share-switch-row {
+      min-height: 42px;
+      border: 1px solid var(--ink-4);
+      border-radius: 14px;
+      background: #fff;
+      color: var(--ink-10);
+      padding: 9px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .share-switch-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .share-switch-label svg {
+      width: 18px;
+      height: 18px;
+      color: var(--brand-7);
+      flex-shrink: 0;
+    }
+    .share-switch {
+      width: 42px;
+      height: 24px;
+      border: none;
+      border-radius: 999px;
+      background: var(--ink-4);
+      padding: 2px;
+      flex-shrink: 0;
+      display: inline-flex;
+      justify-content: flex-start;
+      transition: background 0.16s ease;
+    }
+    .share-switch::after {
+      content: "";
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(9, 30, 64, 0.18);
+      transition: transform 0.16s ease;
+    }
+    .share-switch.on {
+      background: var(--brand-7);
+    }
+    .share-switch.on::after {
+      transform: translateX(18px);
+    }
+    .share-setting.active {
+      border-color: rgba(37, 98, 255, 0.38);
+      background: var(--brand-1);
+      color: var(--brand-7);
+    }
+    .share-setting svg,
+    .share-action svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+    .share-summary {
+      color: var(--ink-9);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .share-action {
+      justify-content: center;
+      min-height: 44px;
+    }
+    .share-action.primary {
+      background: var(--brand-7);
+      color: #fff;
+      border-color: var(--brand-7);
+    }
+    .share-action:disabled {
+      opacity: 0.42;
+    }
+    .share-risk-mask {
+      position: absolute;
+      inset: 0;
+      z-index: 260;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(9, 22, 64, 0.28);
+      backdrop-filter: blur(8px);
+    }
+    .share-risk-mask.open {
+      display: flex;
+    }
+    .share-risk-dialog {
+      width: min(100%, 360px);
+      border-radius: 20px;
+      background: #fff;
+      padding: 20px;
+      box-shadow: 0 18px 60px rgba(9, 30, 64, 0.22);
+    }
+    .share-risk-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--ink-11);
+      font-size: 18px;
+      font-weight: 900;
+      margin-bottom: 12px;
+    }
+    .share-risk-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: var(--orange-soft);
+      color: var(--orange);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 22px;
+      font-weight: 900;
+    }
+    .share-risk-dialog p {
+      margin: 0;
+      color: var(--ink-10);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    .share-risk-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .share-risk-actions .danger {
+      border-color: rgba(224, 87, 74, 0.72);
+      color: var(--orange);
+      background: #fff;
+      font-weight: 800;
+    }
     .work-panel {
       margin: 12px 0 12px 41px;
       border: 1px solid var(--ink-4);
@@ -1330,6 +1645,36 @@
       max-height: min(76vh, 660px);
       display: flex;
       flex-direction: column;
+    }
+    .bottom-sheet.agent-more-sheet {
+      height: min(72vh, 640px);
+      max-height: min(72vh, 640px);
+      display: flex;
+      flex-direction: column;
+    }
+    .agent-more-sheet .sheet-body {
+      flex: 1;
+      min-height: 0;
+      max-height: none;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .agent-more-layout {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .agent-more-content {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      display: grid;
+      align-content: start;
+      gap: 12px;
+      padding-bottom: 4px;
     }
     .side-sheet {
       top: 0;
@@ -2476,41 +2821,12 @@
           <span id="conversationSubtitle" hidden>华东销售经营日报分析</span>
         </div>
         <button class="icon-btn" id="newConversationBtn" type="button" onclick="startNewConversation()" aria-label="新对话" data-anno="当前会话可直接开启同类型新对话。" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h6"/><path d="M17 3v8"/><path d="M13 7h8"/></svg></button>
-        <button class="icon-btn" id="conversationShareBtn" type="button" onclick="showToast('会话转发链接已生成')" aria-label="转发会话" data-anno="所有会话页右上角都提供转发入口。"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 17 20 12 15 7"/><path d="M4 18v-2a4 4 0 0 1 4-4h12"/></svg></button>
+        <button class="icon-btn" id="conversationShareBtn" type="button" onclick="openConversationShare()" aria-label="转发会话" data-anno="会话分享在当前页进入选择模式，底部面板承载分享设置和分享方式。"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 17 20 12 15 7"/><path d="M4 18v-2a4 4 0 0 1 4-4h12"/></svg></button>
         <button class="icon-btn" type="button" onclick="openFilesSheet()" aria-label="会话文件" data-anno="PC 右侧资料面板在手机端改为底部 Sheet，保留来源/产物切换。"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6.5h6l2 2h9v9.5a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-9.5a2 2 0 0 1 2-2Z"/><path d="M3.5 8.5V6a2 2 0 0 1 2-2h3.2l1.8 2.5"/></svg></button>
         <button class="icon-btn" id="conversationMoreBtn" type="button" onclick="openAgentMoreSheet('history')" aria-label="更多菜单" data-anno="方案B：会话页右上角更多菜单承载当前 Agent 的会话记录和定时任务。" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
       </header>
-      <div class="chat-body" id="chatBody">
-        <div class="message user">
-          <div class="user-message-stack">
-            <span class="file-chip"><span class="chip-badge">BI</span>销售日报看板</span>
-            <div class="bubble">帮我分析华东区昨天销售额下降的原因，重点看苏南渠道、商机转化和回款情况。</div>
-          </div>
-        </div>
-        <div class="message agent">
-          <span class="avatar small" id="replyAvatar">D</span>
-          <div class="bubble direct-only">收到，我会基于销售日报看板、CRM 商机明细和回款清单直接分析，并整理跟进建议。</div>
-          <div class="bubble agent-only">收到，我会先理解你的目标，再调度相关专家 Agent 完成问数、归因和报告整理。</div>
-        </div>
-        <div class="work-panel" data-anno="PC 的执行过程在移动端以可折叠工作面板承载，避免常驻占满屏幕。">
-          <header><span id="workTitle">DeerFlow 执行中 · 29s</span><button class="mini-btn" type="button" onclick="toggleWorkPanel()">收起</button></header>
-          <div class="timeline" id="timeline">
-            <div class="timeline-row done"><span class="timeline-dot">✓</span><span>读取销售日报看板</span><span>4s</span></div>
-            <div class="timeline-row done"><span class="timeline-dot">✓</span><span>关联 CRM 商机明细</span><span>9s</span></div>
-            <div class="timeline-row running"><span class="timeline-dot">…</span><span>生成销售下滑分析</span><span>进行中</span></div>
-          </div>
-        </div>
-        <div class="output-grid" id="outputGrid">
-          <button class="output-card" type="button" onclick="openConversationFilePreview('苏南渠道销售下滑分析.html')">
-            <span class="asset-thumb html">HTML</span>
-            <span class="row-body"><strong>苏南渠道销售下滑分析.html</strong><span>会话产物 · 未存资料库</span></span>
-          </button>
-          <button class="output-card" type="button" onclick="openConversationFilePreview('重点客户跟进清单.xlsx')">
-            <span class="asset-thumb ppt">XLSX</span>
-            <span class="row-body"><strong>重点客户跟进清单.xlsx</strong><span>会话产物 · 点击后可主动存资料库</span></span>
-          </button>
-        </div>
-      </div>
+      <div class="chat-body" id="chatBody"></div>
+      <div class="share-panel" id="sharePanel"></div>
       <footer class="chat-footer">
         <div class="compact-sender" data-anno="会话页 Sender 保留文件引用能力，并可通过麦克风继续语音追问。">
           <div class="sender-files" id="chatFiles"></div>
@@ -2536,7 +2852,7 @@
           </span>
           <span class="detail-source-line" id="detailSubtitle" hidden></span>
         </div>
-        <button class="icon-btn" id="detailShareBtn" type="button" onclick="showToast('分享链接已生成')" aria-label="分享" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg></button>
+        <button class="icon-btn" id="detailShareBtn" type="button" onclick="openFileShareSheet()" aria-label="分享" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg></button>
         <button class="icon-btn" type="button" onclick="showToast('已下载到本地')" aria-label="下载"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></button>
       </header>
       <div class="content-scroll">
@@ -2661,6 +2977,17 @@
       </div>
     </div>
 
+    <div class="share-risk-mask" id="shareRiskMask" onclick="if(event.target===this) closeShareRiskDialog()">
+      <div class="share-risk-dialog" role="dialog" aria-modal="true" aria-labelledby="shareRiskTitle">
+        <div class="share-risk-title" id="shareRiskTitle"><span class="share-risk-icon">!</span><span>确定公开分享？</span></div>
+        <p>公开分享后，任何获得链接的人都可以访问本次分享内容，包括已选对话消息、执行过程和相关会话文件。请在分享前确认内容已完成必要审查，不包含商业机密、未公开信息、账号凭证、密钥、个人隐私或其他敏感信息。</p>
+        <div class="share-risk-actions">
+          <button class="btn" type="button" onclick="closeShareRiskDialog()">取消</button>
+          <button class="btn danger" type="button" onclick="confirmPublicShare()">确定公开</button>
+        </div>
+      </div>
+    </div>
+
     <div class="toast" id="toast"></div>
   </main>
   <div class="anno-tooltip" id="annoTooltip"></div>
@@ -2692,6 +3019,11 @@
       conversationTitle: 'agent-title'
     };
     let currentConversationHasOutputs = true;
+    let conversationShareMode = false;
+    let selectedShareTurns = new Set(['turn-1']);
+    let shareScope = 'org';
+    let shareReplayEnabled = true;
+    let shareTarget = 'conversation';
     let activeExpertFilter = 'all';
     let activeExpertQuick = 'recent';
     let currentConversationMeta = {
@@ -2719,6 +3051,52 @@
       { id: 'market', initial: '营', title: '营销复盘助手', creator: 'Marketing Admin', desc: '活动复盘、客群洞察和转化分析，辅助市场团队优化投放。', tone: 'rose', tags: ['市场', '运营'], usage: '2.65k', favorite: false, created: false, recent: true, unread: 0, conversation: 'market' },
       { id: 'risk', initial: '险', title: '法务风险助手', creator: 'Legal Admin', desc: '合同风险、异常客户和合规预警归因，支持法务快速跟进。', tone: 'rose', tags: ['法务'], usage: '1.24k', favorite: false, created: false, recent: false, unread: 0, conversation: 'risk' }
     ];
+
+    const conversationTurns = {
+      dora: [
+        {
+          id: 'turn-1',
+          file: ['BI', '销售日报看板'],
+          user: '帮我分析华东区昨天销售额下降的原因，重点看苏南渠道、商机转化和回款情况。',
+          agent: '收到，我会基于销售日报看板、CRM 商机明细和回款清单直接分析，并整理跟进建议。',
+          work: true,
+          outputs: true
+        },
+        {
+          id: 'turn-2',
+          user: '把苏南渠道拆到客户层级，看看是不是几个重点客户导致的。',
+          agent: '苏南渠道下降主要来自 3 个 KA 客户：宝钢湛江钢铁、珠海格力电器、广东中南钢铁。共同特征是订单确认延迟和回款节点后移，其中宝钢湛江影响最大。',
+          outputs: false
+        },
+        {
+          id: 'turn-3',
+          user: '给我整理今天可以直接执行的跟进动作。',
+          agent: '建议今天优先做三件事：确认宝钢湛江订单签收时间，推动格力电器补充商机阶段信息，要求中南钢铁在 18:00 前反馈付款节点。我已生成重点客户跟进清单。',
+          outputs: true
+        }
+      ],
+      expert: [
+        {
+          id: 'turn-1',
+          user: '请解释苏南渠道销售额下降和商机转化之间的关系。',
+          agent: '从指标口径看，销售额下降是结果指标，商机转化是前置指标。本次异常并不是商机数量不足，而是高意向商机推进率下降，导致已承诺订单未及时转收入。',
+          work: true,
+          outputs: false
+        },
+        {
+          id: 'turn-2',
+          user: '那今天应该优先看哪些转化指标？',
+          agent: '建议优先看高意向商机跟进率、报价后停留天数、订单确认率和回款节点完整率。这四个指标能解释从商机到收入确认之间的断点。',
+          outputs: false
+        },
+        {
+          id: 'turn-3',
+          user: '帮我把这些指标整理成一段给销售负责人的说明。',
+          agent: '可以这样说明：当前问题不是线索不足，而是重点客户从高意向到订单确认的推进变慢。今天需要销售负责人逐个确认报价后停留超过 3 天的客户，并补齐回款节点。',
+          outputs: true
+        }
+      ]
+    };
 
     const files = {
       input: [
@@ -2937,6 +3315,174 @@
       if (detailReturn !== 'conversation') $('bottomNav').style.display = 'grid';
     }
 
+    function conversationWorkHtml() {
+      return `
+        <div class="work-panel" data-anno="PC 的执行过程在移动端以可折叠工作面板承载，避免常驻占满屏幕。">
+          <header><span id="workTitle">Dora 分析中 · 29s</span><button class="mini-btn" type="button" onclick="toggleWorkPanel()">收起</button></header>
+          <div class="timeline" id="timeline">
+            <div class="timeline-row done"><span class="timeline-dot">✓</span><span>读取销售日报看板</span><span>4s</span></div>
+            <div class="timeline-row done"><span class="timeline-dot">✓</span><span>关联 CRM 商机明细</span><span>9s</span></div>
+            <div class="timeline-row running"><span class="timeline-dot">…</span><span>生成销售下滑分析</span><span>进行中</span></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function conversationOutputsHtml(compact = false) {
+      return `
+        <div class="output-grid" ${compact ? '' : 'id="outputGrid"'}>
+          <button class="output-card" type="button" onclick="openConversationFilePreview('苏南渠道销售下滑分析.html')">
+            <span class="asset-thumb html">HTML</span>
+            <span class="row-body"><strong>苏南渠道销售下滑分析.html</strong><span>会话产物 · 未存资料库</span></span>
+          </button>
+          ${compact ? '' : `<button class="output-card" type="button" onclick="openConversationFilePreview('重点客户跟进清单.xlsx')"><span class="asset-thumb ppt">XLSX</span><span class="row-body"><strong>重点客户跟进清单.xlsx</strong><span>会话产物 · 点击后可主动存资料库</span></span></button>`}
+        </div>
+      `;
+    }
+
+    function conversationTurnHtml(turn) {
+      const selected = selectedShareTurns.has(turn.id);
+      return `
+        <section class="share-turn ${conversationShareMode && selected ? 'selected' : ''}" data-turn-id="${turn.id}">
+          ${conversationShareMode ? `<button class="share-check" type="button" onclick="toggleShareTurn('${turn.id}')" aria-label="选择本轮对话"></button>` : ''}
+          <div class="message user">
+            ${turn.file ? `<div class="user-message-stack"><span class="file-chip"><span class="chip-badge">${turn.file[0]}</span>${turn.file[1]}</span><div class="bubble">${turn.user}</div></div>` : `<div class="bubble">${turn.user}</div>`}
+          </div>
+          <div class="message agent">
+            <span class="avatar small">${currentConversationMeta.replyAvatar}</span>
+            <div class="bubble">${turn.agent}</div>
+          </div>
+          ${turn.work ? conversationWorkHtml() : ''}
+          ${turn.outputs ? conversationOutputsHtml(turn.id !== 'turn-1') : ''}
+        </section>
+      `;
+    }
+
+    function renderExistingConversation() {
+      const turns = conversationTurns[currentConversationType === 'dora' ? 'dora' : 'expert'];
+      const shareHeader = conversationShareMode ? `
+        <div class="share-top-bar">
+          <button type="button" onclick="toggleAllShareTurns()">全选</button>
+          <strong>已选中 ${selectedShareTurns.size} 轮对话</strong>
+          <button type="button" onclick="closeConversationShare()">取消</button>
+        </div>
+      ` : '';
+      $('chatBody').innerHTML = shareHeader + turns.map(conversationTurnHtml).join('');
+      renderCoordinationTimeline();
+    }
+
+    function openConversationShare() {
+      if (!currentConversationHasOutputs && $('chatBody').querySelector('.chat-empty-state')) {
+        showToast('当前新会话暂无可分享内容');
+        return;
+      }
+      conversationShareMode = true;
+      shareTarget = 'conversation';
+      selectedShareTurns = new Set(['turn-1']);
+      $('screen-conversation').classList.add('share-mode');
+      $('conversationShareBtn').hidden = true;
+      $('newConversationBtn').hidden = true;
+      document.querySelector('#screen-conversation .chat-footer').hidden = true;
+      $('bottomNav').style.display = 'none';
+      renderExistingConversation();
+      renderSharePanel();
+      $('sharePanel').classList.add('open');
+      $('chatBody').scrollTop = 0;
+    }
+
+    function closeConversationShare() {
+      conversationShareMode = false;
+      $('screen-conversation').classList.remove('share-mode');
+      $('conversationShareBtn').hidden = false;
+      $('newConversationBtn').hidden = false;
+      document.querySelector('#screen-conversation .chat-footer').hidden = false;
+      $('bottomNav').style.display = currentConversationType === 'dora' ? 'grid' : 'none';
+      $('sharePanel').classList.remove('open');
+      renderExistingConversation();
+    }
+
+    function toggleShareTurn(id) {
+      if (selectedShareTurns.has(id)) selectedShareTurns.delete(id);
+      else selectedShareTurns.add(id);
+      renderExistingConversation();
+      renderSharePanel();
+    }
+
+    function toggleAllShareTurns() {
+      const turns = conversationTurns[currentConversationType === 'dora' ? 'dora' : 'expert'];
+      selectedShareTurns = selectedShareTurns.size === turns.length ? new Set() : new Set(turns.map((turn) => turn.id));
+      renderExistingConversation();
+      renderSharePanel();
+    }
+
+    function toggleShareScope() {
+      if (shareScope === 'org') {
+        openShareRiskDialog();
+        return;
+      }
+      shareScope = 'org';
+      if (shareTarget === 'file') renderFileShareSheetBody();
+      else renderSharePanel();
+    }
+
+    function openShareRiskDialog() {
+      $('shareRiskMask').classList.add('open');
+    }
+
+    function closeShareRiskDialog() {
+      $('shareRiskMask').classList.remove('open');
+    }
+
+    function confirmPublicShare() {
+      shareScope = 'public';
+      closeShareRiskDialog();
+      if (shareTarget === 'file') renderFileShareSheetBody();
+      else renderSharePanel();
+    }
+
+    function toggleShareReplay() {
+      shareReplayEnabled = !shareReplayEnabled;
+      renderSharePanel();
+    }
+
+    function completeShare(action) {
+      if (shareTarget === 'conversation' && !selectedShareTurns.size) return;
+      const feedback = action === 'image' ? '分享图已生成' : '分享链接已复制';
+      if (shareTarget === 'conversation') closeConversationShare();
+      else closeSheets();
+      showToast(feedback);
+    }
+
+    function sharePanelHtml(isFile = false, showHead = true) {
+      const disabled = !isFile && !selectedShareTurns.size;
+      return `
+        ${showHead ? `<div class="share-panel-head"><strong>${isFile ? '分享文件' : '分享会话'}</strong><button class="share-panel-close" type="button" onclick="${isFile ? 'closeSheets()' : 'closeConversationShare()'}">×</button></div>` : ''}
+        <div class="share-settings-row ${isFile ? 'single' : 'stacked'}">
+          <button class="share-setting scope-setting active" type="button" onclick="toggleShareScope()" aria-label="切换分享范围"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="share-setting-copy"><small>分享范围</small><strong>${shareScope === 'org' ? '组织内分享' : '公开分享'}</strong></span><svg class="share-setting-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+          ${isFile ? '' : `<div class="share-switch-row"><span class="share-switch-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg><span>演示回放</span></span><button class="share-switch ${shareReplayEnabled ? 'on' : ''}" type="button" onclick="toggleShareReplay()" aria-label="切换演示回放"></button></div>`}
+        </div>
+        <div class="share-summary">${isFile ? '分享范围将应用于当前文件。' : `已选择 ${selectedShareTurns.size} 轮对话 · ${shareScope === 'org' ? '组织内可访问' : '获得链接即可访问'}`}</div>
+        <div class="share-actions-row ${isFile ? 'single' : ''}">
+          ${isFile ? '' : `<button class="share-action" type="button" onclick="completeShare('image')" ${disabled ? 'disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 15-5-5L5 20"/></svg>生成分享图</button>`}
+          <button class="share-action primary" type="button" onclick="completeShare('link')" ${disabled ? 'disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>复制链接</button>
+        </div>
+      `;
+    }
+
+    function renderSharePanel() {
+      $('sharePanel').innerHTML = sharePanelHtml(false);
+    }
+
+    function renderFileShareSheetBody() {
+      $('sheetBody').innerHTML = `<div class="add-panel">${sharePanelHtml(true, false)}</div>`;
+    }
+
+    function openFileShareSheet() {
+      shareTarget = 'file';
+      openSheet('分享文件', '');
+      renderFileShareSheetBody();
+    }
+
     function openConversation(type) {
       previousMain = document.querySelector('.nav-item.active')?.dataset.nav || 'home';
       const map = {
@@ -2953,13 +3499,17 @@
       currentConversationType = map[type] ? type : 'dora';
       currentConversationMeta = data;
       currentConversationHasOutputs = true;
+      conversationShareMode = false;
       renderConversationHeader();
-      $('replyAvatar').textContent = data.replyAvatar;
       $('conversationHistoryBtn').hidden = false;
       $('conversationBackBtn').hidden = currentConversationType === 'dora';
       $('newConversationBtn').hidden = false;
+      $('conversationShareBtn').hidden = false;
+      $('screen-conversation').classList.remove('share-mode');
+      document.querySelector('#screen-conversation .chat-footer').hidden = false;
+      $('sharePanel').classList.remove('open');
+      renderExistingConversation();
       setScreen('conversation');
-      renderCoordinationTimeline();
       setTimeout(() => $('chatBody').scrollTop = $('chatBody').scrollHeight, 30);
     }
 
@@ -3127,7 +3677,7 @@
       $('sheetTitle').textContent = title;
       $('sheetBody').innerHTML = html;
       const sheet = $('genericSheet');
-      sheet.className = mode === 'side' ? 'side-sheet' : mode === 'side-left' ? 'side-sheet left' : mode === 'files' ? 'bottom-sheet files-sheet' : mode === 'voice' ? 'bottom-sheet voice-sheet' : mode === 'detail-chat' ? 'bottom-sheet detail-conversation-sheet' : mode === 'asset' ? 'bottom-sheet asset-picker-sheet' : 'bottom-sheet';
+      sheet.className = mode === 'side' ? 'side-sheet' : mode === 'side-left' ? 'side-sheet left' : mode === 'files' ? 'bottom-sheet files-sheet' : mode === 'voice' ? 'bottom-sheet voice-sheet' : mode === 'detail-chat' ? 'bottom-sheet detail-conversation-sheet' : mode === 'asset' ? 'bottom-sheet asset-picker-sheet' : mode === 'agent-more' ? 'bottom-sheet agent-more-sheet' : 'bottom-sheet';
       document.querySelector('.sheet-close').hidden = mode === 'side' || mode === 'side-left';
       $('sheetMask').classList.add('open');
     }
@@ -3250,12 +3800,16 @@
       const agent = activeAgentForMoreMenu();
       const isHistory = tab === 'history';
       openSheet(agent.name, `
-        <div class="segmented" data-anno="方案B：更多菜单用底部抽屉承载当前 Agent 的会话记录和定时任务。">
-          <button class="${isHistory ? 'active' : ''}" type="button" onclick="openAgentMoreSheet('history')">会话记录</button>
-          <button class="${isHistory ? '' : 'active'}" type="button" onclick="openAgentMoreSheet('tasks')">定时任务</button>
+        <div class="agent-more-layout">
+          <div class="segmented" data-anno="方案B：更多菜单用底部抽屉承载当前 Agent 的会话记录和定时任务。">
+            <button class="${isHistory ? 'active' : ''}" type="button" onclick="openAgentMoreSheet('history')">会话记录</button>
+            <button class="${isHistory ? '' : 'active'}" type="button" onclick="openAgentMoreSheet('tasks')">定时任务</button>
+          </div>
+          <div class="agent-more-content">
+            ${isHistory ? agentMoreHistoryHtml(agent) : agentMoreTasksHtml(agent)}
+          </div>
         </div>
-        ${isHistory ? agentMoreHistoryHtml(agent) : agentMoreTasksHtml(agent)}
-      `);
+      `, 'agent-more');
     }
 
     function toggleHistorySection(button) {
