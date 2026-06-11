@@ -1,0 +1,3519 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Dora Mobile · 多视图 Agent 体验</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      --brand-1: #EAF0FF;
+      --brand-2: #D8E4FF;
+      --brand-6: #2562FF;
+      --brand-7: #0047FD;
+      --ink-1: #FFFFFF;
+      --ink-2: #F7F8FA;
+      --ink-3: #F0F1F5;
+      --ink-4: #E6E8ED;
+      --ink-6: #C3C8D4;
+      --ink-8: #8C95B0;
+      --ink-9: #5D6581;
+      --ink-10: #222D53;
+      --ink-11: #091640;
+      --green: #1E8A64;
+      --green-soft: #E8F7F1;
+      --orange: #F26B4F;
+      --orange-soft: #FFF0E8;
+      --purple: #7C5CFF;
+      --purple-soft: #F0ECFF;
+      --rose: #D44865;
+      --rose-soft: #FFF0F3;
+      --shadow-card: 0 10px 30px rgba(9, 30, 64, 0.08);
+      --shadow-pop: 0 18px 50px rgba(9, 30, 64, 0.2);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: #DCE2EE;
+      color: var(--ink-11);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    button, input, textarea { font: inherit; }
+    [hidden] { display: none !important; }
+    button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .variant-bar {
+      position: sticky;
+      top: 0;
+      z-index: 10000;
+      width: 100%;
+      height: 46px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.24);
+      background: rgba(9, 22, 64, 0.78);
+      box-shadow: 0 8px 20px rgba(9, 30, 64, 0.12);
+      backdrop-filter: blur(16px);
+    }
+    .variant-config-trigger, .guide-toggle {
+      height: 30px;
+      border: none;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.84);
+      font-size: 12px;
+      padding: 0 12px;
+      white-space: nowrap;
+    }
+    .variant-config-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      max-width: min(68vw, 360px);
+      background: #fff;
+      color: var(--ink-11);
+      font-weight: 700;
+    }
+    .variant-summary {
+      min-width: 0;
+      color: var(--ink-9);
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .guide-toggle {
+      margin-left: auto;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+    .guide-toggle.active {
+      background: rgba(37, 98, 255, 0.22);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+    body[data-coordination-mode="direct"] .agent-only,
+    body[data-coordination-mode="agent"] .direct-only {
+      display: none !important;
+    }
+    .phone-shell {
+      position: relative;
+      width: min(430px, 100vw);
+      height: calc(100vh - 46px);
+      margin: 0 auto;
+      background: var(--ink-2);
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(9, 30, 64, 0.08), 0 30px 80px rgba(9, 30, 64, 0.22);
+    }
+    @media (min-width: 520px) {
+      .phone-shell { height: calc(100vh - 70px); margin-top: 12px; border-radius: 34px; }
+    }
+    .app-screen {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      background: var(--ink-2);
+    }
+    .app-screen.active { display: flex; }
+    .top-safe { height: max(20px, env(safe-area-inset-top, 0px)); flex-shrink: 0; }
+    .mobile-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 58px;
+      padding: 10px 16px 8px;
+      background: rgba(247, 248, 250, 0.9);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(230, 232, 237, 0.72);
+    }
+    .mobile-header.no-border { border-bottom: none; background: transparent; }
+    .header-title {
+      min-width: 0;
+      flex: 1;
+      display: grid;
+      gap: 2px;
+    }
+    .header-title strong {
+      font-size: 18px;
+      line-height: 1.2;
+      color: var(--ink-11);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .header-title span {
+      font-size: 12px;
+      color: var(--ink-9);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .icon-btn, .round-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: 1px solid var(--ink-4);
+      background: #fff;
+      color: var(--ink-10);
+    }
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+    }
+    .round-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+    }
+    .icon-btn.primary, .round-btn.primary {
+      background: var(--brand-7);
+      color: #fff;
+      border-color: var(--brand-7);
+    }
+    .icon-btn.ghost {
+      background: transparent;
+      border-color: transparent;
+    }
+    .icon-btn svg, .nav-item svg, .sheet-close svg { width: 19px; height: 19px; }
+    .content-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 0 16px 120px;
+      -webkit-overflow-scrolling: touch;
+    }
+    #screen-home .content-scroll {
+      padding-bottom: 292px;
+    }
+    #screen-experts .content-scroll,
+    #screen-space .content-scroll {
+      padding-top: 12px;
+    }
+    .home-hero {
+      padding-top: 8px;
+      display: grid;
+      gap: 12px;
+    }
+    .home-block {
+      border: 1px solid rgba(218, 221, 229, 0.92);
+      border-radius: 20px;
+      background: #fff;
+      box-shadow: 0 8px 24px rgba(9, 30, 64, 0.06);
+    }
+    .home-block-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .home-block-title strong {
+      color: var(--ink-11);
+      font-size: 15px;
+    }
+    .home-block-title span {
+      color: var(--ink-9);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .greeting-block {
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      padding: 10px 4px 4px;
+    }
+    .dashboard-block {
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      padding: 8px 0 0;
+    }
+    .dashboard-block .home-block-title {
+      padding: 0 4px;
+    }
+    .recommend-block {
+      width: 100%;
+      padding: 10px 12px 8px;
+      text-align: left;
+      color: inherit;
+      border: 1px solid rgba(255, 255, 255, 0.58);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.54), rgba(255, 255, 255, 0.2)),
+        radial-gradient(circle at 16% 0%, rgba(37, 98, 255, 0.1), transparent 42%);
+      backdrop-filter: blur(18px);
+    }
+    .recommend-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 8px;
+      color: var(--brand-7);
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .recommend-title svg {
+      width: 18px;
+      height: 18px;
+      color: var(--brand-6);
+    }
+    .recommend-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .recommend-pill {
+      min-height: 36px;
+      border: 1px solid rgba(37, 98, 255, 0.72);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.86);
+      color: var(--brand-7);
+      font-size: 12px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .recommend-pill.secondary {
+      border-color: rgba(18, 200, 200, 0.85);
+      color: #00AFA8;
+    }
+    .business-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin: 0 0 12px;
+    }
+    .business-kpi {
+      min-height: 72px;
+      border: 1px solid var(--ink-4);
+      border-radius: 14px;
+      background: #fff;
+      padding: 10px 12px;
+      box-shadow: 0 5px 18px rgba(9, 30, 64, 0.04);
+    }
+    .business-kpi span {
+      display: block;
+      color: var(--ink-9);
+      font-size: 11px;
+      line-height: 1.3;
+    }
+    .business-kpi strong {
+      display: block;
+      margin-top: 5px;
+      color: var(--brand-7);
+      font-size: 18px;
+      line-height: 1.1;
+    }
+    .business-kpi em {
+      display: block;
+      margin-top: 6px;
+      color: var(--green);
+      font-size: 10px;
+      font-style: normal;
+      font-weight: 700;
+    }
+    .business-kpi.warning strong,
+    .business-kpi.warning em { color: var(--orange); }
+    .dora-insight-panel {
+      display: grid;
+      gap: 8px;
+    }
+    .insight-card {
+      border: none;
+      border-radius: 12px;
+      background: var(--ink-2);
+      padding: 10px;
+      display: block;
+    }
+    .insight-card.full {
+      display: block;
+      background: var(--orange-soft);
+    }
+    .insight-copy strong {
+      display: block;
+      color: var(--ink-11);
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+    .insight-copy p {
+      margin: 0;
+      color: var(--ink-10);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .insight-copy b {
+      color: var(--green);
+    }
+    .progress-track {
+      width: 110px;
+      height: 8px;
+      border-radius: 999px;
+      background: #dff3f4;
+      overflow: hidden;
+    }
+    .progress-track i {
+      display: block;
+      height: 100%;
+      width: 73%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #12C8C8, #18A982);
+    }
+    .dora-greeting {
+      display: block;
+      margin: 0;
+    }
+    .avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--brand-7), var(--purple));
+      box-shadow: 0 8px 24px rgba(37, 98, 255, 0.22);
+      flex-shrink: 0;
+    }
+    .avatar.small { width: 32px; height: 32px; border-radius: 12px; font-size: 13px; }
+    .avatar.green { background: linear-gradient(135deg, #1E8A64, #4BB178); }
+    .avatar.orange { background: linear-gradient(135deg, #E85D3F, #FFAA58); }
+    .avatar.violet { background: linear-gradient(135deg, #6F55E8, #AF7DFF); }
+    .avatar.rose { background: linear-gradient(135deg, #C93D58, #F67A93); }
+    .hero-copy h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+    .hero-copy p {
+      margin: 6px 0 0;
+      color: var(--ink-9);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .mobile-sender {
+      position: relative;
+      border: 1px solid rgba(218, 221, 229, 0.92);
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+    }
+    .home-sender-dock {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: calc(68px + var(--safe-bottom));
+      z-index: 42;
+      display: grid;
+      gap: 8px;
+      padding: 22px 16px 12px;
+      background:
+        linear-gradient(180deg, rgba(247, 248, 250, 0), rgba(247, 248, 250, 0.76) 28%, rgba(255, 255, 255, 0.94) 100%);
+      backdrop-filter: blur(20px);
+      pointer-events: none;
+    }
+    .home-sender-dock > * {
+      pointer-events: auto;
+    }
+    .home-sender-dock .compact-sender {
+      box-shadow: none;
+    }
+    .sender-files {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 10px 10px 0;
+    }
+    .sender-files:empty { display: none; }
+    .file-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      flex-shrink: 0;
+      max-width: 230px;
+      min-height: 30px;
+      border: 1px solid var(--ink-4);
+      border-radius: 999px;
+      padding: 4px 9px;
+      background: var(--ink-2);
+      color: var(--ink-10);
+      font-size: 12px;
+    }
+    .chip-badge {
+      min-width: 32px;
+      height: 20px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      background: var(--brand-7);
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .chip-badge.fr { background: var(--purple); }
+    .chip-badge.xls { background: var(--green); }
+    .mobile-sender textarea {
+      width: 100%;
+      min-height: 88px;
+      resize: none;
+      border: none;
+      outline: none;
+      padding: 14px 14px 10px;
+      color: var(--ink-11);
+      font-size: 15px;
+      line-height: 1.45;
+      background: transparent;
+    }
+    .sender-tools {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px;
+      border-top: 1px solid var(--ink-3);
+    }
+    .tool-strip {
+      display: flex;
+      gap: 7px;
+      flex: 1;
+      min-width: 0;
+      overflow-x: auto;
+    }
+    .tool-pill {
+      height: 34px;
+      border: 1px solid var(--ink-4);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--ink-10);
+      padding: 0 11px;
+      font-size: 12px;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .tool-pill strong { font-size: 11px; color: var(--brand-7); }
+    .mic-btn.listening {
+      border-color: var(--rose);
+      color: var(--rose);
+      background: var(--rose-soft);
+      animation: pulseMic 1.3s infinite;
+    }
+    @keyframes pulseMic {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(212, 72, 101, 0.28); }
+      50% { box-shadow: 0 0 0 8px rgba(212, 72, 101, 0); }
+    }
+    .asset-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      background: var(--brand-7);
+      font-weight: 800;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+    .asset-icon.fr { background: var(--purple); }
+    .section-label {
+      margin: 22px 0 10px;
+      color: var(--ink-9);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .practice-list, .expert-list, .asset-list {
+      display: grid;
+      gap: 10px;
+    }
+    .info-card {
+      border: 1px solid var(--ink-4);
+      border-radius: 16px;
+      background: #fff;
+      padding: 14px;
+      box-shadow: 0 4px 16px rgba(9, 30, 64, 0.04);
+    }
+    .info-card strong {
+      display: block;
+      color: var(--ink-11);
+      font-size: 15px;
+      margin-bottom: 5px;
+    }
+    .info-card p {
+      margin: 0;
+      color: var(--ink-9);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .history-row, .expert-card, .asset-card {
+      width: 100%;
+      border: 1px solid var(--ink-4);
+      border-radius: 16px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px;
+      text-align: left;
+      color: inherit;
+      box-shadow: 0 4px 16px rgba(9, 30, 64, 0.04);
+    }
+    .row-body { min-width: 0; flex: 1; }
+    .row-body strong {
+      display: block;
+      color: var(--ink-11);
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .row-body span {
+      display: block;
+      margin-top: 3px;
+      color: var(--ink-9);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .unread-dot {
+      min-width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      background: var(--rose);
+      color: #fff;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+    }
+    .bottom-nav {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 50;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      padding: 8px 18px calc(8px + var(--safe-bottom));
+      background: rgba(255, 255, 255, 0.86);
+      backdrop-filter: blur(18px);
+    }
+    .nav-item {
+      min-height: 52px;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      color: var(--ink-8);
+      display: grid;
+      place-items: center;
+      gap: 2px;
+      font-size: 11px;
+      position: relative;
+    }
+    .nav-item.active {
+      color: var(--brand-7);
+      font-weight: 700;
+    }
+    .nav-icon {
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+      display: block;
+    }
+    .nav-icon.active {
+      display: none;
+    }
+    .nav-item.active .nav-icon.default {
+      display: none;
+    }
+    .nav-item.active .nav-icon.active {
+      display: block;
+    }
+    .nav-badge {
+      position: absolute;
+      top: 6px;
+      right: calc(50% - 24px);
+      min-width: 16px;
+      height: 16px;
+      border: 2px solid #fff;
+      border-radius: 999px;
+      background: var(--rose);
+      color: #fff;
+      font-size: 9px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .segmented {
+      display: flex;
+      gap: 6px;
+      padding: 5px;
+      border: 1px solid var(--ink-4);
+      border-radius: 14px;
+      background: #fff;
+      margin: 0 0 12px;
+    }
+    .segmented button {
+      flex: 1;
+      min-height: 34px;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--ink-9);
+      font-size: 13px;
+    }
+    .segmented button.active {
+      background: var(--brand-1);
+      color: var(--brand-7);
+      font-weight: 700;
+    }
+    .resource-filter {
+      gap: 8px;
+      padding: 2px 0;
+      border: none;
+      background: transparent;
+      overflow-x: auto;
+      scrollbar-width: none;
+      box-shadow: none;
+    }
+    .resource-filter::-webkit-scrollbar { display: none; }
+    .resource-filter button {
+      flex: 0 0 auto;
+      min-width: auto;
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid var(--ink-4);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.74);
+      color: var(--ink-9);
+      box-shadow: none;
+    }
+    .resource-filter button.active {
+      border-color: var(--brand-7);
+      background: var(--brand-7);
+      color: #fff;
+      box-shadow: none;
+    }
+    .resource-filter button span {
+      margin-left: 5px;
+      color: currentColor;
+      opacity: 0.68;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .search-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 42px;
+      padding: 0 12px;
+      border: 1px solid var(--ink-4);
+      border-radius: 14px;
+      background: #fff;
+      margin-bottom: 12px;
+      color: var(--ink-8);
+    }
+    .search-line input {
+      min-width: 0;
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--ink-11);
+      font-size: 14px;
+    }
+    .expert-card .tag, .asset-card .tag {
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: var(--ink-2);
+      color: var(--ink-9);
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .expert-filter-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 0 0 4px;
+      margin-bottom: 12px;
+      scrollbar-width: none;
+    }
+    .expert-filter-row::-webkit-scrollbar { display: none; }
+    .expert-filter-chip {
+      min-height: 32px;
+      flex: 0 0 auto;
+      border: 1px solid var(--ink-4);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--ink-9);
+      padding: 0 12px;
+      font-size: 12px;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(9, 30, 64, 0.04);
+    }
+    .expert-filter-chip.active {
+      border-color: var(--brand-7);
+      background: var(--brand-7);
+      color: #fff;
+    }
+    .expert-quick-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 14px 0 10px;
+    }
+    .expert-quick-title {
+      color: var(--ink-11);
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .expert-quick-switch {
+      display: inline-flex;
+      border: 1px solid var(--ink-4);
+      border-radius: 999px;
+      background: #fff;
+      padding: 3px;
+    }
+    .expert-quick-switch button {
+      height: 26px;
+      border: none;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--ink-9);
+      padding: 0 9px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .expert-quick-switch button.active {
+      background: var(--brand-1);
+      color: var(--brand-7);
+    }
+    .expert-quick-list {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 0 0 3px;
+      margin-bottom: 14px;
+      scrollbar-width: none;
+    }
+    .expert-quick-list::-webkit-scrollbar { display: none; }
+    .expert-mini-card {
+      width: 74px;
+      flex: 0 0 auto;
+      border: 1px solid var(--ink-4);
+      border-radius: 14px;
+      background: #fff;
+      padding: 9px 8px;
+      display: grid;
+      justify-items: center;
+      gap: 6px;
+      color: var(--ink-10);
+      box-shadow: 0 4px 14px rgba(9, 30, 64, 0.04);
+      position: relative;
+    }
+    .expert-mini-card span:last-child {
+      max-width: 58px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .mini-star {
+      position: absolute;
+      right: 5px;
+      top: 4px;
+      color: #F6B400;
+      font-size: 12px;
+    }
+    .expert-card {
+      align-items: flex-start;
+      position: relative;
+    }
+    .expert-avatar-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .expert-avatar-wrap .unread-dot {
+      position: absolute;
+      right: -6px;
+      top: -7px;
+      min-width: 18px;
+      height: 18px;
+      border: 2px solid #fff;
+      font-size: 10px;
+      box-shadow: 0 4px 10px rgba(212, 72, 101, 0.22);
+    }
+    .expert-card-main {
+      min-width: 0;
+      flex: 1;
+      display: grid;
+      gap: 7px;
+    }
+    .expert-card-title {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .expert-card-title strong {
+      color: var(--ink-11);
+      font-size: 14px;
+      line-height: 1.25;
+    }
+    .expert-card-title span {
+      display: block;
+      margin-top: 3px;
+      color: var(--ink-9);
+      font-size: 11px;
+    }
+    .expert-desc {
+      margin: 0;
+      color: var(--ink-10);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .expert-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .expert-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--ink-9);
+      font-size: 11px;
+    }
+    .favorite-btn {
+      width: 22px;
+      height: 22px;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      color: var(--ink-8);
+      font-size: 16px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .favorite-btn.active {
+      color: #F6B400;
+      background: transparent;
+    }
+    .history-primary-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .history-primary-actions button {
+      min-height: 44px;
+      border: 1px solid var(--ink-4);
+      border-radius: 14px;
+      background: #fff;
+      color: var(--ink-10);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .history-primary-actions button:first-child {
+      border-color: var(--brand-7);
+      background: var(--brand-7);
+      color: #fff;
+    }
+    .history-section {
+      margin-top: 14px;
+      display: grid;
+      gap: 8px;
+    }
+    .history-section-toggle {
+      width: 100%;
+      height: 30px;
+      border: none;
+      background: transparent;
+      color: var(--ink-9);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 0;
+    }
+    .history-section.collapsed .history-list {
+      display: none;
+    }
+    .history-list {
+      display: grid;
+      gap: 6px;
+    }
+    .history-item {
+      width: 100%;
+      min-height: 48px;
+      border: none;
+      border-radius: 14px;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px;
+      color: var(--ink-10);
+      text-align: left;
+    }
+    .history-item.active {
+      background: var(--ink-3);
+      font-weight: 800;
+    }
+    .history-source-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 9px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--brand-1);
+      color: var(--brand-7);
+      font-size: 13px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .history-source-icon.ding { background: #e8f1ff; color: #1677ff; }
+    .history-source-icon.feishu { background: #eaf8ff; color: #22a6f2; }
+    .history-source-icon.folder { background: var(--ink-3); color: var(--ink-9); }
+    .history-source-icon.clock { background: var(--orange-soft); color: var(--orange); }
+    .task-list {
+      display: grid;
+      gap: 8px;
+    }
+    .task-item {
+      min-height: 58px;
+      border: 1px solid var(--ink-4);
+      border-radius: 14px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      color: var(--ink-10);
+    }
+    .task-status {
+      flex-shrink: 0;
+      min-width: 44px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--green-soft);
+      color: var(--green);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .task-status.paused {
+      background: var(--ink-3);
+      color: var(--ink-9);
+    }
+    .asset-thumb {
+      width: 72px;
+      height: 54px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--brand-1), #fff);
+      border: 1px solid var(--ink-4);
+      display: grid;
+      place-items: center;
+      color: var(--brand-7);
+      font-size: 12px;
+      font-weight: 800;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .asset-thumb.ppt { color: var(--orange); background: var(--orange-soft); }
+    .asset-thumb.html { color: var(--green); background: var(--green-soft); }
+    .asset-thumb.bi { color: var(--purple); background: var(--purple-soft); }
+    .asset-thumb.md { color: var(--ink-10); background: var(--ink-3); }
+    .file-type-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 9px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .file-type-icon.html { background: var(--green); }
+    .file-type-icon.ppt { background: var(--orange); }
+    .file-type-icon.md { background: var(--ink-10); }
+    .file-type-icon.xls { background: var(--brand-7); }
+    .file-type-icon.doc { background: var(--purple); }
+    .file-type-icon.json { background: var(--ink-9); }
+    .file-type-icon.file { background: var(--ink-10); }
+    .detail-title-with-icon {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .detail-title-with-icon strong {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .detail-source-line {
+      display: block;
+      max-width: 100%;
+    }
+    #screen-detail[data-detail-mode="conversation-file"] .preview-card {
+      box-shadow: none;
+      border-color: rgba(218, 221, 229, 0.9);
+    }
+    #screen-detail[data-detail-mode="conversation-file"] .detail-chat-bar {
+      display: none;
+    }
+    .chat-screen {
+      background: #fff;
+    }
+    .chat-screen .top-safe,
+    .chat-screen .mobile-header {
+      background: #fff;
+    }
+    .chat-body {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 8px 14px 220px;
+      background: linear-gradient(180deg, #fff 0%, #F7F8FA 100%);
+    }
+    .chat-screen.expert-conversation .chat-body {
+      padding-bottom: 150px;
+    }
+    .chat-empty-state {
+      min-height: 100%;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      gap: 8px;
+      padding: 24px 22px;
+      color: var(--ink-9);
+      text-align: center;
+    }
+    .chat-empty-state strong {
+      color: var(--ink-11);
+      font-size: 17px;
+    }
+    .chat-empty-state span {
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .message {
+      display: flex;
+      gap: 9px;
+      margin: 12px 0;
+      align-items: flex-start;
+    }
+    .message.user { justify-content: flex-end; }
+    .user-message-stack {
+      max-width: 82%;
+      display: grid;
+      justify-items: end;
+      gap: 6px;
+    }
+    .user-message-stack .bubble {
+      max-width: 100%;
+    }
+    .bubble {
+      max-width: 82%;
+      border-radius: 16px;
+      padding: 11px 12px;
+      background: #fff;
+      border: 1px solid var(--ink-4);
+      color: var(--ink-10);
+      font-size: 14px;
+      line-height: 1.48;
+      box-shadow: 0 3px 14px rgba(9, 30, 64, 0.04);
+    }
+    .message.user .bubble {
+      background: var(--brand-7);
+      color: #fff;
+      border-color: var(--brand-7);
+      border-bottom-right-radius: 6px;
+    }
+    .message.agent .bubble { border-bottom-left-radius: 6px; }
+    .work-panel {
+      margin: 12px 0 12px 41px;
+      border: 1px solid var(--ink-4);
+      border-radius: 16px;
+      background: #fff;
+      overflow: hidden;
+    }
+    .work-panel header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px;
+      color: var(--ink-10);
+      font-size: 13px;
+      font-weight: 700;
+      border-bottom: 1px solid var(--ink-3);
+    }
+    .timeline {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+    .timeline-row {
+      display: grid;
+      grid-template-columns: 18px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      color: var(--ink-9);
+      font-size: 12px;
+    }
+    .timeline-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      background: var(--brand-1);
+      color: var(--brand-7);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .timeline-row.done .timeline-dot { background: var(--green-soft); color: var(--green); }
+    .timeline-row.running .timeline-dot { background: var(--orange-soft); color: var(--orange); }
+    .output-grid {
+      display: grid;
+      gap: 8px;
+      margin: 12px 0 12px 41px;
+    }
+    .output-card {
+      border: 1px solid var(--ink-4);
+      border-radius: 14px;
+      background: #fff;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-align: left;
+      color: inherit;
+    }
+    .chat-footer {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: calc(68px + var(--safe-bottom));
+      z-index: 45;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.95);
+      border-top: 1px solid var(--ink-4);
+      backdrop-filter: blur(18px);
+    }
+    .chat-screen.expert-conversation .chat-footer {
+      bottom: var(--safe-bottom);
+    }
+    .compact-sender {
+      border: 1px solid var(--ink-4);
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: none;
+      overflow: hidden;
+    }
+    .compact-sender textarea {
+      width: 100%;
+      min-height: 44px;
+      max-height: 88px;
+      border: none;
+      outline: none;
+      resize: none;
+      padding: 11px 12px 2px;
+      font-size: 14px;
+      background: transparent;
+    }
+    .compact-tools {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px;
+    }
+    .sheet-mask {
+      position: absolute;
+      inset: 0;
+      z-index: 200;
+      display: none;
+      background: rgba(9, 22, 64, 0.36);
+    }
+    .sheet-mask.open { display: block; }
+    .bottom-sheet, .side-sheet {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      max-height: 86vh;
+      border-radius: 24px 24px 0 0;
+      background: #fff;
+      box-shadow: var(--shadow-pop);
+      transform: translateY(100%);
+      transition: transform 0.22s ease;
+      overflow: hidden;
+    }
+    .sheet-mask.open .bottom-sheet { transform: translateY(0); }
+    .bottom-sheet.files-sheet {
+      height: min(72vh, 640px);
+      max-height: min(72vh, 640px);
+      display: flex;
+      flex-direction: column;
+    }
+    .bottom-sheet.detail-conversation-sheet {
+      height: min(76vh, 660px);
+      max-height: min(76vh, 660px);
+      display: flex;
+      flex-direction: column;
+    }
+    .side-sheet {
+      top: 0;
+      left: auto;
+      right: 0;
+      width: min(92vw, 380px);
+      max-height: none;
+      height: 100%;
+      border-radius: 24px 0 0 24px;
+      transform: translateX(100%);
+    }
+    .side-sheet.left {
+      left: 0;
+      right: auto;
+      width: min(86vw, 360px);
+      border-radius: 0 24px 24px 0;
+      transform: translateX(-100%);
+    }
+    .sheet-mask.open .side-sheet { transform: translateX(0); }
+    .sheet-head {
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--ink-3);
+    }
+    .sheet-head strong { flex: 1; font-size: 16px; }
+    .sheet-head-actions {
+      display: none;
+      align-items: center;
+      gap: 6px;
+    }
+    .detail-conversation-sheet .sheet-head-actions {
+      display: inline-flex;
+    }
+    .sheet-action-icon {
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--ink-4);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--ink-10);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sheet-action-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+    .sheet-close {
+      width: 34px;
+      height: 34px;
+      border: none;
+      border-radius: 999px;
+      background: var(--ink-2);
+      color: var(--ink-9);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sheet-body {
+      max-height: calc(86vh - 58px);
+      overflow: auto;
+      padding: 14px 16px calc(20px + var(--safe-bottom));
+    }
+    .detail-conversation-sheet .sheet-body {
+      flex: 1;
+      min-height: 0;
+      max-height: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #fff 0%, #F7F8FA 100%);
+    }
+    .detail-chat-layout {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .detail-chat-thread {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-bottom: 10px;
+    }
+    .detail-chat-layout .compact-sender {
+      flex-shrink: 0;
+      margin-top: 10px;
+    }
+    .files-sheet .sheet-body {
+      flex: 1;
+      min-height: 0;
+      max-height: none;
+    }
+    .voice-sheet .sheet-head {
+      display: none;
+    }
+    .voice-sheet {
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.62) 48%, rgba(235, 243, 255, 0.48)),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(247, 250, 255, 0.58));
+      backdrop-filter: blur(28px) saturate(1.35);
+      box-shadow: 0 20px 60px rgba(9, 30, 64, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.78);
+    }
+    .voice-sheet .sheet-body {
+      max-height: 86vh;
+      padding-top: 28px;
+      background: transparent;
+    }
+    .side-sheet .sheet-body { max-height: calc(100vh - 58px); }
+    .sheet-actions {
+      display: grid;
+      gap: 10px;
+    }
+    .sheet-action {
+      min-height: 52px;
+      border: 1px solid var(--ink-4);
+      border-radius: 16px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      text-align: left;
+      color: var(--ink-10);
+    }
+    .add-panel {
+      display: grid;
+      gap: 14px;
+    }
+    .add-panel-hint {
+      margin: 0;
+      color: var(--ink-9);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .add-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .add-tile {
+      min-width: 0;
+      border: 1px solid var(--ink-4);
+      border-radius: 18px;
+      background: #fff;
+      color: var(--ink-10);
+      padding: 12px 6px 10px;
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(9, 30, 64, 0.04);
+    }
+    .add-tile span:last-child {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .add-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      background: var(--brand-7);
+    }
+    .add-icon.upload { background: var(--green); }
+    .add-icon.fr { background: var(--purple); }
+    .add-icon.file { background: var(--orange); }
+    .asset-picker-sheet {
+      height: min(86vh, 760px);
+      max-height: min(86vh, 760px);
+      display: flex;
+      flex-direction: column;
+    }
+    .asset-picker-sheet .sheet-body {
+      flex: 1;
+      min-height: 0;
+      max-height: none;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #fff;
+    }
+    .asset-picker-layout {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .asset-picker-top {
+      flex-shrink: 0;
+      display: grid;
+      gap: 10px;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--ink-3);
+      background: rgba(255,255,255,0.96);
+    }
+    .asset-picked-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--ink-9);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .asset-clear-btn {
+      border: none;
+      background: transparent;
+      color: var(--brand-7);
+      font: inherit;
+      padding: 4px 0;
+    }
+    .asset-tree {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      display: grid;
+      align-content: start;
+      gap: 6px;
+      padding: 10px 12px 18px;
+    }
+    .asset-tree-row {
+      width: 100%;
+      border: 1px solid var(--ink-4);
+      border-radius: 12px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px;
+      text-align: left;
+      color: inherit;
+      margin-left: calc(var(--level, 0) * 18px);
+      width: calc(100% - calc(var(--level, 0) * 18px));
+    }
+    .asset-tree-row.asset-row { cursor: pointer; }
+    .asset-tree-row.folder-row {
+      background: var(--ink-1);
+      border-color: transparent;
+    }
+    .asset-tree-row.selected {
+      border-color: var(--brand-6);
+      background: var(--brand-1);
+    }
+    .asset-tree-row.disabled {
+      opacity: 0.58;
+      cursor: default;
+    }
+    .tree-toggle {
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: transparent;
+      color: var(--ink-9);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transform: rotate(-90deg);
+      transition: transform 0.16s ease;
+    }
+    .asset-folder.expanded > .folder-row .tree-toggle { transform: rotate(0deg); }
+    .asset-check {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      border: 1px solid var(--ink-6);
+      flex-shrink: 0;
+      background: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .asset-check.selected,
+    .asset-check.partial {
+      background: var(--brand-7);
+      border-color: var(--brand-7);
+    }
+    .asset-check.selected::after { content: "✓"; }
+    .asset-check.partial::after { content: ""; width: 9px; height: 2px; border-radius: 99px; background: #fff; }
+    .asset-node-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: var(--brand-1);
+      color: var(--brand-7);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .asset-node-icon.fr { background: #f2edff; color: var(--purple); }
+    .asset-node-icon.folder {
+      background: #fff4d8;
+      color: #b77900;
+    }
+    .folder-count, .added-tag {
+      flex-shrink: 0;
+      border-radius: 999px;
+      padding: 3px 7px;
+      background: var(--ink-2);
+      color: var(--ink-8);
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .added-tag {
+      background: var(--ink-3);
+      color: var(--ink-9);
+    }
+    .asset-picker-footer {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 16px calc(12px + var(--safe-bottom));
+      border-top: 1px solid var(--ink-3);
+      background: rgba(255,255,255,0.96);
+    }
+    .asset-picker-footer strong { font-size: 14px; }
+    .sheet-footer {
+      position: sticky;
+      bottom: 0;
+      display: flex;
+      gap: 10px;
+      padding: 10px 0 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0), #fff 24%);
+    }
+    .btn {
+      min-height: 42px;
+      border: 1px solid var(--ink-4);
+      border-radius: 12px;
+      background: #fff;
+      color: var(--ink-10);
+      padding: 0 14px;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn.primary {
+      background: var(--brand-7);
+      border-color: var(--brand-7);
+      color: #fff;
+      font-weight: 700;
+    }
+    .btn.flex { flex: 1; }
+    .voice-state {
+      display: grid;
+      justify-items: center;
+      gap: 16px;
+      padding: 8px 0 4px;
+      text-align: center;
+    }
+    .voice-orb {
+      width: 96px;
+      height: 96px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 32% 28%, #fff, var(--brand-2));
+      color: var(--brand-7);
+      box-shadow: 0 18px 40px rgba(37, 98, 255, 0.24);
+    }
+    .wave {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      height: 38px;
+    }
+    .wave i {
+      display: block;
+      width: 4px;
+      height: 14px;
+      border-radius: 999px;
+      background: var(--brand-6);
+      animation: wave 0.9s infinite ease-in-out;
+    }
+    .wave i:nth-child(2) { animation-delay: 0.1s; height: 24px; background: var(--green); }
+    .wave i:nth-child(3) { animation-delay: 0.2s; height: 32px; background: var(--orange); }
+    .wave i:nth-child(4) { animation-delay: 0.3s; height: 20px; background: var(--purple); }
+    .wave i:nth-child(5) { animation-delay: 0.4s; height: 28px; background: var(--rose); }
+    @keyframes wave {
+      0%, 100% { transform: scaleY(0.55); opacity: 0.65; }
+      50% { transform: scaleY(1); opacity: 1; }
+    }
+    .voice-result {
+      width: 100%;
+      min-height: 76px;
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.58);
+      padding: 12px;
+      color: var(--ink-10);
+      font-size: 14px;
+      line-height: 1.55;
+      text-align: left;
+    }
+    .voice-cursor {
+      display: inline-block;
+      width: 1px;
+      height: 1em;
+      margin-left: 2px;
+      background: var(--brand-7);
+      vertical-align: -2px;
+      animation: cursorBlink 0.8s infinite;
+    }
+    @keyframes cursorBlink {
+      0%, 45% { opacity: 1; }
+      46%, 100% { opacity: 0; }
+    }
+    .files-tabs {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .files-tabs button {
+      min-height: 38px;
+      border: 1px solid var(--ink-4);
+      border-radius: 12px;
+      background: #fff;
+      color: var(--ink-9);
+    }
+    .files-tabs button.active {
+      background: var(--brand-1);
+      color: var(--brand-7);
+      border-color: var(--brand-2);
+      font-weight: 700;
+    }
+    .file-list { display: grid; gap: 9px; }
+    .file-row {
+      border: 1px solid var(--ink-4);
+      border-radius: 15px;
+      background: #fff;
+      padding: 12px;
+      display: grid;
+      gap: 9px;
+      cursor: pointer;
+    }
+    .file-row-main {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .file-actions {
+      display: flex;
+      gap: 7px;
+      overflow-x: auto;
+    }
+    .mini-btn {
+      height: 30px;
+      border: 1px solid var(--ink-4);
+      border-radius: 999px;
+      background: var(--ink-2);
+      color: var(--ink-10);
+      padding: 0 10px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .preview-card {
+      border: 1px solid var(--ink-4);
+      border-radius: 18px;
+      background: #fff;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      margin-bottom: 14px;
+    }
+    .fake-report {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+      background: #fbfcff;
+    }
+    .report-hero {
+      border-radius: 18px;
+      padding: 16px;
+      color: #fff;
+      background:
+        radial-gradient(circle at 18% 20%, rgba(255,255,255,0.44), transparent 25%),
+        linear-gradient(135deg, #0047FD 0%, #1E8A64 100%);
+      box-shadow: 0 14px 28px rgba(37, 98, 255, 0.18);
+    }
+    .report-hero h3 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.25;
+    }
+    .report-hero p {
+      margin: 7px 0 0;
+      color: rgba(255,255,255,0.82);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .report-status-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .report-status-row span {
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0 9px;
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 9px;
+    }
+    .kpi-card {
+      border: 1px solid var(--ink-4);
+      border-radius: 14px;
+      background: #fff;
+      padding: 12px;
+    }
+    .kpi-card span { color: var(--ink-9); font-size: 11px; }
+    .kpi-card strong { display: block; margin-top: 5px; font-size: 18px; color: var(--ink-11); }
+    .kpi-card em {
+      display: block;
+      margin-top: 5px;
+      color: var(--ink-8);
+      font-size: 10px;
+      font-style: normal;
+    }
+    .forecast-section {
+      border: 1px solid var(--ink-4);
+      border-radius: 16px;
+      background: #fff;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+    .forecast-section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--ink-11);
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .forecast-section-title span {
+      color: var(--ink-9);
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .scenario-switch {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .scenario-switch button {
+      height: 30px;
+      border: 1px solid var(--ink-4);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--ink-9);
+      font-size: 12px;
+    }
+    .scenario-switch button.active {
+      border-color: var(--brand-2);
+      background: var(--brand-1);
+      color: var(--brand-7);
+      font-weight: 700;
+    }
+    .chart-box {
+      height: 132px;
+      border-radius: 14px;
+      border: 1px solid var(--ink-4);
+      background: linear-gradient(135deg, rgba(37,98,255,0.12), rgba(30,138,100,0.06));
+      position: relative;
+      overflow: hidden;
+    }
+    .chart-box svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .chart-grid {
+      stroke: rgba(37, 98, 255, 0.14);
+      stroke-width: 1;
+    }
+    .chart-area {
+      fill: url(#forecastAreaGradient);
+    }
+    .chart-line {
+      fill: none;
+      stroke: url(#forecastLineGradient);
+      stroke-width: 3.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .chart-point {
+      fill: #fff;
+      stroke: var(--brand-7);
+      stroke-width: 2;
+    }
+    .forecast-table {
+      display: grid;
+      gap: 7px;
+    }
+    .forecast-row {
+      display: grid;
+      grid-template-columns: 46px 1fr 62px;
+      gap: 8px;
+      align-items: center;
+      min-height: 34px;
+      color: var(--ink-10);
+      font-size: 12px;
+    }
+    .forecast-row strong { color: var(--ink-11); font-size: 13px; }
+    .bar-track {
+      height: 8px;
+      border-radius: 999px;
+      background: var(--ink-3);
+      overflow: hidden;
+    }
+    .bar-track i {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--brand-7), var(--green));
+    }
+    .rule-list, .risk-list {
+      display: grid;
+      gap: 8px;
+    }
+    .rule-item, .risk-item {
+      display: flex;
+      gap: 9px;
+      align-items: flex-start;
+      border-radius: 12px;
+      background: var(--ink-2);
+      padding: 10px;
+      color: var(--ink-9);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .rule-item strong, .risk-item strong {
+      display: block;
+      color: var(--ink-11);
+      font-size: 13px;
+      margin-bottom: 2px;
+    }
+    .rule-badge, .risk-badge {
+      width: 32px;
+      height: 24px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      background: var(--brand-7);
+      font-size: 10px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .risk-badge { background: var(--orange); }
+    .detail-chat-bar {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: calc(16px + var(--safe-bottom));
+      z-index: 42;
+      min-height: 48px;
+      border: 1px solid rgba(255, 255, 255, 0.62);
+      border-radius: 999px;
+      background:
+        radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.62), transparent 26%),
+        linear-gradient(135deg, #0047FD 0%, #6F55E8 52%, #18A982 100%);
+      box-shadow: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      color: #fff;
+    }
+    .detail-chat-bar input {
+      min-width: 0;
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: #fff;
+      font-size: 14px;
+    }
+    .detail-chat-bar input::placeholder {
+      color: rgba(255, 255, 255, 0.86);
+    }
+    .detail-chat-action {
+      width: 36px;
+      height: 36px;
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.22);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .detail-chat-action.primary {
+      background: rgba(255, 255, 255, 0.96);
+      color: var(--brand-7);
+      border-color: rgba(255, 255, 255, 0.96);
+    }
+    .detail-chat-action svg {
+      width: 18px;
+      height: 18px;
+    }
+    .toast {
+      position: absolute;
+      left: 50%;
+      bottom: calc(92px + var(--safe-bottom));
+      z-index: 500;
+      transform: translateX(-50%) translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      min-width: 156px;
+      max-width: calc(100% - 48px);
+      border-radius: 999px;
+      background: rgba(9, 22, 64, 0.9);
+      color: #fff;
+      padding: 10px 14px;
+      font-size: 13px;
+      text-align: center;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .annotation-on [data-anno] {
+      outline: 2px solid rgba(242, 107, 79, 0.92);
+      outline-offset: 3px;
+    }
+    .anno-tooltip {
+      position: fixed;
+      z-index: 20000;
+      display: none;
+      max-width: 260px;
+      padding: 9px 10px;
+      border-radius: 10px;
+      background: rgba(9, 22, 64, 0.96);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.45;
+      pointer-events: none;
+      box-shadow: var(--shadow-pop);
+    }
+    .guide-popover {
+      position: fixed;
+      top: 54px;
+      right: 16px;
+      z-index: 10001;
+      display: none;
+      width: min(390px, calc(100vw - 28px));
+      border: 1px solid rgba(218, 221, 229, 0.9);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.98);
+      box-shadow: var(--shadow-pop);
+      padding: 12px;
+      pointer-events: none;
+    }
+    .guide-popover.open { display: block; }
+    .variant-config-panel {
+      position: fixed;
+      top: 54px;
+      left: 14px;
+      z-index: 10002;
+      display: none;
+      width: min(420px, calc(100vw - 28px));
+      border: 1px solid rgba(218, 221, 229, 0.92);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: var(--shadow-pop);
+      padding: 12px;
+      backdrop-filter: blur(18px);
+    }
+    .variant-config-panel.open {
+      display: block;
+    }
+    .variant-config-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .variant-config-head strong {
+      font-size: 14px;
+      color: var(--ink-11);
+    }
+    .variant-config-head button {
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 999px;
+      background: var(--ink-2);
+      color: var(--ink-9);
+    }
+    .variant-config-group + .variant-config-group {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--ink-3);
+    }
+    .variant-config-group > span {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--ink-9);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .variant-config-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .variant-config-option {
+      min-height: 32px;
+      border: 1px solid var(--ink-4);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--ink-10);
+      font-size: 12px;
+      padding: 0 12px;
+    }
+    .variant-config-option.active {
+      border-color: rgba(37, 98, 255, 0.26);
+      background: var(--brand-1);
+      color: var(--brand-7);
+      font-weight: 700;
+    }
+    @media (min-width: 860px) {
+      .variant-bar {
+        padding-left: calc((100vw - 430px) / 2 - 210px);
+        padding-right: calc((100vw - 430px) / 2 - 210px);
+      }
+      .variant-config-panel {
+        left: calc((100vw - 430px) / 2 - 210px);
+      }
+    }
+    @media (min-width: 1040px) {
+      .guide-popover {
+        left: calc((100vw + 430px) / 2 + 16px);
+        right: auto;
+        width: min(390px, calc((100vw - 430px) / 2 - 32px));
+      }
+    }
+    .guide-popover h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+    }
+    .guide-popover ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--ink-9);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .demo-control { display: none; }
+    .annotation-on .demo-control { display: block; }
+    .empty-state {
+      border: 1px dashed var(--ink-4);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      color: var(--ink-9);
+      font-size: 13px;
+      background: #fff;
+    }
+  </style>
+</head>
+<body data-coordination-mode="direct" data-variant-context="coordination">
+  <div class="variant-bar">
+    <button class="variant-config-trigger" id="variantConfigTrigger" type="button" onclick="toggleVariantConfig()">
+      <span>方案配置</span>
+      <span class="variant-summary" id="variantSummary">侧边菜单 · 仅标题</span>
+    </button>
+    <button class="guide-toggle" id="guideToggle" type="button" onclick="toggleGuide()">交互说明</button>
+  </div>
+  <div class="variant-config-panel" id="variantConfigPanel" data-anno="顶部方案配置为组合式设置，每个设计点可独立切换并即时生效。">
+    <div class="variant-config-head">
+      <strong>方案配置</strong>
+      <button type="button" onclick="closeVariantConfig()" aria-label="关闭">×</button>
+    </div>
+    <div class="variant-config-group">
+      <span>框架方案</span>
+      <div class="variant-config-options">
+        <button class="variant-config-option" type="button" data-variant-key="framework" data-variant-value="side-menu" onclick="setVariant('framework', 'side-menu')">方案A：侧边菜单</button>
+        <button class="variant-config-option" type="button" data-variant-key="framework" data-variant-value="more-menu" onclick="setVariant('framework', 'more-menu')">方案B：更多菜单</button>
+      </div>
+    </div>
+    <div class="variant-config-group">
+      <span>会话标题</span>
+      <div class="variant-config-options">
+        <button class="variant-config-option" type="button" data-variant-key="conversationTitle" data-variant-value="title-only" onclick="setVariant('conversationTitle', 'title-only')">方案1：仅标题</button>
+        <button class="variant-config-option" type="button" data-variant-key="conversationTitle" data-variant-value="agent-only" onclick="setVariant('conversationTitle', 'agent-only')">方案2：仅名称</button>
+        <button class="variant-config-option" type="button" data-variant-key="conversationTitle" data-variant-value="agent-title" onclick="setVariant('conversationTitle', 'agent-title')">方案3：名称+标题</button>
+      </div>
+    </div>
+  </div>
+  <div class="guide-popover" id="guidePopover">
+    <h3>交互说明</h3>
+    <ul>
+      <li>Dora、专家、资源库通过底部 Tab 切换，会话与详情作为沉浸式页面进入。</li>
+      <li>PC 端常驻侧栏和资料面板在移动端转为抽屉 / 底部 Sheet。</li>
+      <li>所有 Sender 保留上传、BI、FR、引用资料和发送能力，并新增语音输入。</li>
+      <li>会话文件预览保留当前会话来源、分享和下载；资料库详情才提供基于资料追问能力。</li>
+    </ul>
+  </div>
+
+  <main class="phone-shell" id="phoneShell">
+    <section class="app-screen active" id="screen-home">
+      <div class="top-safe"></div>
+      <header class="mobile-header no-border">
+        <button class="icon-btn" id="homeHistoryBtn" type="button" onclick="openHistorySheet()" aria-label="最近会话" data-anno="方案A：移动端把 PC 左侧会话栏收进最近会话抽屉。">☰</button>
+        <div class="header-title">
+          <strong>Dora超级智能体</strong>
+        </div>
+        <button class="icon-btn" id="homeMoreBtn" type="button" onclick="openAgentMoreSheet('history')" aria-label="更多菜单" data-anno="方案B：通过右上角更多菜单承载当前 Agent 的会话记录和定时任务。" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
+      </header>
+      <div class="content-scroll">
+        <div class="home-hero">
+          <section class="home-block greeting-block">
+            <div class="dora-greeting">
+              <div class="hero-copy">
+                <h1>早上好，王总</h1>
+                <p>Dora 已为你整理华东区昨日销售经营日报，发现 1 个需要跟进的异常。</p>
+              </div>
+            </div>
+          </section>
+          <section class="home-block dashboard-block">
+            <div class="home-block-title">
+              <strong>华东销售经营看板</strong>
+              <span>2026-06-08 更新</span>
+            </div>
+            <div class="business-kpi-grid">
+              <div class="business-kpi"><span>昨日销售额</span><strong>¥482.6万</strong><em style="color:var(--orange)">↓ 8.4%</em></div>
+              <div class="business-kpi"><span>新增商机</span><strong>126</strong><em>↑ 15.2%</em></div>
+              <div class="business-kpi"><span>回款完成率</span><strong>72.8%</strong><em>差 7.2%</em></div>
+              <div class="business-kpi warning"><span>风险客户</span><strong>9</strong><em>需跟进</em></div>
+            </div>
+            <div class="dora-insight-panel" data-anno="Dora 首页以主动经营洞察承接业务用户，不要求用户先理解 Agent 架构。">
+              <div class="insight-card">
+                <div class="insight-copy">
+                  <strong>苏南渠道销售下滑</strong>
+                  <p>昨日销售额环比下降 <b style="color:var(--orange)">18.7%</b>，主要集中在 3 个 KA 客户订单延迟确认。</p>
+                </div>
+              </div>
+              <div class="insight-card">
+                <div class="insight-copy">
+                  <strong>商机增长但转化放缓</strong>
+                  <p>新增商机较 7 日均值提升 <b>15.2%</b>，高意向商机跟进率下降到 61%。</p>
+                </div>
+              </div>
+              <div class="insight-card full">
+                <div class="insight-copy">
+                  <strong>异常预警</strong>
+                  <p>两个重点客户回款延期，影响现金回款约 ¥52 万。建议今天优先确认付款节点。</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+      <div class="home-sender-dock">
+        <section class="recommend-block">
+          <div class="recommend-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M8.5 14.5A6 6 0 1 1 15.5 14.5c-.8.55-1.5 1.34-1.5 2.5h-4c0-1.16-.7-1.95-1.5-2.5Z"/></svg>
+            <span>Dora 建议</span>
+          </div>
+          <div class="recommend-actions">
+            <button class="recommend-pill" type="button" onclick="sendRecommendedQuestion('查看详细客流报告')">查看详细客流报告 <span>→</span></button>
+            <button class="recommend-pill secondary" type="button" onclick="sendRecommendedQuestion('生成能耗优化方案')">生成能耗优化方案 <span>→</span></button>
+          </div>
+        </section>
+        <div class="compact-sender" data-anno="首页 Sender 复用会话页输入框样式，支持添加上下文、语音输入和发送。">
+          <div class="sender-files" id="homeFiles"></div>
+          <textarea id="homeInput">帮我分析华东区昨天销售额下降的原因，重点看苏南渠道、商机转化和回款情况</textarea>
+          <div class="compact-tools">
+            <button class="round-btn" type="button" onclick="openToolSheet('home')">＋</button>
+            <span style="flex:1"></span>
+            <button class="round-btn mic-btn" type="button" onclick="openVoiceSheet('home')" aria-label="语音输入" data-anno="手机端新增语音输入，识别结果可插入输入框或直接发送。"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8 21h8"/></svg></button>
+            <button class="round-btn primary" type="button" onclick="openConversation('dora')">↑</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="app-screen" id="screen-experts">
+      <div class="top-safe"></div>
+      <header class="mobile-header">
+        <div class="header-title"><strong>专家团</strong></div>
+      </header>
+      <div class="content-scroll">
+        <label class="search-line" data-anno="专家团页优先支持按名称或描述搜索，帮助用户快速发现并进入专家 Agent。">
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+          <input placeholder="搜索名称/描述" />
+        </label>
+        <div class="expert-filter-row" id="expertFilters" data-anno="PC 端标签和我创建的筛选在移动端转为横向滚动 chips，减少下拉层级。"></div>
+        <div class="expert-quick-head">
+          <span class="expert-quick-title">快捷进入</span>
+          <div class="expert-quick-switch" id="expertQuickSwitch">
+            <button class="active" type="button" onclick="switchExpertQuick('recent')">最近使用</button>
+            <button type="button" onclick="switchExpertQuick('favorite')">我收藏的</button>
+          </div>
+        </div>
+        <div class="expert-quick-list" id="expertQuickList" data-anno="PC 右侧最近使用和收藏在移动端前置为横向快捷区。"></div>
+        <div class="section-label">专家 Agent</div>
+        <div class="expert-list" id="expertList"></div>
+      </div>
+    </section>
+
+    <section class="app-screen" id="screen-space">
+      <div class="top-safe"></div>
+      <header class="mobile-header">
+        <div class="header-title"><strong>资源库</strong></div>
+      </header>
+      <div class="content-scroll">
+        <label class="search-line" data-anno="资源库支持按名称、来源会话和来源 Agent 检索。">
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+          <input placeholder="搜索名称/来源对话/来源Agent" />
+        </label>
+        <div class="segmented resource-filter" data-anno="类型筛选会真实过滤资料列表，并隐藏无匹配分组。">
+          <button class="active" type="button" data-resource-filter="all" onclick="filterResourceType('all')" aria-pressed="true">全部<span>9</span></button>
+          <button type="button" data-resource-filter="html" onclick="filterResourceType('html')" aria-pressed="false">HTML<span>3</span></button>
+          <button type="button" data-resource-filter="ppt" onclick="filterResourceType('ppt')" aria-pressed="false">PPT<span>3</span></button>
+          <button type="button" data-resource-filter="md" onclick="filterResourceType('md')" aria-pressed="false">MD<span>3</span></button>
+        </div>
+        <div class="section-label">最近常用</div>
+        <div class="asset-list">
+          <button class="asset-card" type="button" data-asset-type="html" onclick="openAssetDetail('html-sales')" data-anno="点击资料进入详情，详情页标题左侧展示文件类型图标。">
+            <span class="asset-thumb html">HTML</span>
+            <span class="row-body"><strong>销售日报看板.html</strong><span>已存资料库 · 华东销售日报</span></span>
+          </button>
+          <button class="asset-card" type="button" data-asset-type="ppt" onclick="openAssetDetail('ppt-east')">
+            <span class="asset-thumb ppt">PPT</span>
+            <span class="row-body"><strong>华东区经营日报.pptx</strong><span>用户主动保存 · 经营简报</span></span>
+          </button>
+          <button class="asset-card" type="button" data-asset-type="md" onclick="openAssetDetail('md-review')">
+            <span class="asset-thumb md">MD</span>
+            <span class="row-body"><strong>销售复盘纪要.md</strong><span>会议纪要 · 异常原因沉淀</span></span>
+          </button>
+        </div>
+        <div class="section-label">全部资料</div>
+        <div class="asset-list">
+          <button class="asset-card" type="button" data-asset-type="html" onclick="openAssetDetail('html-sunan')">
+            <span class="asset-thumb html">HTML</span>
+            <span class="row-body"><strong>苏南渠道销售下滑分析.html</strong><span>已存资料库 · 来源：用户主动保存</span></span>
+          </button>
+          <button class="asset-card" type="button" data-asset-type="html" onclick="openAssetDetail('html-risk')">
+            <span class="asset-thumb html">HTML</span>
+            <span class="row-body"><strong>风险客户回款追踪.html</strong><span>经营分析 · 回款与客户风险</span></span>
+          </button>
+          <button class="asset-card" type="button" data-asset-type="ppt" onclick="openAssetDetail('ppt-follow')">
+            <span class="asset-thumb ppt">PPT</span>
+            <span class="row-body"><strong>重点客户跟进方案.pptx</strong><span>管理汇报 · 今日跟进动作</span></span>
+          </button>
+          <button class="asset-card" type="button" data-asset-type="ppt" onclick="openAssetDetail('ppt-month')">
+            <span class="asset-thumb ppt">PPT</span>
+            <span class="row-body"><strong>6月经营例会材料.pptx</strong><span>例会材料 · 指标复盘</span></span>
+          </button>
+          <button class="asset-card" type="button" data-asset-type="md" onclick="openAssetDetail('md-caliber')">
+            <span class="asset-thumb md">MD</span>
+            <span class="row-body"><strong>销售指标口径说明.md</strong><span>知识沉淀 · 指标定义</span></span>
+          </button>
+          <button class="asset-card" type="button" data-asset-type="md" onclick="openAssetDetail('md-action')">
+            <span class="asset-thumb md">MD</span>
+            <span class="row-body"><strong>今日行动清单.md</strong><span>任务清单 · 渠道跟进</span></span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="app-screen chat-screen" id="screen-conversation">
+      <div class="top-safe"></div>
+      <header class="mobile-header">
+        <button class="icon-btn ghost" id="conversationBackBtn" type="button" onclick="backToMain()" aria-label="返回" hidden>‹</button>
+        <button class="icon-btn" id="conversationHistoryBtn" type="button" onclick="openHistorySheet()" aria-label="最近会话" data-anno="Dora 与专家会话都可从标题左侧展开最近会话抽屉。"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg></button>
+        <div class="header-title">
+          <strong id="conversationTitle">Dora 会话</strong>
+          <span id="conversationSubtitle" hidden>华东销售经营日报分析</span>
+        </div>
+        <button class="icon-btn" id="newConversationBtn" type="button" onclick="startNewConversation()" aria-label="新对话" data-anno="当前会话可直接开启同类型新对话。" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h6"/><path d="M17 3v8"/><path d="M13 7h8"/></svg></button>
+        <button class="icon-btn" id="conversationShareBtn" type="button" onclick="showToast('会话转发链接已生成')" aria-label="转发会话" data-anno="所有会话页右上角都提供转发入口。"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 17 20 12 15 7"/><path d="M4 18v-2a4 4 0 0 1 4-4h12"/></svg></button>
+        <button class="icon-btn" type="button" onclick="openFilesSheet()" aria-label="会话文件" data-anno="PC 右侧资料面板在手机端改为底部 Sheet，保留来源/产物切换。"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6.5h6l2 2h9v9.5a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-9.5a2 2 0 0 1 2-2Z"/><path d="M3.5 8.5V6a2 2 0 0 1 2-2h3.2l1.8 2.5"/></svg></button>
+        <button class="icon-btn" id="conversationMoreBtn" type="button" onclick="openAgentMoreSheet('history')" aria-label="更多菜单" data-anno="方案B：会话页右上角更多菜单承载当前 Agent 的会话记录和定时任务。" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
+      </header>
+      <div class="chat-body" id="chatBody">
+        <div class="message user">
+          <div class="user-message-stack">
+            <span class="file-chip"><span class="chip-badge">BI</span>销售日报看板</span>
+            <div class="bubble">帮我分析华东区昨天销售额下降的原因，重点看苏南渠道、商机转化和回款情况。</div>
+          </div>
+        </div>
+        <div class="message agent">
+          <span class="avatar small" id="replyAvatar">D</span>
+          <div class="bubble direct-only">收到，我会基于销售日报看板、CRM 商机明细和回款清单直接分析，并整理跟进建议。</div>
+          <div class="bubble agent-only">收到，我会先理解你的目标，再调度相关专家 Agent 完成问数、归因和报告整理。</div>
+        </div>
+        <div class="work-panel" data-anno="PC 的执行过程在移动端以可折叠工作面板承载，避免常驻占满屏幕。">
+          <header><span id="workTitle">DeerFlow 执行中 · 29s</span><button class="mini-btn" type="button" onclick="toggleWorkPanel()">收起</button></header>
+          <div class="timeline" id="timeline">
+            <div class="timeline-row done"><span class="timeline-dot">✓</span><span>读取销售日报看板</span><span>4s</span></div>
+            <div class="timeline-row done"><span class="timeline-dot">✓</span><span>关联 CRM 商机明细</span><span>9s</span></div>
+            <div class="timeline-row running"><span class="timeline-dot">…</span><span>生成销售下滑分析</span><span>进行中</span></div>
+          </div>
+        </div>
+        <div class="output-grid" id="outputGrid">
+          <button class="output-card" type="button" onclick="openConversationFilePreview('苏南渠道销售下滑分析.html')">
+            <span class="asset-thumb html">HTML</span>
+            <span class="row-body"><strong>苏南渠道销售下滑分析.html</strong><span>会话产物 · 未存资料库</span></span>
+          </button>
+          <button class="output-card" type="button" onclick="openConversationFilePreview('重点客户跟进清单.xlsx')">
+            <span class="asset-thumb ppt">XLSX</span>
+            <span class="row-body"><strong>重点客户跟进清单.xlsx</strong><span>会话产物 · 点击后可主动存资料库</span></span>
+          </button>
+        </div>
+      </div>
+      <footer class="chat-footer">
+        <div class="compact-sender" data-anno="会话页 Sender 保留文件引用能力，并可通过麦克风继续语音追问。">
+          <div class="sender-files" id="chatFiles"></div>
+          <textarea id="chatInput" placeholder="输入需求，或 @ 引用会话文件"></textarea>
+          <div class="compact-tools">
+            <button class="round-btn" type="button" onclick="openToolSheet('chat')">＋</button>
+            <span style="flex:1"></span>
+            <button class="round-btn mic-btn" type="button" onclick="openVoiceSheet('chat')" aria-label="语音输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8 21h8"/></svg></button>
+            <button class="round-btn primary" type="button" onclick="sendChat()">↑</button>
+          </div>
+        </div>
+      </footer>
+    </section>
+
+    <section class="app-screen" id="screen-detail" data-detail-mode="library">
+      <div class="top-safe"></div>
+      <header class="mobile-header">
+        <button class="icon-btn ghost" type="button" onclick="backToMain()" aria-label="返回">‹</button>
+        <div class="header-title">
+          <span class="detail-title-with-icon">
+            <span class="file-type-icon html" id="detailFileIcon">HTML</span>
+            <strong id="detailTitle">销售日报看板.html</strong>
+          </span>
+          <span class="detail-source-line" id="detailSubtitle" hidden></span>
+        </div>
+        <button class="icon-btn" id="detailShareBtn" type="button" onclick="showToast('分享链接已生成')" aria-label="分享" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg></button>
+        <button class="icon-btn" type="button" onclick="showToast('已下载到本地')" aria-label="下载"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></button>
+      </header>
+      <div class="content-scroll">
+        <div class="preview-card">
+          <div class="fake-report">
+            <section class="report-hero">
+              <h3>销售预测系统</h3>
+              <p>基于 8 个 BU、1153 行历史流水与预算规则，预测未来 6 个月销售、利润和现金流。</p>
+              <div class="report-status-row">
+                <span>2026 Q2 预测版</span>
+                <span>置信度 89%</span>
+                <span>已同步 BI 数据</span>
+              </div>
+            </section>
+            <div class="kpi-grid">
+              <div class="kpi-card"><span>未来 3 个月净流入</span><strong>+$28.854 亿</strong><em>较上版 +12.4%</em></div>
+              <div class="kpi-card"><span>Q2 末销售额</span><strong>$510.854 亿</strong><em>达成率 103.8%</em></div>
+              <div class="kpi-card"><span>最低流动性</span><strong style="color:var(--green)">$491.618 亿</strong><em>高于警戒线 $0.80 亿</em></div>
+              <div class="kpi-card"><span>风险预警</span><strong style="color:var(--orange)">2 条</strong><em>库存与回款周期</em></div>
+            </div>
+            <section class="forecast-section">
+              <div class="forecast-section-title">预测情景<span>按销售额 / 回款 / 费用规则联动</span></div>
+              <div class="scenario-switch">
+                <button type="button">乐观</button>
+                <button class="active" type="button">基准</button>
+                <button type="button">保守</button>
+              </div>
+              <div class="chart-box">
+                <svg viewBox="0 0 300 132" role="img" aria-label="未来六个月销售预测折线图">
+                  <defs>
+                    <linearGradient id="forecastLineGradient" x1="36" y1="0" x2="264" y2="0" gradientUnits="userSpaceOnUse">
+                      <stop offset="0" stop-color="#0047FD"/>
+                      <stop offset="1" stop-color="#1E8A64"/>
+                    </linearGradient>
+                    <linearGradient id="forecastAreaGradient" x1="0" y1="34" x2="0" y2="110" gradientUnits="userSpaceOnUse">
+                      <stop offset="0" stop-color="#2562FF" stop-opacity="0.18"/>
+                      <stop offset="1" stop-color="#1E8A64" stop-opacity="0.03"/>
+                    </linearGradient>
+                  </defs>
+                  <path class="chart-grid" d="M30 28H270M30 58H270M30 88H270"/>
+                  <path class="chart-area" d="M34 96C62 82 88 74 115 67C142 60 164 51 192 46C220 41 242 36 266 34V108H34Z"/>
+                  <path class="chart-line" d="M34 96C62 82 88 74 115 67C142 60 164 51 192 46C220 41 242 36 266 34"/>
+                  <circle class="chart-point" cx="34" cy="96" r="4"/>
+                  <circle class="chart-point" cx="115" cy="67" r="4"/>
+                  <circle class="chart-point" cx="192" cy="46" r="4"/>
+                  <circle class="chart-point" cx="266" cy="34" r="4"/>
+                  <text x="34" y="120" fill="#8C95B0" font-size="10" text-anchor="middle">04月</text>
+                  <text x="115" y="120" fill="#8C95B0" font-size="10" text-anchor="middle">06月</text>
+                  <text x="192" y="120" fill="#8C95B0" font-size="10" text-anchor="middle">08月</text>
+                  <text x="266" y="120" fill="#8C95B0" font-size="10" text-anchor="middle">09月</text>
+                </svg>
+              </div>
+            </section>
+            <section class="forecast-section">
+              <div class="forecast-section-title">逐月销售预测<span>USD 亿</span></div>
+              <div class="forecast-table">
+                <div class="forecast-row"><strong>04月</strong><div class="bar-track"><i style="width:68%"></i></div><span>$82.4</span></div>
+                <div class="forecast-row"><strong>05月</strong><div class="bar-track"><i style="width:74%"></i></div><span>$89.7</span></div>
+                <div class="forecast-row"><strong>06月</strong><div class="bar-track"><i style="width:81%"></i></div><span>$96.2</span></div>
+                <div class="forecast-row"><strong>07月</strong><div class="bar-track"><i style="width:88%"></i></div><span>$104.5</span></div>
+                <div class="forecast-row"><strong>08月</strong><div class="bar-track"><i style="width:92%"></i></div><span>$109.1</span></div>
+                <div class="forecast-row"><strong>09月</strong><div class="bar-track"><i style="width:96%"></i></div><span>$114.8</span></div>
+              </div>
+            </section>
+            <section class="forecast-section">
+              <div class="forecast-section-title">预测规则配置<span>3 条生效</span></div>
+              <div class="rule-list">
+                <div class="rule-item"><span class="rule-badge">GMV</span><span><strong>销售额滚动预测</strong>近 3 个月加权平均，叠加大促系数 1.18 与区域季节性修正。</span></div>
+                <div class="rule-item"><span class="rule-badge">COST</span><span><strong>费用率约束</strong>营销费用率不超过 8.5%，人力成本按环比 +2.4% 估算。</span></div>
+                <div class="rule-item"><span class="rule-badge">CASH</span><span><strong>回款周期</strong>KA 客户账期 45 天，直营门店 T+7，异常客户进入风险观察。</span></div>
+              </div>
+            </section>
+            <section class="forecast-section">
+              <div class="forecast-section-title">风险提示<span>需关注 2 项</span></div>
+              <div class="risk-list">
+                <div class="risk-item"><span class="risk-badge">中</span><span><strong>华东 BU 库存周转偏慢</strong>预计 06 月占用现金 +$3.2 亿，建议压降补货节奏。</span></div>
+                <div class="risk-item"><span class="risk-badge">低</span><span><strong>新客转化率低于基准</strong>若转化率继续下降 3%，Q2 销售额将下修约 $6.8 亿。</span></div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+      <div class="detail-chat-bar" data-anno="资料库详情保留底部追问能力，用户可围绕当前资料继续让 Dora 解释或生成新内容。">
+        <button class="detail-chat-action" type="button" onclick="openToolSheet('detail')" aria-label="添加上下文"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+        <input id="detailInput" placeholder="去问 Dora" />
+        <button class="detail-chat-action" type="button" onclick="openVoiceSheet('detail')" aria-label="语音输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8 21h8"/></svg></button>
+        <button class="detail-chat-action primary" type="button" onclick="sendDetailQuestion()" aria-label="发送"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.7 3.7 20.3 12 3.7 20.3 6.8 12 3.7 3.7Z"/><path d="M6.8 12h13.5"/></svg></button>
+      </div>
+    </section>
+
+    <nav class="bottom-nav" id="bottomNav">
+      <button class="nav-item active" type="button" onclick="switchMain('home')" data-nav="home">
+        <img class="nav-icon default" src="assets/icons/data agent logo_默认_e805.svg" alt="" aria-hidden="true" />
+        <img class="nav-icon active" src="assets/icons/data agent logo_选中.svg" alt="" aria-hidden="true" />
+        <span>Dora</span>
+      </button>
+      <button class="nav-item" type="button" onclick="switchMain('experts')" data-nav="experts">
+        <span class="nav-badge">2</span>
+        <img class="nav-icon default" src="assets/icons/专家团_默认_e802.svg" alt="" aria-hidden="true" />
+        <img class="nav-icon active" src="assets/icons/专家团_选中.svg" alt="" aria-hidden="true" />
+        <span>专家团</span>
+      </button>
+      <button class="nav-item" type="button" onclick="switchMain('space')" data-nav="space">
+        <img class="nav-icon default" src="assets/icons/资料库_默认_e803.svg" alt="" aria-hidden="true" />
+        <img class="nav-icon active" src="assets/icons/资料库_选中.svg" alt="" aria-hidden="true" />
+        <span>资源库</span>
+      </button>
+    </nav>
+
+    <div class="sheet-mask" id="sheetMask" onclick="if(event.target===this) closeSheets()">
+      <div class="bottom-sheet" id="genericSheet">
+        <div class="sheet-head">
+          <strong id="sheetTitle">操作</strong>
+          <div class="sheet-head-actions" id="sheetHeadActions">
+            <button class="sheet-action-icon" type="button" onclick="startDetailSheetConversation()" aria-label="新会话"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h6"/><path d="M17 3v8"/><path d="M13 7h8"/></svg></button>
+            <button class="sheet-action-icon" type="button" onclick="openFilesSheet(activeFilesTab)" aria-label="会话文件"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6.5h6l2 2h9v9.5a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-9.5a2 2 0 0 1 2-2Z"/><path d="M3.5 8.5V6a2 2 0 0 1 2-2h3.2l1.8 2.5"/></svg></button>
+            <button class="sheet-action-icon" type="button" onclick="showToast('更多资料对话操作')" aria-label="更多"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
+          </div>
+          <button class="sheet-close" type="button" onclick="closeSheets()">×</button>
+        </div>
+        <div class="sheet-body" id="sheetBody"></div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </main>
+  <div class="anno-tooltip" id="annoTooltip"></div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const screens = ['home', 'experts', 'space', 'conversation', 'detail'];
+    let previousMain = 'home';
+    let activeTab = 'home';
+    let tabState = {
+      home: { screen: 'home' },
+      experts: { screen: 'experts' },
+      space: { screen: 'space' }
+    };
+    let activeContext = 'home';
+    let activeFilesTab = 'input';
+    let currentAssetType = 'bi';
+    let selectedAssets = new Set(['bi-dashboard', 'bi-topic-sales']);
+    let voiceTimer = null;
+    let voiceSeconds = 0;
+    const voiceTranscript = '请基于华东区昨日销售数据，生成苏南渠道下滑原因和今天的跟进动作。';
+    let detailReturn = 'space';
+    let coordinationMode = 'direct';
+    let currentConversationType = 'dora';
+    let variantState = {
+      framework: 'side-menu',
+      conversationTitle: 'title-only'
+    };
+    let currentConversationHasOutputs = true;
+    let activeExpertFilter = 'all';
+    let activeExpertQuick = 'recent';
+    let currentConversationMeta = {
+      agentName: 'Dora超级智能体',
+      title: '华东销售经营日报分析',
+      replyAvatar: 'D'
+    };
+
+    const expertFilters = [
+      ['all', '全部'],
+      ['created', '我创建的'],
+      ['运营', '运营'],
+      ['市场', '市场'],
+      ['行政', '行政'],
+      ['研发', '研发'],
+      ['财务', '财务'],
+      ['法务', '法务']
+    ];
+    const experts = [
+      { id: 'smart', initial: '问', title: '智能问数', creator: 'Admin', desc: '经营指标归因分析，快速查询销售、商机和回款波动。', tone: 'blue', tags: ['运营', '财务'], usage: '7.90k', favorite: true, created: true, recent: true, unread: 2, conversation: 'smart' },
+      { id: 'report', initial: '报', title: '智能报告', creator: 'Admin', desc: '把经营分析过程整理成汇报材料、日报和领导摘要。', tone: 'orange', tags: ['运营', '市场'], usage: '5.42k', favorite: true, created: true, recent: true, unread: 1, conversation: 'report' },
+      { id: 'analysis', initial: '析', title: '经营分析助手', creator: 'Admin', desc: '预算、销售与库存分析，适合做经营复盘和异常拆解。', tone: 'green', tags: ['运营', '财务'], usage: '3.28k', favorite: false, created: true, recent: true, unread: 0, conversation: 'analysis' },
+      { id: 'model', initial: '模', title: '建模助手', creator: 'Admin', desc: '数据建模与口径解释，帮助研发和业务统一指标定义。', tone: 'violet', tags: ['研发'], usage: '1.86k', favorite: false, created: true, recent: false, unread: 0, conversation: 'model' },
+      { id: 'finance', initial: '财', title: '财务费用查询助手', creator: 'Finance Admin', desc: '查找报销、采购、差旅单据并进行费用分析洞察。', tone: 'green', tags: ['财务', '行政'], usage: '4.12k', favorite: true, created: false, recent: false, unread: 0, conversation: 'finance' },
+      { id: 'market', initial: '营', title: '营销复盘助手', creator: 'Marketing Admin', desc: '活动复盘、客群洞察和转化分析，辅助市场团队优化投放。', tone: 'rose', tags: ['市场', '运营'], usage: '2.65k', favorite: false, created: false, recent: true, unread: 0, conversation: 'market' },
+      { id: 'risk', initial: '险', title: '法务风险助手', creator: 'Legal Admin', desc: '合同风险、异常客户和合规预警归因，支持法务快速跟进。', tone: 'rose', tags: ['法务'], usage: '1.24k', favorite: false, created: false, recent: false, unread: 0, conversation: 'risk' }
+    ];
+
+    const files = {
+      input: [
+        ['BI', '销售日报看板', 'FRBI · 仪表板 · 只读引用', 'bi'],
+        ['XLSX', 'CRM 商机明细.xlsx', '286 KB · 用户上传', 'xls'],
+        ['XLSX', '重点客户回款清单.xlsx', '142 KB · 用户上传', 'xls'],
+        ['TXT', '华东区销售规则说明.txt', '18 KB · 其他类输入', '']
+      ],
+      output: [
+        ['HTML', '苏南渠道销售下滑分析.html', '会话产物 · 未存资料库', 'html'],
+        ['XLSX', '重点客户跟进清单.xlsx', '会话产物 · 未存资料库', 'xls'],
+        ['PPTX', '华东区经营日报.pptx', '会话产物 · 未存资料库', 'ppt'],
+        ['DOCX', '领导版五句话摘要.docx', '会话产物 · 未存资料库', ''],
+        ['JSON', 'sales_drop_reason.json', '结构化结果 · 不建议存资料库', '']
+      ]
+    };
+
+    const assetDefs = {
+      bi: {
+        title: '添加 FineBI 资产',
+        items: [
+          ['bi-dashboard', '门店经营仪表板', '仪表板 · 销售额、客单价、门店排名', true],
+          ['bi-topic-sales', 'BI demo_门店销售表', '分析主题 · 门店、城市、品类、利润率', true],
+          ['bi-topic-member', '会员复购分析主题', '字段 · 会员等级、优惠券、生命周期价值', true]
+        ]
+      },
+      fr: {
+        title: '添加 FineReport 资产',
+        items: [
+          ['fr-region', 'FR demo_地区经营看板', '报表 · 收入、费用、利润', true],
+          ['fr-store', '门店日报填报表', '填报 · 客流、库存、活动执行', true],
+          ['fr-finance', '财务月结分析报表', '月结 · 应收应付、费用科目', true]
+        ]
+      }
+    };
+
+    function tabForScreen(name) {
+      if (name === 'conversation') return currentConversationType === 'dora' ? 'home' : 'experts';
+      if (name === 'detail') return detailReturn === 'conversation' ? tabForScreen('conversation') : 'space';
+      return name;
+    }
+
+    function setActiveTab(tab) {
+      activeTab = tab;
+      document.querySelectorAll('.nav-item').forEach((item) => item.classList.toggle('active', item.dataset.nav === tab));
+    }
+
+    function rememberTabScreen(name) {
+      const tab = tabForScreen(name);
+      tabState[tab] = {
+        screen: name,
+        conversationType: name === 'conversation' || detailReturn === 'conversation' ? currentConversationType : undefined
+      };
+      setActiveTab(tab);
+    }
+
+    function setScreen(name, shouldRemember = true) {
+      screens.forEach((screen) => $('screen-' + screen).classList.toggle('active', screen === name));
+      const isDoraConversation = name === 'conversation' && currentConversationType === 'dora';
+      const isExpertConversation = name === 'conversation' && currentConversationType !== 'dora';
+      $('screen-conversation').classList.toggle('expert-conversation', isExpertConversation);
+      $('bottomNav').style.display = ['home', 'experts', 'space'].includes(name) || isDoraConversation ? 'grid' : 'none';
+      if (shouldRemember) rememberTabScreen(name);
+      renderVariantBar();
+    }
+
+    function renderVariantBar() {
+      const frameworkLabel = variantState.framework === 'side-menu' ? '侧边菜单' : '更多菜单';
+      const titleLabelMap = {
+        'title-only': '仅标题',
+        'agent-only': '仅名称',
+        'agent-title': '名称+标题'
+      };
+      $('variantSummary').textContent = `${frameworkLabel} · ${titleLabelMap[variantState.conversationTitle]}`;
+      document.querySelectorAll('[data-variant-key]').forEach((button) => {
+        button.classList.toggle('active', variantState[button.dataset.variantKey] === button.dataset.variantValue);
+      });
+      renderFrameworkChrome();
+    }
+
+    function renderFrameworkChrome() {
+      const moreMenu = variantState.framework === 'more-menu';
+      $('homeHistoryBtn').hidden = moreMenu;
+      $('homeMoreBtn').hidden = !moreMenu;
+      $('conversationHistoryBtn').hidden = moreMenu;
+      $('conversationMoreBtn').hidden = !moreMenu;
+    }
+
+    function toggleVariantConfig() {
+      $('variantConfigPanel').classList.toggle('open');
+    }
+
+    function closeVariantConfig() {
+      $('variantConfigPanel').classList.remove('open');
+    }
+
+    function setVariant(key, value) {
+      variantState = { ...variantState, [key]: value };
+      if (key === 'framework') closeSheets();
+      renderVariantBar();
+      if (key === 'conversationTitle') renderConversationHeader();
+      const groupLabel = key === 'framework' ? '框架方案' : '会话标题';
+      const optionLabel = document.querySelector(`[data-variant-key="${key}"][data-variant-value="${value}"]`)?.textContent || '方案';
+      showToast(`已切换：${groupLabel} / ${optionLabel}`);
+    }
+
+    function handleVariantOption(option) {
+      if (option === 'one') setVariant('framework', 'side-menu');
+    }
+
+    function switchCoordinationMode(mode) {
+      coordinationMode = mode;
+      document.body.dataset.coordinationMode = mode;
+      renderVariantBar();
+      renderCoordinationTimeline();
+      showToast(mode === 'agent' ? '已切换到未来方案：Dora 调度专家' : '已切换到当前方案：Dora 直答');
+    }
+
+    function switchConversationTitleMode(mode) {
+      const modeMap = {
+        title: 'title-only',
+        agent: 'agent-only',
+        both: 'agent-title',
+        'title-only': 'title-only',
+        'agent-only': 'agent-only',
+        'agent-title': 'agent-title'
+      };
+      variantState = { ...variantState, conversationTitle: modeMap[mode] || 'title-only' };
+      renderConversationHeader();
+      renderVariantBar();
+    }
+
+    function renderConversationHeader() {
+      if (variantState.conversationTitle === 'agent-only') {
+        $('conversationTitle').textContent = currentConversationMeta.agentName;
+        $('conversationSubtitle').hidden = true;
+        return;
+      }
+      if (variantState.conversationTitle === 'agent-title') {
+        $('conversationTitle').textContent = currentConversationMeta.agentName;
+        $('conversationSubtitle').textContent = currentConversationMeta.title;
+        $('conversationSubtitle').hidden = false;
+        return;
+      }
+      $('conversationTitle').textContent = currentConversationMeta.title;
+      $('conversationSubtitle').hidden = true;
+    }
+
+    function renderCoordinationTimeline() {
+      const timeline = $('timeline');
+      const workTitle = $('workTitle');
+      if (!timeline || !workTitle) return;
+      if (coordinationMode === 'agent') {
+        workTitle.textContent = 'Dora 调度中 · 29s';
+        timeline.innerHTML = `
+          <div class="timeline-row done"><span class="timeline-dot">✓</span><span>Dora 理解经营问题</span><span>2s</span></div>
+          <div class="timeline-row done"><span class="timeline-dot">问</span><span>调用智能问数 Agent 查询销售/商机/回款</span><span>8s</span></div>
+          <div class="timeline-row done"><span class="timeline-dot">析</span><span>调用经营分析 Agent 拆解苏南渠道原因</span><span>13s</span></div>
+          <div class="timeline-row running"><span class="timeline-dot">报</span><span>调用智能报告 Agent 生成跟进清单</span><span>进行中</span></div>
+        `;
+        return;
+      }
+      workTitle.textContent = 'Dora 分析中 · 29s';
+      timeline.innerHTML = `
+        <div class="timeline-row done"><span class="timeline-dot">✓</span><span>读取销售日报看板</span><span>4s</span></div>
+        <div class="timeline-row done"><span class="timeline-dot">✓</span><span>关联 CRM 商机明细</span><span>9s</span></div>
+        <div class="timeline-row running"><span class="timeline-dot">…</span><span>生成销售下滑分析</span><span>进行中</span></div>
+      `;
+    }
+
+    function switchMain(name) {
+      closeSheets();
+      previousMain = name;
+      const state = tabState[name] || { screen: name };
+      if (state.screen === 'conversation' && state.conversationType) {
+        openConversation(state.conversationType);
+        return;
+      }
+      setScreen(state.screen || name);
+    }
+
+    function backToMain() {
+      setScreen(detailReturn === 'conversation' ? 'conversation' : previousMain);
+      if (detailReturn !== 'conversation') $('bottomNav').style.display = 'grid';
+    }
+
+    function openConversation(type) {
+      previousMain = document.querySelector('.nav-item.active')?.dataset.nav || 'home';
+      const map = {
+        dora: { agentName: 'Dora超级智能体', title: '华东销售经营日报分析', replyAvatar: 'D' },
+        report: { agentName: '智能报告', title: '经营分析会材料整理', replyAvatar: '报' },
+        smart: { agentName: '智能问数', title: '苏南渠道销售下滑归因', replyAvatar: '问' },
+        analysis: { agentName: '经营分析助手', title: '经营指标异常归因', replyAvatar: '析' },
+        model: { agentName: '建模助手', title: '指标口径与模型解释', replyAvatar: '模' },
+        finance: { agentName: '财务费用查询助手', title: '差旅与采购费用分析', replyAvatar: '财' },
+        market: { agentName: '营销复盘助手', title: '活动转化复盘分析', replyAvatar: '营' },
+        risk: { agentName: '法务风险助手', title: '合同与客户风险预警', replyAvatar: '险' }
+      };
+      const data = map[type] || map.dora;
+      currentConversationType = map[type] ? type : 'dora';
+      currentConversationMeta = data;
+      currentConversationHasOutputs = true;
+      renderConversationHeader();
+      $('replyAvatar').textContent = data.replyAvatar;
+      $('conversationHistoryBtn').hidden = false;
+      $('conversationBackBtn').hidden = currentConversationType === 'dora';
+      $('newConversationBtn').hidden = false;
+      setScreen('conversation');
+      renderCoordinationTimeline();
+      setTimeout(() => $('chatBody').scrollTop = $('chatBody').scrollHeight, 30);
+    }
+
+    function startNewConversation() {
+      const nextMeta = { ...currentConversationMeta, title: '新对话' };
+      currentConversationMeta = nextMeta;
+      currentConversationHasOutputs = false;
+      if (currentConversationType === 'dora') {
+        $('chatInput').value = '';
+        $('chatFiles').innerHTML = '';
+        tabState.home = { screen: 'home' };
+        previousMain = 'home';
+        setScreen('home');
+        showToast('已开启 Dora 新对话');
+        return;
+      }
+      renderConversationHeader();
+      $('conversationHistoryBtn').hidden = false;
+      $('conversationBackBtn').hidden = currentConversationType === 'dora';
+      $('newConversationBtn').hidden = false;
+      setScreen('conversation');
+      $('chatBody').innerHTML = `
+        <div class="chat-empty-state">
+          <strong>开始新的${nextMeta.agentName}会话</strong>
+          <span>在下方输入需求，或添加资料、会话文件后再发送。</span>
+        </div>
+      `;
+      $('chatInput').value = '';
+      $('chatFiles').innerHTML = '';
+      showToast('已开启新对话');
+    }
+
+    function openAssetDetail(type) {
+      detailReturn = document.getElementById('screen-conversation').classList.contains('active') ? 'conversation' : 'space';
+      const assetDetailMap = {
+        'html-sales': ['销售日报看板.html', 'HTML', 'html'],
+        'html-sunan': ['苏南渠道销售下滑分析.html', 'HTML', 'html'],
+        'html-risk': ['风险客户回款追踪.html', 'HTML', 'html'],
+        'ppt-east': ['华东区经营日报.pptx', 'PPT', 'ppt'],
+        'ppt-follow': ['重点客户跟进方案.pptx', 'PPT', 'ppt'],
+        'ppt-month': ['6月经营例会材料.pptx', 'PPT', 'ppt'],
+        'md-review': ['销售复盘纪要.md', 'MD', 'md'],
+        'md-caliber': ['销售指标口径说明.md', 'MD', 'md'],
+        'md-action': ['今日行动清单.md', 'MD', 'md']
+      };
+      const data = assetDetailMap[type] || assetDetailMap['html-sales'];
+      $('screen-detail').dataset.detailMode = 'library';
+      $('detailTitle').textContent = data[0];
+      $('detailFileIcon').textContent = data[1];
+      $('detailFileIcon').className = `file-type-icon ${data[2]}`;
+      $('detailSubtitle').textContent = '';
+      $('detailSubtitle').hidden = true;
+      $('detailShareBtn').hidden = false;
+      $('detailInput').placeholder = '去问 Dora';
+      setScreen('detail');
+    }
+
+    function openConversationFilePreview(name) {
+      const lowerName = name.toLowerCase();
+      const ext = lowerName.endsWith('.pptx') || lowerName.endsWith('.ppt') ? ['PPT', 'ppt'] :
+        lowerName.endsWith('.md') ? ['MD', 'md'] :
+        lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls') ? ['XLS', 'xls'] :
+        lowerName.endsWith('.docx') || lowerName.endsWith('.doc') ? ['DOC', 'doc'] :
+        lowerName.endsWith('.json') ? ['JSON', 'json'] :
+        lowerName.endsWith('.html') ? ['HTML', 'html'] :
+        name.includes('BI') || name.includes('看板') ? ['BI', 'xls'] : ['FILE', 'file'];
+      detailReturn = 'conversation';
+      activeContext = 'detail';
+      $('screen-detail').dataset.detailMode = 'conversation-file';
+      $('detailTitle').textContent = name;
+      $('detailFileIcon').textContent = ext[0];
+      $('detailFileIcon').className = `file-type-icon ${ext[1]}`;
+      $('detailSubtitle').textContent = `来自会话：${currentConversationMeta.title}`;
+      $('detailSubtitle').hidden = false;
+      $('detailShareBtn').hidden = false;
+      setScreen('detail');
+    }
+
+    function filterResourceType(type) {
+      document.querySelectorAll('[data-resource-filter]').forEach((button) => {
+        const isActive = button.dataset.resourceFilter === type;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', String(isActive));
+      });
+      document.querySelectorAll('#screen-space .asset-card').forEach((card) => {
+        card.hidden = type !== 'all' && card.dataset.assetType !== type;
+      });
+      document.querySelectorAll('#screen-space .asset-list').forEach((list) => {
+        const hasVisibleCard = Array.from(list.querySelectorAll('.asset-card')).some((card) => !card.hidden);
+        list.hidden = !hasVisibleCard;
+        const label = list.previousElementSibling;
+        if (label?.classList.contains('section-label')) label.hidden = !hasVisibleCard;
+      });
+    }
+
+    function renderExpertFilters() {
+      $('expertFilters').innerHTML = expertFilters.map(([value, label]) => `
+        <button class="expert-filter-chip ${activeExpertFilter === value ? 'active' : ''}" type="button" onclick="filterExperts('${value}')">${label}</button>
+      `).join('');
+    }
+
+    function getFilteredExperts() {
+      if (activeExpertFilter === 'all') return experts;
+      if (activeExpertFilter === 'created') return experts.filter((expert) => expert.created);
+      return experts.filter((expert) => expert.tags.includes(activeExpertFilter));
+    }
+
+    function renderExpertQuick() {
+      document.querySelectorAll('#expertQuickSwitch button').forEach((button, index) => {
+        button.classList.toggle('active', (activeExpertQuick === 'recent' && index === 0) || (activeExpertQuick === 'favorite' && index === 1));
+      });
+      const quickExperts = experts.filter((expert) => activeExpertQuick === 'recent' ? expert.recent : expert.favorite);
+      $('expertQuickList').innerHTML = quickExperts.map((expert) => `
+        <button class="expert-mini-card" type="button" onclick="openConversation('${expert.conversation}')">
+          ${expert.favorite ? '<span class="mini-star">★</span>' : ''}
+          <span class="avatar small ${expert.tone}">${expert.initial}</span>
+          <span>${expert.title}</span>
+        </button>
+      `).join('');
+    }
+
+    function renderExperts() {
+      renderExpertFilters();
+      renderExpertQuick();
+      const list = getFilteredExperts();
+      $('expertList').innerHTML = list.map((expert) => `
+        <div class="expert-card" role="button" tabindex="0" onclick="openConversation('${expert.conversation}')">
+          <span class="expert-avatar-wrap">
+            <span class="avatar small ${expert.tone}">${expert.initial}</span>
+            ${expert.unread ? `<span class="unread-dot">${expert.unread}</span>` : ''}
+          </span>
+          <span class="expert-card-main">
+            <span class="expert-card-title">
+              <span><strong>${expert.title}</strong><span>创建人：${expert.creator}</span></span>
+              <button class="favorite-btn ${expert.favorite ? 'active' : ''}" type="button" onclick="toggleExpertFavorite(event, '${expert.id}')" aria-label="${expert.favorite ? '取消收藏' : '收藏'}">★</button>
+            </span>
+            <span class="expert-desc">${expert.desc}</span>
+            <span class="expert-tags">${expert.tags.map((tag) => `<span class="tag">${tag}</span>`).join('')}</span>
+            <span class="expert-meta"><span>${expert.usage} 次使用</span><span>点击进入</span></span>
+          </span>
+        </div>
+      `).join('') || '<div class="empty-state">暂无匹配专家</div>';
+    }
+
+    function filterExperts(filter) {
+      activeExpertFilter = filter;
+      renderExperts();
+    }
+
+    function switchExpertQuick(type) {
+      activeExpertQuick = type;
+      renderExpertQuick();
+    }
+
+    function toggleExpertFavorite(event, id) {
+      event.stopPropagation();
+      const expert = experts.find((item) => item.id === id);
+      if (!expert) return;
+      expert.favorite = !expert.favorite;
+      renderExperts();
+      showToast(expert.favorite ? '已收藏专家' : '已取消收藏');
+    }
+
+    function openSheet(title, html, mode = 'bottom') {
+      $('sheetTitle').textContent = title;
+      $('sheetBody').innerHTML = html;
+      const sheet = $('genericSheet');
+      sheet.className = mode === 'side' ? 'side-sheet' : mode === 'side-left' ? 'side-sheet left' : mode === 'files' ? 'bottom-sheet files-sheet' : mode === 'voice' ? 'bottom-sheet voice-sheet' : mode === 'detail-chat' ? 'bottom-sheet detail-conversation-sheet' : 'bottom-sheet';
+      document.querySelector('.sheet-close').hidden = mode === 'side' || mode === 'side-left';
+      $('sheetMask').classList.add('open');
+    }
+
+    function closeSheets() {
+      $('sheetMask').classList.remove('open');
+      stopVoiceTimer();
+    }
+
+    function openHistorySheet() {
+      openSheet('最近会话', `
+        <div class="history-primary-actions" data-anno="PC 最近会话面板的高频入口在移动端置顶。">
+          <button type="button" onclick="closeSheets();openConversation('dora')"><span>＋</span>新聊天</button>
+          <button type="button" onclick="showToast('已打开定时任务')"><span>◴</span>定时任务</button>
+        </div>
+        <label class="search-line">
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+          <input placeholder="搜索会话" />
+        </label>
+        <div class="history-section">
+          <button class="history-section-toggle" type="button" onclick="toggleHistorySection(this)">分身 <span>⌄</span></button>
+          <div class="history-list">
+            <button class="history-item" type="button" onclick="closeSheets();openConversation('dora')"><span class="history-source-icon">企</span><span class="row-body"><strong>企业微信-未命名Agent</strong><span>客户经营问题同步</span></span><span class="unread-dot">99+</span></button>
+            <button class="history-item" type="button" onclick="closeSheets();openConversation('dora')"><span class="history-source-icon ding">钉</span><span class="row-body"><strong>钉钉-未命名Agent_01</strong><span>渠道群日报追问</span></span><span class="unread-dot">1</span></button>
+            <button class="history-item" type="button" onclick="closeSheets();openConversation('dora')"><span class="history-source-icon feishu">飞</span><span class="row-body"><strong>飞书-未命名Agent_01</strong><span>市场复盘会话</span></span></button>
+          </div>
+        </div>
+        <div class="history-section">
+          <button class="history-section-toggle" type="button" onclick="toggleHistorySection(this)">资料库会话 <span>⌄</span></button>
+          <div class="history-list">
+            <button class="history-item" type="button" onclick="closeSheets();openAssetDetail('html-sales')"><span class="history-source-icon folder">□</span><span class="row-body"><strong>这个文件里讲了什么</strong><span>销售日报看板.html</span></span></button>
+            <button class="history-item" type="button" onclick="closeSheets();openAssetDetail('ppt-east')"><span class="history-source-icon folder">□</span><span class="row-body"><strong>这个资料帮我总结一下</strong><span>华东区经营日报.pptx</span></span></button>
+            <button class="history-item" type="button" onclick="closeSheets();openAssetDetail('md-review')"><span class="history-source-icon folder">□</span><span class="row-body"><strong>我想要修改这个资料</strong><span>销售复盘纪要.md</span></span></button>
+          </div>
+        </div>
+        <div class="history-section">
+          <button class="history-section-toggle" type="button" onclick="toggleHistorySection(this)">今天 <span>⌄</span></button>
+          <div class="history-list">
+            <button class="history-item active" type="button" onclick="closeSheets();openConversation('dora')"><span class="history-source-icon">D</span><span class="row-body"><strong>广东省潜量最高的10个客户</strong><span>Dora · 今天 09:42</span></span></button>
+          </div>
+        </div>
+        <div class="history-section">
+          <button class="history-section-toggle" type="button" onclick="toggleHistorySection(this)">7天内 <span>⌄</span></button>
+          <div class="history-list">
+            <button class="history-item" type="button" onclick="closeSheets();openConversation('smart')"><span class="history-source-icon">问</span><span class="row-body"><strong>去年门店销售额最高的商品</strong><span>智能问数 · 3天前</span></span><span class="unread-dot">20</span></button>
+          </div>
+        </div>
+        <div class="history-section">
+          <button class="history-section-toggle" type="button" onclick="toggleHistorySection(this)">30天内 <span>⌄</span></button>
+          <div class="history-list">
+            <button class="history-item" type="button" onclick="closeSheets();openConversation('dora')"><span class="history-source-icon clock">时</span><span class="row-body"><strong>你以后每天晚上8:00给我发一份日报</strong><span>定时任务 · 每日触发</span></span></button>
+            <button class="history-item" type="button" onclick="closeSheets();openConversation('report')"><span class="history-source-icon">报</span><span class="row-body"><strong>经营分析会材料整理</strong><span>智能报告 · 已生成PPT</span></span></button>
+          </div>
+        </div>
+        <div class="history-section collapsed">
+          <button class="history-section-toggle" type="button" onclick="toggleHistorySection(this)">更早 <span>›</span></button>
+          <div class="history-list">
+            <button class="history-item" type="button" onclick="closeSheets();openConversation('market')"><span class="history-source-icon">营</span><span class="row-body"><strong>618活动复盘</strong><span>营销复盘助手</span></span></button>
+          </div>
+        </div>
+      `, 'side-left');
+    }
+
+    function activeAgentForMoreMenu() {
+      if (document.getElementById('screen-home').classList.contains('active')) {
+        return { name: 'Dora超级智能体', type: 'dora', icon: 'D' };
+      }
+      return {
+        name: currentConversationMeta.agentName,
+        type: currentConversationType,
+        icon: currentConversationMeta.replyAvatar
+      };
+    }
+
+    function agentMoreHistoryHtml(agent) {
+      const isDora = agent.type === 'dora';
+      const weekHistoryItem = isDora
+        ? `<button class="history-item" type="button" onclick="closeSheets();openAssetDetail('html-sales')"><span class="history-source-icon folder">□</span><span class="row-body"><strong>围绕资料继续追问</strong><span>销售日报看板.html</span></span></button>`
+        : `<button class="history-item" type="button" onclick="closeSheets();openConversation('${agent.type}')"><span class="history-source-icon">${agent.icon}</span><span class="row-body"><strong>专题复盘追问</strong><span>${agent.name} · 5天前</span></span></button>`;
+      return `
+        <label class="search-line">
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+          <input placeholder="搜索会话记录" />
+        </label>
+        <div class="history-section">
+          <button class="history-section-toggle" type="button" onclick="toggleHistorySection(this)">今天 <span>⌄</span></button>
+          <div class="history-list">
+            <button class="history-item active" type="button" onclick="closeSheets();openConversation('${agent.type}')"><span class="history-source-icon">${agent.icon}</span><span class="row-body"><strong>${isDora ? '华东销售经营日报分析' : currentConversationMeta.title}</strong><span>${agent.name} · 今天 09:42</span></span><span class="unread-dot">2</span></button>
+            <button class="history-item" type="button" onclick="closeSheets();openConversation('${agent.type}')"><span class="history-source-icon">${agent.icon}</span><span class="row-body"><strong>${isDora ? '苏南渠道销售下滑归因' : '指标口径追问'}</strong><span>${agent.name} · 今天 10:18</span></span></button>
+          </div>
+        </div>
+        <div class="history-section">
+          <button class="history-section-toggle" type="button" onclick="toggleHistorySection(this)">7天内 <span>⌄</span></button>
+          <div class="history-list">
+            <button class="history-item" type="button" onclick="closeSheets();openConversation('${agent.type}')"><span class="history-source-icon clock">时</span><span class="row-body"><strong>${isDora ? '每日经营日报自动推送' : '专家分析周报'}</strong><span>会话记录 · 3天前</span></span></button>
+            ${weekHistoryItem}
+          </div>
+        </div>
+        <div class="history-section collapsed">
+          <button class="history-section-toggle" type="button" onclick="toggleHistorySection(this)">30天内 <span>›</span></button>
+          <div class="history-list">
+            <button class="history-item" type="button" onclick="closeSheets();openConversation('${agent.type}')"><span class="history-source-icon">${agent.icon}</span><span class="row-body"><strong>${isDora ? '经营例会材料整理' : '历史指标复盘'}</strong><span>${agent.name} · 21天前</span></span></button>
+          </div>
+        </div>
+      `;
+    }
+
+    function agentMoreTasksHtml(agent) {
+      const isDora = agent.type === 'dora';
+      return `
+        <div class="task-list">
+          <div class="task-item"><span class="task-status">运行中</span><span class="row-body"><strong>${isDora ? '每日 20:00 生成华东经营日报' : '每周一生成专家分析摘要'}</strong><span>下一次执行：今天 20:00</span></span></div>
+          <div class="task-item"><span class="task-status">运行中</span><span class="row-body"><strong>${isDora ? '重点客户回款异常提醒' : '异常指标自动归因'}</strong><span>触发条件：回款延期或指标波动超过阈值</span></span></div>
+          <div class="task-item"><span class="task-status paused">暂停</span><span class="row-body"><strong>${isDora ? '月度经营复盘材料' : '专题分析材料生成'}</strong><span>上次执行：2026-06-08 09:00</span></span></div>
+        </div>
+      `;
+    }
+
+    function openAgentMoreSheet(tab = 'history') {
+      const agent = activeAgentForMoreMenu();
+      const isHistory = tab === 'history';
+      openSheet(agent.name, `
+        <div class="segmented" data-anno="方案B：更多菜单用底部抽屉承载当前 Agent 的会话记录和定时任务。">
+          <button class="${isHistory ? 'active' : ''}" type="button" onclick="openAgentMoreSheet('history')">会话记录</button>
+          <button class="${isHistory ? '' : 'active'}" type="button" onclick="openAgentMoreSheet('tasks')">定时任务</button>
+        </div>
+        ${isHistory ? agentMoreHistoryHtml(agent) : agentMoreTasksHtml(agent)}
+      `);
+    }
+
+    function toggleHistorySection(button) {
+      const section = button.closest('.history-section');
+      section.classList.toggle('collapsed');
+      button.querySelector('span').textContent = section.classList.contains('collapsed') ? '›' : '⌄';
+    }
+
+    function openToolSheet(context) {
+      activeContext = context;
+      openSheet('添加', `
+        <div class="add-panel">
+          <p class="add-panel-hint">选择要补充到当前问题的上下文。</p>
+          <div class="add-grid">
+            <button class="add-tile" type="button" onclick="mockUpload()"><span class="add-icon upload">UP</span><span>上传</span></button>
+            <button class="add-tile" type="button" onclick="openAssetPicker('bi','${context}')"><span class="add-icon">BI</span><span>FineBI</span></button>
+            <button class="add-tile" type="button" onclick="openAssetPicker('fr','${context}')"><span class="add-icon fr">FR</span><span>FineReport</span></button>
+          </div>
+        </div>
+      `, 'voice');
+    }
+
+    function sendRecommendedQuestion(question) {
+      $('homeInput').value = question;
+      openConversation('dora');
+    }
+
+    function targetFilesContainer() {
+      if (activeContext === 'chat') return $('chatFiles');
+      if (activeContext === 'detail') return null;
+      return $('homeFiles');
+    }
+
+    function addChip(label, kind = 'BI') {
+      const container = targetFilesContainer();
+      if (!container) {
+        showToast(`已添加 ${label}`);
+        return;
+      }
+      const chip = document.createElement('span');
+      chip.className = 'file-chip';
+      chip.innerHTML = `<span class="chip-badge ${kind === 'FR' ? 'fr' : kind === 'XLSX' ? 'xls' : ''}">${kind}</span>${label}`;
+      container.appendChild(chip);
+    }
+
+    function mockUpload() {
+      addChip('CRM 商机明细.xlsx', 'XLSX');
+      closeSheets();
+      showToast('已添加本地文件');
+    }
+
+    function openAssetPicker(type, context = activeContext) {
+      activeContext = context;
+      currentAssetType = type;
+      selectedAssets = new Set(type === 'bi' ? ['bi-dashboard', 'bi-topic-sales'] : ['fr-region', 'fr-store']);
+      renderAssetPicker();
+    }
+
+    function renderAssetPicker() {
+      const def = assetDefs[currentAssetType];
+      const html = `
+        <div class="asset-picker-layout">
+          <label class="search-line" style="margin-bottom:0"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input placeholder="搜索名称" /></label>
+          <div class="asset-tree">
+            ${def.items.map(([id, title, desc, enabled]) => `
+              <button class="asset-option ${selectedAssets.has(id) ? 'selected' : ''} ${enabled ? '' : 'disabled'}" type="button" ${enabled ? `onclick="toggleAsset('${id}')"` : ''}>
+                <span class="check"></span>
+                <span class="row-body"><strong>${title}</strong><span>${desc}</span></span>
+              </button>
+            `).join('')}
+          </div>
+          <div class="sheet-footer">
+            <button class="btn flex" type="button" onclick="closeSheets()">取消</button>
+            <button class="btn primary flex" type="button" onclick="confirmAssetPicker()">确定 · ${selectedAssets.size} 个</button>
+          </div>
+        </div>
+      `;
+      openSheet(def.title, html);
+    }
+
+    function toggleAsset(id) {
+      if (selectedAssets.has(id)) selectedAssets.delete(id);
+      else selectedAssets.add(id);
+      renderAssetPicker();
+    }
+
+    function confirmAssetPicker() {
+      const label = currentAssetType === 'bi' ? 'BI 资产' : 'FR 资产';
+      addChip(`${selectedAssets.size} 个${label}`, currentAssetType.toUpperCase());
+      closeSheets();
+      showToast(`已添加 ${selectedAssets.size} 个${label}`);
+    }
+
+    function openVoiceSheet(context) {
+      activeContext = context;
+      voiceSeconds = 0;
+      openSheet('语音输入', `
+        <div class="voice-state">
+          <div class="voice-orb"><svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8 21h8"/></svg></div>
+          <div><strong id="voiceTitle">正在聆听 · 0s</strong><p style="margin:6px 0 0;color:var(--ink-9);font-size:13px">正在实时识别你的语音内容。</p></div>
+          <div class="wave" id="voiceWave"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="voice-result" id="voiceResult"><span id="voiceTranscriptText"></span><span class="voice-cursor"></span></div>
+          <div class="sheet-footer" style="width:100%">
+            <button class="btn flex" type="button" onclick="stopVoiceInput(this)"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="5" y="5" rx="2"/></svg>停止</button>
+            <button class="btn primary flex" type="button" onclick="sendVoiceText()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-8-8 18-2-8-8-2Z"/><path d="m11 13 10-10"/></svg>直接发送</button>
+          </div>
+        </div>
+      `);
+      startVoiceTimer();
+    }
+
+    function startVoiceTimer() {
+      stopVoiceTimer();
+      voiceTimer = setInterval(() => {
+        voiceSeconds += 1;
+        const title = $('voiceTitle');
+        if (title) title.textContent = `正在聆听 · ${voiceSeconds}s`;
+        updateVoiceTranscript();
+      }, 380);
+      updateVoiceTranscript();
+    }
+
+    function updateVoiceTranscript() {
+      const text = $('voiceTranscriptText');
+      if (!text) return;
+      const length = Math.min(voiceTranscript.length, Math.max(8, voiceSeconds * 4));
+      text.textContent = voiceTranscript.slice(0, length);
+    }
+
+    function stopVoiceInput(button) {
+      stopVoiceTimer();
+      const recognizedText = $('voiceTranscriptText')?.textContent || voiceTranscript;
+      const input = inputForContext();
+      input.value = recognizedText;
+      const title = $('voiceTitle');
+      const cursor = document.querySelector('#voiceResult .voice-cursor');
+      if (title) title.textContent = `已停止 · ${voiceSeconds}s`;
+      if (cursor) cursor.hidden = true;
+      if ($('voiceWave')) $('voiceWave').style.opacity = '0.35';
+      button.disabled = true;
+      showToast('已回填到输入框');
+    }
+
+    function stopVoiceTimer() {
+      if (voiceTimer) clearInterval(voiceTimer);
+      voiceTimer = null;
+    }
+
+    function inputForContext() {
+      if (activeContext === 'chat') return $('chatInput');
+      if (activeContext === 'detail') return $('detailInput');
+      return $('homeInput');
+    }
+
+    function insertVoiceText() {
+      const input = inputForContext();
+      input.value = $('voiceTranscriptText')?.textContent || voiceTranscript;
+      closeSheets();
+      showToast('语音已转为文字');
+    }
+
+    function sendVoiceText() {
+      const text = $('voiceTranscriptText')?.textContent || voiceTranscript;
+      const input = inputForContext();
+      input.value = text;
+      closeSheets();
+      if (activeContext === 'chat') sendChat();
+      else if (activeContext === 'home') openConversation('dora');
+      else showToast('已发送语音需求');
+    }
+
+    function openFilesSheet(tab = activeFilesTab) {
+      activeFilesTab = tab;
+      renderFilesSheet();
+    }
+
+    function renderFilesSheet() {
+      const visibleFiles = activeFilesTab === 'output' && !currentConversationHasOutputs ? [] : files[activeFilesTab];
+      const html = `
+        <div class="files-tabs">
+          <button class="${activeFilesTab === 'input' ? 'active' : ''}" type="button" onclick="openFilesSheet('input')">来源 ${files.input.length}</button>
+          <button class="${activeFilesTab === 'output' ? 'active' : ''}" type="button" onclick="openFilesSheet('output')">产物 ${currentConversationHasOutputs ? files.output.length : 0}</button>
+        </div>
+        <label class="search-line"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input placeholder="搜索${activeFilesTab === 'input' ? '来源' : '产物'}" /></label>
+        <div class="file-list">
+          ${visibleFiles.length ? visibleFiles.map(([ext, name, meta, tone]) => `
+            <div class="file-row" role="button" tabindex="0" onclick="previewFile('${name}')">
+              <div class="file-row-main"><span class="chip-badge ${tone === 'fr' ? 'fr' : tone === 'xls' ? 'xls' : ''}">${ext}</span><span class="row-body"><strong>${name}</strong><span>${meta}</span></span></div>
+              <div class="file-actions" onclick="event.stopPropagation()">
+                <button class="mini-btn" type="button" onclick="quoteFile('${name}')">引用</button>
+                ${activeFilesTab === 'output' ? "<button class=\"mini-btn\" type=\"button\" onclick=\"saveToLibrary()\">存资料库</button><button class=\"mini-btn\" type=\"button\" onclick=\"showToast('分享链接已生成')\">分享</button>" : "<button class=\"mini-btn\" type=\"button\" onclick=\"showToast('已下载')\">下载</button>"}
+              </div>
+            </div>
+          `).join('') : `<div class="empty-state"><strong>暂无会话产物</strong><span>当前新会话还没有生成文件，发送需求后产物会出现在这里。</span></div>`}
+        </div>
+      `;
+      openSheet('会话文件', html, 'files');
+    }
+
+    function quoteFile(name) {
+      if (document.getElementById('screen-conversation').classList.contains('active')) activeContext = 'chat';
+      addChip(name, name.endsWith('.xlsx') ? 'XLSX' : name.includes('BI') || name.includes('仪表板') ? 'BI' : 'FR');
+      closeSheets();
+      showToast('已引用会话文件');
+    }
+
+    function previewFile(name) {
+      closeSheets();
+      openConversationFilePreview(name);
+    }
+
+    function saveToLibrary() {
+      showToast('请确认是否将该会话产物存入资料库');
+      setTimeout(() => openSheet('存入资料库', `
+        <div class="info-card"><strong>会话产物不会自动进入资料库</strong><p>只有用户主动确认后，当前产物才会作为快照副本存入资料库；后续资料库中的变更不会反向影响原会话。</p></div>
+        <div class="sheet-footer">
+          <button class="btn flex" type="button" onclick="closeSheets();showToast('已另存新文件')">另存新文件</button>
+          <button class="btn primary flex" type="button" onclick="closeSheets();showToast('已覆盖存入资料库')">覆盖存入</button>
+        </div>
+      `), 300);
+    }
+
+    function openDetailChatSheet() {
+      activeContext = 'detail';
+      openSheet('基于当前资料处理', `
+        <div class="segmented">
+          <button class="active" type="button">根据文件回答</button>
+          <button type="button">对文件进行修改</button>
+        </div>
+        <div class="message agent" style="margin:0 0 12px"><span class="avatar small">D</span><div class="bubble">我可以读取当前资料内容，继续解释规则、改页面、生成新版本或追溯来源会话。</div></div>
+        <div class="compact-sender">
+          <textarea id="detailSheetInput" placeholder="例如：把预测规则改成近 6 个月加权平均"></textarea>
+          <div class="compact-tools">
+            <button class="round-btn" type="button" onclick="openToolSheet('detail')">＋</button>
+            <button class="tool-pill" type="button" onclick="openFilesSheet('input')">@ 引用</button>
+            <span style="flex:1"></span>
+            <button class="round-btn mic-btn" type="button" onclick="openVoiceSheet('detail')" aria-label="语音输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8 21h8"/></svg></button>
+            <button class="round-btn primary" type="button" onclick="closeSheets();showToast('已提交资料处理任务')">↑</button>
+          </div>
+        </div>
+      `);
+    }
+
+    function startDetailSheetConversation() {
+      activeContext = 'detail';
+      openSheet('Dora', `
+        <div class="detail-chat-layout">
+          <div class="detail-chat-thread">
+            <div class="info-card"><strong>${$('detailTitle').textContent}</strong><p>已开启新的资料对话，可以继续围绕当前资料发起追问。</p></div>
+            <div class="message agent" style="margin:0"><span class="avatar small">D</span><div class="bubble">我已准备好基于当前资料回答。你可以问我指标含义、预测规则、风险原因，或让我生成新的行动清单。</div></div>
+          </div>
+          <div class="compact-sender">
+            <textarea id="detailSheetInput" placeholder="继续追问当前资料"></textarea>
+            <div class="compact-tools">
+              <button class="round-btn" type="button" onclick="openToolSheet('detail')">＋</button>
+              <span style="flex:1"></span>
+              <button class="round-btn mic-btn" type="button" onclick="openVoiceSheet('detail')" aria-label="语音输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8 21h8"/></svg></button>
+              <button class="round-btn primary" type="button" onclick="showToast('已继续追问当前资料')">↑</button>
+            </div>
+          </div>
+        </div>
+      `, 'detail-chat');
+    }
+
+    function sendDetailQuestion() {
+      activeContext = 'detail';
+      const input = $('detailInput');
+      const text = input.value.trim() || '基于当前资料继续分析';
+      input.value = '';
+      openSheet('Dora', `
+        <div class="detail-chat-layout">
+          <div class="detail-chat-thread">
+            <div class="info-card"><strong>${$('detailTitle').textContent}</strong><p>围绕当前资料继续追问，Dora 会基于文件内容和来源上下文回答。</p></div>
+            <div class="message user" style="margin:0;justify-content:flex-end"><div class="bubble">${text}</div></div>
+            <div class="message agent" style="margin:0"><span class="avatar small">D</span><div class="bubble">我已读取当前资料。这个文件主要包含销售预测、逐月销售趋势、预测规则配置和风险提示。你可以继续让我解释某个指标、修改规则，或基于这份资料生成新的行动清单。</div></div>
+          </div>
+          <div class="compact-sender">
+            <textarea id="detailSheetInput" placeholder="继续追问当前资料"></textarea>
+            <div class="compact-tools">
+              <button class="round-btn" type="button" onclick="openToolSheet('detail')">＋</button>
+              <span style="flex:1"></span>
+              <button class="round-btn mic-btn" type="button" onclick="openVoiceSheet('detail')" aria-label="语音输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8 21h8"/></svg></button>
+              <button class="round-btn primary" type="button" onclick="showToast('已继续追问当前资料')">↑</button>
+            </div>
+          </div>
+        </div>
+      `, 'detail-chat');
+    }
+
+    function sendChat() {
+      const input = $('chatInput');
+      const text = input.value.trim() || '帮我看一下苏南渠道销售下滑原因';
+      const user = document.createElement('div');
+      user.className = 'message user';
+      const filesHtml = $('chatFiles').innerHTML.trim();
+      user.innerHTML = filesHtml ? `<div class="user-message-stack"><div class="sender-files">${filesHtml}</div><div class="bubble">${text}</div></div>` : `<div class="bubble">${text}</div>`;
+      $('chatBody').appendChild(user);
+      input.value = '';
+      $('chatFiles').innerHTML = '';
+      setTimeout(() => {
+        currentConversationHasOutputs = true;
+        const agent = document.createElement('div');
+        agent.className = 'message agent';
+        agent.innerHTML = `<span class="avatar small">D</span><div class="bubble">已追加分析卡片：反馈主要集中在交付延迟、售后响应和价格争议三类，我会同步更新产物。</div>`;
+        $('chatBody').appendChild(agent);
+        $('chatBody').scrollTop = $('chatBody').scrollHeight;
+      }, 450);
+      $('chatBody').scrollTop = $('chatBody').scrollHeight;
+    }
+
+    function toggleWorkPanel() {
+      const timeline = $('timeline');
+      const hidden = timeline.style.display === 'none';
+      timeline.style.display = hidden ? 'grid' : 'none';
+      event.target.textContent = hidden ? '收起' : '展开';
+    }
+
+    function showToast(text) {
+      const toast = $('toast');
+      toast.textContent = text;
+      toast.classList.add('show');
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => toast.classList.remove('show'), 1800);
+    }
+
+    function toggleGuide() {
+      closeVariantConfig();
+      const shell = $('phoneShell');
+      const enabled = !shell.classList.contains('annotation-on');
+      shell.classList.toggle('annotation-on', enabled);
+      $('guideToggle').classList.toggle('active', enabled);
+      $('guidePopover').classList.toggle('open', enabled);
+    }
+
+    document.addEventListener('mouseover', (event) => {
+      const target = event.target.closest('[data-anno]');
+      if (!target || !$('phoneShell').classList.contains('annotation-on')) return;
+      const tip = $('annoTooltip');
+      tip.textContent = target.dataset.anno;
+      const rect = target.getBoundingClientRect();
+      tip.style.left = Math.min(window.innerWidth - 276, Math.max(12, rect.left)) + 'px';
+      tip.style.top = Math.max(12, rect.top - 50) + 'px';
+      tip.style.display = 'block';
+    });
+    document.addEventListener('mouseout', (event) => {
+      if (event.target.closest('[data-anno]')) $('annoTooltip').style.display = 'none';
+    });
+
+    renderVariantBar();
+    renderExperts();
+  </script>
+</body>
+</html>
