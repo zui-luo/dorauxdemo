@@ -334,27 +334,56 @@
       gap: 8px;
     }
     .insight-card {
-      border: none;
+      border: 1px solid rgba(37, 98, 255, 0.12);
       border-radius: 12px;
-      background: var(--ink-2);
-      padding: 10px;
-      display: block;
+      background: linear-gradient(135deg, rgba(238, 244, 255, 0.96), rgba(248, 250, 255, 0.92));
+      padding: 11px 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
     }
-    .insight-card.full {
-      display: block;
-      background: var(--orange-soft);
+    .insight-card.opportunity {
+      border-color: rgba(18, 169, 130, 0.14);
+      background: linear-gradient(135deg, rgba(235, 250, 246, 0.96), rgba(249, 253, 252, 0.92));
+    }
+    .insight-card.alert {
+      border-color: rgba(224, 87, 74, 0.16);
+      background: linear-gradient(135deg, rgba(255, 241, 239, 0.98), rgba(255, 250, 248, 0.94));
+    }
+    .insight-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--brand-7);
+      background: rgba(37, 98, 255, 0.1);
+    }
+    .insight-card.opportunity .insight-icon {
+      color: var(--green);
+      background: rgba(18, 169, 130, 0.1);
+    }
+    .insight-card.alert .insight-icon {
+      color: var(--orange);
+      background: rgba(224, 87, 74, 0.1);
+    }
+    .insight-icon svg {
+      width: 17px;
+      height: 17px;
     }
     .insight-copy strong {
       display: block;
       color: var(--ink-11);
-      font-size: 15px;
-      margin-bottom: 6px;
+      font-size: 14px;
+      margin-bottom: 4px;
     }
     .insight-copy p {
       margin: 0;
       color: var(--ink-10);
-      font-size: 13px;
-      line-height: 1.45;
+      font-size: 12px;
+      line-height: 1.5;
     }
     .insight-copy b {
       color: var(--green);
@@ -1437,30 +1466,44 @@
     }
     .add-panel {
       display: grid;
-      gap: 14px;
+      gap: 16px;
     }
-    .add-panel-hint {
+    .add-section {
+      display: grid;
+      gap: 8px;
+    }
+    .add-section-title {
       margin: 0;
       color: var(--ink-9);
-      font-size: 13px;
-      line-height: 1.45;
+      font-size: 12px;
+      font-weight: 800;
     }
     .add-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
+      gap: 8px;
+    }
+    .add-grid.connectors {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .add-tile {
       min-width: 0;
       border: 1px solid var(--ink-4);
-      border-radius: 18px;
+      border-radius: 14px;
       background: #fff;
       color: var(--ink-10);
-      padding: 12px 6px 10px;
+      padding: 10px 6px 9px;
       display: grid;
       justify-items: center;
-      gap: 8px;
-      box-shadow: 0 4px 16px rgba(9, 30, 64, 0.04);
+      gap: 6px;
+    }
+    .add-tile.connector {
+      grid-template-columns: auto 1fr;
+      justify-items: start;
+      align-items: center;
+      text-align: left;
+      padding: 10px;
+      background: var(--ink-1);
     }
     .add-tile span:last-child {
       max-width: 100%;
@@ -1471,20 +1514,20 @@
       font-weight: 700;
     }
     .add-icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 15px;
+      width: 34px;
+      height: 34px;
+      border-radius: 11px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      color: #fff;
-      font-size: 13px;
+      color: var(--ink-10);
+      font-size: 11px;
       font-weight: 800;
-      background: var(--brand-7);
+      background: var(--ink-2);
     }
-    .add-icon.upload { background: var(--green); }
-    .add-icon.fr { background: var(--purple); }
-    .add-icon.file { background: var(--orange); }
+    .add-icon svg { width: 18px; height: 18px; }
+    .add-icon.bi { color: #fff; background: var(--brand-7); }
+    .add-icon.fr { color: #fff; background: var(--purple); }
     .asset-picker-sheet {
       height: min(86vh, 760px);
       max-height: min(86vh, 760px);
@@ -1515,48 +1558,36 @@
       border-bottom: 1px solid var(--ink-3);
       background: rgba(255,255,255,0.96);
     }
-    .asset-picked-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      color: var(--ink-9);
-      font-size: 13px;
-      font-weight: 700;
-    }
-    .asset-clear-btn {
-      border: none;
-      background: transparent;
-      color: var(--brand-7);
-      font: inherit;
-      padding: 4px 0;
-    }
     .asset-tree {
       flex: 1;
       min-height: 0;
       overflow: auto;
       display: grid;
       align-content: start;
-      gap: 6px;
-      padding: 10px 12px 18px;
+      gap: 2px;
+      padding: 8px 12px 18px;
     }
     .asset-tree-row {
       width: 100%;
-      border: 1px solid var(--ink-4);
-      border-radius: 12px;
-      background: #fff;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: transparent;
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 10px;
+      padding: 8px 8px 8px calc(8px + var(--level, 0) * 18px);
       text-align: left;
       color: inherit;
-      margin-left: calc(var(--level, 0) * 18px);
-      width: calc(100% - calc(var(--level, 0) * 18px));
     }
     .asset-tree-row.asset-row { cursor: pointer; }
+    .asset-tree-row.asset-row:hover,
+    .asset-tree-row.asset-row.selected {
+      border-color: var(--ink-4);
+      background: #fff;
+    }
     .asset-tree-row.folder-row {
-      background: var(--ink-1);
+      min-height: 42px;
+      background: transparent;
       border-color: transparent;
     }
     .asset-tree-row.selected {
@@ -1568,8 +1599,8 @@
       cursor: default;
     }
     .tree-toggle {
-      width: 24px;
-      height: 24px;
+      width: 18px;
+      height: 18px;
       border: none;
       background: transparent;
       color: var(--ink-9);
@@ -1582,9 +1613,9 @@
     }
     .asset-folder.expanded > .folder-row .tree-toggle { transform: rotate(0deg); }
     .asset-check {
-      width: 20px;
-      height: 20px;
-      border-radius: 6px;
+      width: 18px;
+      height: 18px;
+      border-radius: 5px;
       border: 1px solid var(--ink-6);
       flex-shrink: 0;
       background: #fff;
@@ -1592,7 +1623,7 @@
       align-items: center;
       justify-content: center;
       color: #fff;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 900;
     }
     .asset-check.selected,
@@ -1603,24 +1634,42 @@
     .asset-check.selected::after { content: "✓"; }
     .asset-check.partial::after { content: ""; width: 9px; height: 2px; border-radius: 99px; background: #fff; }
     .asset-node-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 10px;
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
       background: var(--brand-1);
       color: var(--brand-7);
-      font-size: 12px;
+      font-size: 10px;
       font-weight: 900;
     }
     .asset-node-icon.fr { background: #f2edff; color: var(--purple); }
     .asset-node-icon.folder {
-      background: #fff4d8;
-      color: #b77900;
+      background: transparent;
+      color: #c98900;
+      font-size: 0;
     }
-    .folder-count, .added-tag {
+    .asset-node-icon.folder svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+    .asset-tree .row-body strong {
+      font-size: 14px;
+      line-height: 1.25;
+    }
+    .asset-tree .folder-row .row-body strong {
+      font-weight: 800;
+    }
+    .asset-tree .row-body span {
+      margin-top: 2px;
+      color: var(--ink-8);
+      font-size: 12px;
+    }
+    .added-tag {
       flex-shrink: 0;
       border-radius: 999px;
       padding: 3px 7px;
@@ -1644,6 +1693,12 @@
       background: rgba(255,255,255,0.96);
     }
     .asset-picker-footer strong { font-size: 14px; }
+    .asset-picker-confirm {
+      min-height: 36px;
+      min-width: 76px;
+      padding: 7px 18px;
+      flex: none;
+    }
     .sheet-footer {
       position: sticky;
       bottom: 0;
@@ -2278,18 +2333,21 @@
             </div>
             <div class="dora-insight-panel" data-anno="Dora 首页以主动经营洞察承接业务用户，不要求用户先理解 Agent 架构。">
               <div class="insight-card">
+                <span class="insight-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 7 6 6 4-4 8 8"/><path d="M21 10v7h-7"/></svg></span>
                 <div class="insight-copy">
                   <strong>苏南渠道销售下滑</strong>
                   <p>昨日销售额环比下降 <b style="color:var(--orange)">18.7%</b>，主要集中在 3 个 KA 客户订单延迟确认。</p>
                 </div>
               </div>
-              <div class="insight-card">
+              <div class="insight-card opportunity">
+                <span class="insight-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3Z"/></svg></span>
                 <div class="insight-copy">
                   <strong>商机增长但转化放缓</strong>
                   <p>新增商机较 7 日均值提升 <b>15.2%</b>，高意向商机跟进率下降到 61%。</p>
                 </div>
               </div>
-              <div class="insight-card full">
+              <div class="insight-card alert">
+                <span class="insight-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
                 <div class="insight-copy">
                   <strong>异常预警</strong>
                   <p>两个重点客户回款延期，影响现金回款约 ¥52 万。建议今天优先确认付款节点。</p>
@@ -2620,7 +2678,9 @@
     let activeContext = 'home';
     let activeFilesTab = 'input';
     let currentAssetType = 'bi';
-    let selectedAssets = new Set(['bi-dashboard', 'bi-topic-sales']);
+    let selectedAssets = new Set();
+    let addedAssets = new Set(['bi-dashboard', 'fr-region']);
+    let expandedAssetFolders = new Set(['all-data', 'normal-report']);
     let voiceTimer = null;
     let voiceSeconds = 0;
     const voiceTranscript = '请基于华东区昨日销售数据，生成苏南渠道下滑原因和今天的跟进动作。';
@@ -2628,8 +2688,8 @@
     let coordinationMode = 'direct';
     let currentConversationType = 'dora';
     let variantState = {
-      framework: 'side-menu',
-      conversationTitle: 'title-only'
+      framework: 'more-menu',
+      conversationTitle: 'agent-title'
     };
     let currentConversationHasOutputs = true;
     let activeExpertFilter = 'all';
@@ -2679,18 +2739,50 @@
     const assetDefs = {
       bi: {
         title: '添加 FineBI 资产',
-        items: [
-          ['bi-dashboard', '门店经营仪表板', '仪表板 · 销售额、客单价、门店排名', true],
-          ['bi-topic-sales', 'BI demo_门店销售表', '分析主题 · 门店、城市、品类、利润率', true],
-          ['bi-topic-member', '会员复购分析主题', '字段 · 会员等级、优惠券、生命周期价值', true]
+        assetLabel: 'BI 资产',
+        icon: 'BI',
+        iconClass: '',
+        tree: [
+          { id: 'all-data', type: 'folder', name: '全部数据', children: [
+            { id: 'normal-report', type: 'folder', name: '普通报表', children: [
+              { id: 'bi-dashboard', type: 'asset', name: '销售日报看板', desc: '仪表板 · 销售额、商机、回款', tag: 'BI' },
+              { id: 'bi-store', type: 'asset', name: '门店经营仪表板', desc: '仪表板 · 客单价、门店排名', tag: 'BI' }
+            ] },
+            { id: 'decision-report', type: 'folder', name: '决策报表', children: [
+              { id: 'bi-topic-sales', type: 'asset', name: 'BI demo_门店销售表', desc: '主题 · 门店、城市、品类、利润率', tag: '主题' },
+              { id: 'bi-topic-member', type: 'asset', name: '会员复购分析主题', desc: '主题 · 会员等级、优惠券、生命周期', tag: '主题' }
+            ] },
+            { id: 'folder-1', type: 'folder', name: '文件夹1', children: [
+              { id: 'bi-opportunity', type: 'asset', name: '商机转化分析', desc: '仪表板 · 阶段、负责人、转化率', tag: 'BI' }
+            ] },
+            { id: 'folder-3-long', type: 'folder', name: '文件夹3的名称也很长', children: [
+              { id: 'bi-payment', type: 'asset', name: '回款风险监控主题', desc: '主题 · 账期、客户、逾期金额', tag: '主题' }
+            ] }
+          ] }
         ]
       },
       fr: {
         title: '添加 FineReport 资产',
-        items: [
-          ['fr-region', 'FR demo_地区经营看板', '报表 · 收入、费用、利润', true],
-          ['fr-store', '门店日报填报表', '填报 · 客流、库存、活动执行', true],
-          ['fr-finance', '财务月结分析报表', '月结 · 应收应付、费用科目', true]
+        assetLabel: 'FR 资产',
+        icon: 'FR',
+        iconClass: 'fr',
+        tree: [
+          { id: 'all-data', type: 'folder', name: '全部数据', children: [
+            { id: 'normal-report', type: 'folder', name: '普通报表', children: [
+              { id: 'fr-region', type: 'asset', name: 'FR demo_地区经营看板', desc: '报表 · 收入、费用、利润', tag: 'FR' },
+              { id: 'fr-store', type: 'asset', name: '门店日报填报表', desc: '填报 · 客流、库存、活动执行', tag: '报表' }
+            ] },
+            { id: 'decision-report', type: 'folder', name: '决策报表', children: [
+              { id: 'fr-finance', type: 'asset', name: '财务月结分析报表', desc: '报表 · 应收应付、费用科目', tag: 'FR' },
+              { id: 'fr-budget', type: 'asset', name: '预算执行跟踪表', desc: '报表 · 预算、实际、偏差', tag: '报表' }
+            ] },
+            { id: 'folder-1', type: 'folder', name: '文件夹1', children: [
+              { id: 'fr-channel', type: 'asset', name: '渠道销售日报', desc: '报表 · 渠道、区域、商品线', tag: 'FR' }
+            ] },
+            { id: 'folder-3-long', type: 'folder', name: '文件夹3的名称也很长', children: [
+              { id: 'fr-contract', type: 'asset', name: '重点合同回款表', desc: '报表 · 合同、客户、回款节点', tag: '报表' }
+            ] }
+          ] }
         ]
       }
     };
@@ -3035,7 +3127,7 @@
       $('sheetTitle').textContent = title;
       $('sheetBody').innerHTML = html;
       const sheet = $('genericSheet');
-      sheet.className = mode === 'side' ? 'side-sheet' : mode === 'side-left' ? 'side-sheet left' : mode === 'files' ? 'bottom-sheet files-sheet' : mode === 'voice' ? 'bottom-sheet voice-sheet' : mode === 'detail-chat' ? 'bottom-sheet detail-conversation-sheet' : 'bottom-sheet';
+      sheet.className = mode === 'side' ? 'side-sheet' : mode === 'side-left' ? 'side-sheet left' : mode === 'files' ? 'bottom-sheet files-sheet' : mode === 'voice' ? 'bottom-sheet voice-sheet' : mode === 'detail-chat' ? 'bottom-sheet detail-conversation-sheet' : mode === 'asset' ? 'bottom-sheet asset-picker-sheet' : 'bottom-sheet';
       document.querySelector('.sheet-close').hidden = mode === 'side' || mode === 'side-left';
       $('sheetMask').classList.add('open');
     }
@@ -3176,11 +3268,20 @@
       activeContext = context;
       openSheet('添加', `
         <div class="add-panel">
-          <p class="add-panel-hint">选择要补充到当前问题的上下文。</p>
-          <div class="add-grid">
-            <button class="add-tile" type="button" onclick="mockUpload()"><span class="add-icon upload">UP</span><span>上传</span></button>
-            <button class="add-tile" type="button" onclick="openAssetPicker('bi','${context}')"><span class="add-icon">BI</span><span>FineBI</span></button>
-            <button class="add-tile" type="button" onclick="openAssetPicker('fr','${context}')"><span class="add-icon fr">FR</span><span>FineReport</span></button>
+          <div class="add-section">
+            <p class="add-section-title">手机本地</p>
+            <div class="add-grid">
+              <button class="add-tile" type="button" onclick="mockLocalAdd('camera')"><span class="add-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4 16 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h3l1.5-3h5Z"/><circle cx="12" cy="13" r="3"/></svg></span><span>拍照</span></button>
+              <button class="add-tile" type="button" onclick="mockLocalAdd('image')"><span class="add-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 15-5-5L5 20"/></svg></span><span>图片</span></button>
+              <button class="add-tile" type="button" onclick="mockLocalAdd('file')"><span class="add-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg></span><span>本地文件</span></button>
+            </div>
+          </div>
+          <div class="add-section">
+            <p class="add-section-title">数据连接器</p>
+            <div class="add-grid connectors">
+              <button class="add-tile connector" type="button" onclick="openAssetPicker('bi','${context}')"><span class="add-icon bi">BI</span><span>FineBI</span></button>
+              <button class="add-tile connector" type="button" onclick="openAssetPicker('fr','${context}')"><span class="add-icon fr">FR</span><span>FineReport</span></button>
+            </div>
           </div>
         </div>
       `, 'voice');
@@ -3209,52 +3310,162 @@
       container.appendChild(chip);
     }
 
-    function mockUpload() {
-      addChip('CRM 商机明细.xlsx', 'XLSX');
+    function mockLocalAdd(type) {
+      const localFiles = {
+        camera: ['现场照片.jpg', 'IMG'],
+        image: ['销售看板截图.png', 'IMG'],
+        file: ['CRM 商机明细.xlsx', 'XLSX']
+      };
+      const [name, kind] = localFiles[type];
+      addChip(name, kind);
       closeSheets();
-      showToast('已添加本地文件');
+      showToast(`已添加${type === 'camera' ? '拍摄照片' : type === 'image' ? '图片' : '本地文件'}`);
     }
 
     function openAssetPicker(type, context = activeContext) {
       activeContext = context;
       currentAssetType = type;
-      selectedAssets = new Set(type === 'bi' ? ['bi-dashboard', 'bi-topic-sales'] : ['fr-region', 'fr-store']);
+      selectedAssets = new Set();
+      expandedAssetFolders = new Set(['all-data', 'normal-report']);
       renderAssetPicker();
+    }
+
+    function flattenAssetNodes(nodes) {
+      return nodes.flatMap((node) => node.type === 'folder' ? flattenAssetNodes(node.children) : [node]);
+    }
+
+    function findAssetFolder(nodes, id) {
+      for (const node of nodes) {
+        if (node.type === 'folder' && node.id === id) return node;
+        if (node.type === 'folder') {
+          const match = findAssetFolder(node.children, id);
+          if (match) return match;
+        }
+      }
+      return null;
+    }
+
+    function selectableAssetIds(nodes) {
+      return flattenAssetNodes(nodes).filter((node) => !addedAssets.has(node.id)).map((node) => node.id);
+    }
+
+    function folderSelectionState(folder) {
+      const ids = selectableAssetIds(folder.children);
+      if (!ids.length) return '';
+      const count = ids.filter((id) => selectedAssets.has(id)).length;
+      if (count === ids.length) return 'selected';
+      if (count > 0) return 'partial';
+      return '';
+    }
+
+    function assetNodeMatches(node, query) {
+      if (!query) return true;
+      if (node.type === 'asset') return `${node.name} ${node.desc} ${node.tag}`.toLowerCase().includes(query);
+      return node.children.some((child) => assetNodeMatches(child, query));
+    }
+
+    function renderAssetTree(nodes, level = 0, query = '') {
+      const def = assetDefs[currentAssetType];
+      return nodes.filter((node) => assetNodeMatches(node, query)).map((node) => {
+        if (node.type === 'folder') {
+          const expanded = expandedAssetFolders.has(node.id) || Boolean(query);
+          const count = flattenAssetNodes(node.children).length;
+          const state = folderSelectionState(node);
+          return `
+            <div class="asset-folder ${expanded ? 'expanded' : ''}">
+              <div class="asset-tree-row folder-row" style="--level:${level}" onclick="toggleAssetFolder('${node.id}')">
+                <button class="tree-toggle" type="button" aria-label="展开目录">⌄</button>
+                <button class="asset-check ${state}" type="button" onclick="toggleAssetFolderSelection('${node.id}', event)" aria-label="选择目录"></button>
+                <span class="asset-node-icon folder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6.5h6l2 2h9v9.5a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-9.5a2 2 0 0 1 2-2Z"/><path d="M3.5 8.5V6a2 2 0 0 1 2-2h3.2l1.8 2.5"/></svg></span>
+                <span class="row-body"><strong>${node.name}</strong><span>${count} 个子项</span></span>
+              </div>
+              ${expanded ? renderAssetTree(node.children, level + 1, query) : ''}
+            </div>
+          `;
+        }
+        const selected = selectedAssets.has(node.id);
+        const added = addedAssets.has(node.id);
+        return `
+          <div class="asset-tree-row asset-row ${selected ? 'selected' : ''} ${added ? 'disabled' : ''}" style="--level:${level}" ${added ? '' : `onclick="toggleAsset('${node.id}')"`}>
+            <button class="asset-check ${selected ? 'selected' : ''}" type="button" ${added ? 'disabled' : `onclick="toggleAsset('${node.id}', event)"`} aria-label="选择资产"></button>
+            <span class="asset-node-icon ${def.iconClass}">${node.tag || def.icon}</span>
+            <span class="row-body"><strong>${node.name}</strong><span>${node.desc}</span></span>
+            ${added ? '<span class="added-tag">已添加</span>' : ''}
+          </div>
+        `;
+      }).join('');
     }
 
     function renderAssetPicker() {
       const def = assetDefs[currentAssetType];
+      const query = $('assetSearchInput')?.value.trim().toLowerCase() || '';
+      const selectedCount = selectedAssets.size;
       const html = `
         <div class="asset-picker-layout">
-          <label class="search-line" style="margin-bottom:0"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input placeholder="搜索名称" /></label>
-          <div class="asset-tree">
-            ${def.items.map(([id, title, desc, enabled]) => `
-              <button class="asset-option ${selectedAssets.has(id) ? 'selected' : ''} ${enabled ? '' : 'disabled'}" type="button" ${enabled ? `onclick="toggleAsset('${id}')"` : ''}>
-                <span class="check"></span>
-                <span class="row-body"><strong>${title}</strong><span>${desc}</span></span>
-              </button>
-            `).join('')}
+          <div class="asset-picker-top" data-anno="移动端资产选择采用顶部搜索、中间多选目录树、底部固定确认栏。">
+            <label class="search-line" style="margin-bottom:0"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input id="assetSearchInput" placeholder="搜索资产名称" value="${query}" oninput="filterAssetTree(this.value)" /></label>
           </div>
-          <div class="sheet-footer">
-            <button class="btn flex" type="button" onclick="closeSheets()">取消</button>
-            <button class="btn primary flex" type="button" onclick="confirmAssetPicker()">确定 · ${selectedAssets.size} 个</button>
+          <div class="asset-tree" id="assetTree">
+            ${renderAssetTree(def.tree, 0, query)}
+          </div>
+          <div class="asset-picker-footer">
+            <strong>已选 ${selectedCount} 个</strong>
+            <button class="btn primary asset-picker-confirm" type="button" onclick="confirmAssetPicker()" ${selectedCount ? '' : 'disabled'}>确定</button>
           </div>
         </div>
       `;
-      openSheet(def.title, html);
+      openSheet(def.title, html, 'asset');
+      const input = $('assetSearchInput');
+      if (input && query) {
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+      }
     }
 
-    function toggleAsset(id) {
+    function filterAssetTree(value) {
+      renderAssetPicker();
+    }
+
+    function toggleAssetFolder(id) {
+      if (expandedAssetFolders.has(id)) expandedAssetFolders.delete(id);
+      else expandedAssetFolders.add(id);
+      renderAssetPicker();
+    }
+
+    function toggleAssetFolderSelection(id, event) {
+      event.stopPropagation();
+      const folder = findAssetFolder(assetDefs[currentAssetType].tree, id);
+      if (!folder) return;
+      const ids = selectableAssetIds(folder.children);
+      const allSelected = ids.every((assetId) => selectedAssets.has(assetId));
+      ids.forEach((assetId) => {
+        if (allSelected) selectedAssets.delete(assetId);
+        else selectedAssets.add(assetId);
+      });
+      renderAssetPicker();
+    }
+
+    function clearAssetSelection() {
+      selectedAssets.clear();
+      renderAssetPicker();
+    }
+
+    function toggleAsset(id, event) {
+      if (event) event.stopPropagation();
+      if (addedAssets.has(id)) return;
       if (selectedAssets.has(id)) selectedAssets.delete(id);
       else selectedAssets.add(id);
       renderAssetPicker();
     }
 
     function confirmAssetPicker() {
-      const label = currentAssetType === 'bi' ? 'BI 资产' : 'FR 资产';
-      addChip(`${selectedAssets.size} 个${label}`, currentAssetType.toUpperCase());
+      if (!selectedAssets.size) return;
+      const def = assetDefs[currentAssetType];
+      const count = selectedAssets.size;
+      selectedAssets.forEach((id) => addedAssets.add(id));
+      addChip(`${count} 个${def.assetLabel}`, currentAssetType.toUpperCase());
       closeSheets();
-      showToast(`已添加 ${selectedAssets.size} 个${label}`);
+      showToast(`已添加 ${count} 个${def.assetLabel}`);
     }
 
     function openVoiceSheet(context) {
@@ -3267,7 +3478,7 @@
           <div class="wave" id="voiceWave"><i></i><i></i><i></i><i></i><i></i></div>
           <div class="voice-result" id="voiceResult"><span id="voiceTranscriptText"></span><span class="voice-cursor"></span></div>
           <div class="sheet-footer" style="width:100%">
-            <button class="btn flex" type="button" onclick="stopVoiceInput(this)"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="5" y="5" rx="2"/></svg>停止</button>
+            <button class="btn flex" type="button" onclick="stopVoiceInput()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="5" y="5" rx="2"/></svg>停止</button>
             <button class="btn primary flex" type="button" onclick="sendVoiceText()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-8-8 18-2-8-8-2Z"/><path d="m11 13 10-10"/></svg>直接发送</button>
           </div>
         </div>
@@ -3293,17 +3504,12 @@
       text.textContent = voiceTranscript.slice(0, length);
     }
 
-    function stopVoiceInput(button) {
+    function stopVoiceInput() {
       stopVoiceTimer();
       const recognizedText = $('voiceTranscriptText')?.textContent || voiceTranscript;
       const input = inputForContext();
       input.value = recognizedText;
-      const title = $('voiceTitle');
-      const cursor = document.querySelector('#voiceResult .voice-cursor');
-      if (title) title.textContent = `已停止 · ${voiceSeconds}s`;
-      if (cursor) cursor.hidden = true;
-      if ($('voiceWave')) $('voiceWave').style.opacity = '0.35';
-      button.disabled = true;
+      closeSheets();
       showToast('已回填到输入框');
     }
 
