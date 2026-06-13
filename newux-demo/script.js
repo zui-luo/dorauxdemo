@@ -24,6 +24,7 @@ let currentConversationType = 'smart-data';
 let currentModuleView = 'dora';
 let hasScenarioBooted = false;
 let resultStreamToken = 0;
+let thinkingGenuiRenderToken = 0;
 let scenarioTimers = [];
 let scenarioStartedAt = 0;
 let waitTimerId = null;
@@ -48,6 +49,7 @@ let currentPreviewPptStyle = 'default';
 let currentPreviewSpeakerNotesOpen = true;
 let currentPreviewSpeakerNotesText = '建议先强调问题规模，再进入分类拆解和行动项。';
 let currentPreviewMdStyle = 'default';
+let isReadonlyLibraryConversation = false;
 let currentInputSourceFilter = 'local';
 let currentInputSearch = '';
 let currentSourceTrace = null;
@@ -57,6 +59,10 @@ let liveOutputProgressShown = false;
 let pendingOutputLibrarySave = null;
 let pendingPromptReuse = null;
 let activeShareFileName = '';
+let activeShareMode = 'file';
+let activeShareScope = 'platform';
+let activeShareReplay = true;
+let activeShareGenerated = false;
 let scenarioVisibleOutputCount = 0;
 let outputTabFlashTimer = null;
 
@@ -187,6 +193,18 @@ const FILE_PANEL_STATE = {
   input: FILE_DEFS.input.map(item => ({ ...item })),
   output: FILE_DEFS.output.map(item => ({ ...item })),
   savedAssets: []
+};
+
+const READONLY_LIBRARY_FILE_PANEL = {
+  input: [
+    { id: 'readonly-src-docx', source: 'input', type: 'docx', ext: 'DOCX', name: '客户决策系统说明.docx', meta: '2 MB · 资料库来源', icon: 'DOCX', iconClass: 'docx', clickKind: 'docx', clickName: '客户决策系统说明.docx' }
+  ],
+  output: [
+    { id: 'readonly-out-xlsx', source: 'output', type: 'table', ext: 'XLSX', name: '客户潜量测算表.xlsx', meta: '2 MB · Agent 产出', icon: 'XLSX', iconClass: 'xlsx', clickKind: 'xlsx', clickName: '反馈分类结果.xlsx' },
+    { id: 'readonly-out-ppt', source: 'output', type: 'ppt', ext: 'PPT', name: '分析主题', meta: '客户潜量与增长机会说明', icon: 'PPT', iconClass: 'pptx', clickKind: 'pptx', clickName: '客户反馈分析汇报.pptx' },
+    { id: 'readonly-out-html', source: 'output', type: 'web', ext: 'HTML', name: '财务报销系统.html', meta: '经营看板 · 可预览', icon: 'HTML', iconClass: 'html', clickKind: 'html', clickName: '反馈分布看板.html' },
+    { id: 'readonly-out-md', source: 'output', type: 'doc', ext: 'MD', name: '财务报销知识.html', meta: '总结说明 · 只读资料', icon: 'MD', iconClass: 'md', clickKind: 'md', clickName: '反馈分析报告.md' }
+  ]
 };
 
 const ASSET_PICKER_DEFS = {
@@ -627,6 +645,10 @@ function handleFileRowClick(fileId) {
 }
 
 function renderFilePanel() {
+  if (isReadonlyLibraryConversation) {
+    renderReadonlyFilePanel(currentPreviewTab === 'output' ? 'output' : 'input');
+    return;
+  }
   const inputList = $('filesListMaterials');
   const outputList = $('filesListOutputs');
   if (inputList) inputList.innerHTML = renderInputPanel();
@@ -659,6 +681,13 @@ function notifyOutputTabUpdate(nextVisibleCount) {
 }
 
 function setFilesPanelTab(target, opts = {}) {
+  if (isReadonlyLibraryConversation) {
+    renderReadonlyFilePanel(target);
+    if (opts.preservePreview) return;
+    currentPreviewFile = null;
+    closePreview();
+    return;
+  }
   document.querySelectorAll('.conv-files .files-tab').forEach(tab => {
     tab.classList.toggle('is-active', tab.dataset.tab === target);
   });
@@ -678,6 +707,69 @@ function setFilesPanelTab(target, opts = {}) {
   if (opts.preservePreview) return;
   currentPreviewFile = null;
   closePreview();
+}
+
+function buildReadonlyFileRow(file) {
+  const badge = file.source === 'output' ? `<span class="output-row-badge">${getReadonlyFileCategoryLabel(file.type)}</span>` : '';
+  return `
+    <div class="${file.source === 'output' ? 'output-row' : 'file-row'} readonly-file-row" data-file-id="${file.id}" onclick="openPreview('${file.clickKind}','${file.clickName}')">
+      <div class="${file.source === 'output' ? 'output-preview-icon' : 'file-icon'} ${file.iconClass}">${file.icon}</div>
+      <div class="${file.source === 'output' ? 'output-row-main' : 'file-info'}">
+        <div class="${file.source === 'output' ? 'output-row-title' : 'file-name'}">
+          <span class="${file.source === 'output' ? 'output-row-name' : ''}">${file.name}</span>
+          ${badge}
+        </div>
+        <div class="${file.source === 'output' ? 'output-row-meta' : 'file-size'}">${file.meta}</div>
+      </div>
+    </div>`;
+}
+
+function getReadonlyFileCategoryLabel(type) {
+  const map = { table: '表格', doc: '文档', web: '网页', image: '图像', skill: '技能包', ppt: '其他' };
+  return map[type] || '其他';
+}
+
+function renderReadonlyFilePanel(target = 'input') {
+  currentPreviewTab = target;
+  const pane = $('paneFiles');
+  if (pane) {
+    pane.dataset.activeTab = target;
+    pane.classList.add('is-readonly-files');
+  }
+  document.querySelectorAll('.conv-files .files-tab').forEach(tab => {
+    tab.classList.toggle('is-active', tab.dataset.tab === target);
+  });
+  const inputList = $('filesListMaterials');
+  const outputList = $('filesListOutputs');
+  const toolbar = document.querySelector('.conv-files .files-toolbar');
+  if (toolbar) toolbar.hidden = true;
+  if ($('materialsCount')) $('materialsCount').textContent = String(READONLY_LIBRARY_FILE_PANEL.input.length);
+  if ($('outputsCount')) $('outputsCount').textContent = String(READONLY_LIBRARY_FILE_PANEL.output.length);
+  if (inputList) {
+    inputList.hidden = target !== 'input';
+    inputList.innerHTML = READONLY_LIBRARY_FILE_PANEL.input.map(buildReadonlyFileRow).join('');
+  }
+  if (outputList) {
+    outputList.hidden = target !== 'output';
+    outputList.innerHTML = `
+      <div class="readonly-output-filter">
+        ${['全部', '表格', '文档', '网页', '图像', '技能包', '其他'].map((label, index) => `<button class="${index === 0 ? 'is-active' : ''}">${label}</button>`).join('')}
+      </div>
+      <label class="readonly-file-search">
+        <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+        <input placeholder="搜索名称" />
+      </label>
+      <div class="output-row-list">${READONLY_LIBRARY_FILE_PANEL.output.map(buildReadonlyFileRow).join('')}</div>
+    `;
+  }
+}
+
+function restoreNormalFilePanel() {
+  const pane = $('paneFiles');
+  if (pane) pane.classList.remove('is-readonly-files');
+  const toolbar = document.querySelector('.conv-files .files-toolbar');
+  if (toolbar) toolbar.hidden = false;
+  renderFilePanel();
 }
 
 function highlightFileRow(fileId) {
@@ -1590,7 +1682,7 @@ function showSurface(surfaceId) {
   const inConversation = surfaceId === 'view-conversation';
   toggleVariantGroups(inConversation);
   // 进入会话页时自动播放剧本
-  if (inConversation && hasScenarioBooted) {
+  if (inConversation && hasScenarioBooted && !isReadonlyLibraryConversation) {
     playScenario();
   }
 }
@@ -1603,7 +1695,14 @@ function switchView(view) {
     return;
   }
   showSurface('view-' + view);
+  if (view === 'dora') expandDoraLibraryConversationGroups();
   closeSourcePopover();
+}
+
+function openLibraryHomeFromToast() {
+  switchView('space');
+  closeAssetDetail();
+  renderAssetLibrary();
 }
 
 function openUnreadExpert(type) {
@@ -1766,6 +1865,7 @@ function openConversation(type) {
 }
 
 function applyConversationConfig(type, config, activeRailView) {
+  exitReadonlyLibraryConversation();
   currentConversationType = type || 'smart-data';
   conversationReturnView = config.returnView;
   const isDoraConversation = currentConversationType === 'dora';
@@ -1800,7 +1900,15 @@ function applyConversationConfig(type, config, activeRailView) {
   showSurface('view-conversation');
 }
 
+function exitReadonlyLibraryConversation() {
+  if (!isReadonlyLibraryConversation) return;
+  isReadonlyLibraryConversation = false;
+  $('conversationPage')?.classList.remove('is-readonly-library');
+  restoreNormalFilePanel();
+}
+
 function startDoraConversationFlow() {
+  exitReadonlyLibraryConversation();
   const title = '计算ROI与同比环比拆解';
   const config = {
     ...conversationConfigs.dora,
@@ -1817,20 +1925,164 @@ function startDoraConversationFlow() {
   selectConversationEntry('expert', 'history', $('conversationHistoryTitle'));
 }
 
+function openDoraHistoryConversation(title, target) {
+  exitReadonlyLibraryConversation();
+  const config = {
+    ...conversationConfigs.dora,
+    sidebarCollapsed: false,
+    title,
+    history: title,
+    userText: '继续查看这条历史会话。'
+  };
+  selectConversationEntry('dora', 'history', target);
+  applyConversationConfig('dora', config, 'dora');
+  $('conversationPage').classList.remove('sidebar-collapsed');
+  if (!preserveTraceTitle && !currentSourceTrace) $('conversationHistoryTitle').textContent = title;
+  selectConversationEntry('expert', 'history', $('conversationHistoryTitle'));
+}
+
 function showDoraNewConversation() {
   moduleState.dora.page = 'home';
   selectConversationEntry('dora', 'new', $('doraNewConversation'));
   switchView('dora');
   toggleDoraSidebar(true);
+  expandDoraLibraryConversationGroups();
 }
 
 function handleConversationNewClick(target) {
+  exitReadonlyLibraryConversation();
   if (currentConversationType === 'dora') {
     selectConversationEntry('expert', 'new', target);
     showDoraNewConversation();
     return;
   }
   selectConversationEntry('expert', 'new', target);
+}
+
+function toggleConversationGroup(target) {
+  const group = target?.closest('.conversation-group');
+  if (!group) return;
+  group.classList.toggle('is-collapsed');
+}
+
+function openReadonlyLibraryConversation(kind = 'intro', target) {
+  clearScenario();
+  isReadonlyLibraryConversation = true;
+  currentConversationType = 'dora';
+  conversationReturnView = 'space';
+  currentModuleView = 'dora';
+  $('conversationPage').classList.remove('sidebar-collapsed');
+  $('conversationPage').classList.add('dora-mode', 'is-readonly-library');
+  $('conversationSideAgent').textContent = 'Dora';
+  $('conversationTitle').textContent = getReadonlyConversationTitle(kind);
+  $('conversationUserText').textContent = getReadonlyConversationPrompt(kind);
+  $('conversationAgentName').textContent = 'Dora';
+  document.querySelectorAll('.dora-side-panel .conversation-side-action, .dora-side-panel .conversation-history button').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.conversation-side .conversation-history button, .conversation-side-action').forEach(btn => btn.classList.remove('active'));
+  expandDoraLibraryConversationGroups();
+  if (target) target.classList.add('active');
+  document.querySelectorAll(`[data-library-kind="${kind}"]`).forEach(btn => btn.classList.add('active'));
+  setRailActive('dora');
+  renderReadonlyConversation(kind);
+  renderReadonlyFilePanel('output');
+  showSurface('view-conversation');
+}
+
+function getReadonlyConversationTitle(kind) {
+  const map = {
+    intro: '这个文件里讲了什么',
+    summary: '这个资料帮我总结一下',
+    edit: '我想要修改这个资料'
+  };
+  return map[kind] || map.intro;
+}
+
+function getReadonlyConversationPrompt(kind) {
+  const map = {
+    intro: '这个文件里讲了什么？',
+    summary: '请帮我总结一下这个资料，提炼关键结论。',
+    edit: '我想要修改这个资料，先帮我看看可以从哪里改。'
+  };
+  return map[kind] || map.intro;
+}
+
+function renderReadonlyConversation(kind) {
+  resultStreamToken += 1;
+  hideWaitLine();
+  clearWaitText();
+  $('waitTime').textContent = '0s';
+  $('chartSlot').hidden = true;
+  $('chartSlot').innerHTML = '';
+  $('genuiSlot').hidden = true;
+  $('genuiSlot').innerHTML = '';
+  $('outputsSection').hidden = true;
+  $('outputsSection').innerHTML = '';
+  $('extraReplies').innerHTML = '';
+  document.querySelectorAll('.conv-chat .lead-pill').forEach(el => el.remove());
+  const slot = $('resultSlot');
+  slot.classList.remove('is-empty', 'is-interim', 'is-fading');
+  slot.classList.add('is-final');
+  slot.innerHTML = getReadonlyConversationResult(kind);
+  $('execTimeline').innerHTML = '';
+  resetExecHeader();
+  actionCount = 4;
+  $('execTitle').textContent = '全部工作已完成，耗时23秒';
+  $('execPanel').classList.add('is-collapsed');
+  $('finalActions').classList.remove('is-hidden');
+  closePreview();
+  scrollToBottom();
+}
+
+function getReadonlyConversationResult(kind) {
+  if (kind === 'edit') {
+    return `
+      <h2>可以修改，我先帮您把资料结构看了一遍</h2>
+      <p>这份资料主要由数据概况、关键洞察和行动建议三部分组成。如果要继续修改，我建议优先从“结论口径”和“图表表达”两处入手。</p>
+      <ul>
+        <li>结论部分可以压缩成 3 条管理层判断，减少过程描述。</li>
+        <li>图表部分可以补充地区、客户层级和时间维度的交叉视图。</li>
+        <li>行动建议需要补齐负责人、优先级和复盘指标。</li>
+      </ul>
+      <p>当前页面是历史只读会话。如需继续编辑，请点击底部“去继续对话”。</p>
+    `;
+  }
+  if (kind === 'summary') {
+    return `
+      <h2>资料总结</h2>
+      <p>这份资料围绕客户反馈和经营表现展开，重点说明了物流配送、客户服务和产品质量三类问题对满意度的影响。</p>
+      <h2>关键结论</h2>
+      <ul>
+        <li>物流配送是当前最需要优先处理的经营信号。</li>
+        <li>问题并非完全全局扩散，而是在重点客户和局部区域更集中。</li>
+        <li>后续应围绕 SLA、包装标准和客服处理口径建立复盘机制。</li>
+      </ul>
+      <p>右侧文件区保留了本次会话关联的来源与产物，可点击预览，但该历史会话本身不可直接操作。</p>
+    `;
+  }
+  return `
+    <h2>数据概况</h2>
+    <ul>
+      <li>总销售额：59.42万元，266条有效订单，9名销售员覆盖福建9市。</li>
+      <li>时间范围：2022年1月-6月（H1），6大产品品类。</li>
+    </ul>
+    <h2>关键洞察</h2>
+    <p>增长强劲但波动明显。6月峰值15.78万，环比+39.3%；但2月曾下滑-19.88%，整体趋势向上，6月较1月增长107%。</p>
+    <p>牛肉干是核心引擎：总销售13.52万，占比22.7%，6月贡献最突出；同时集中度风险较高，一旦供应链断裂，营收会明显受损。</p>
+  `;
+}
+
+function continueReadonlyConversation() {
+  exitReadonlyLibraryConversation();
+  const config = {
+    ...conversationConfigs.dora,
+    sidebarCollapsed: false,
+    title: '资料继续对话',
+    history: '这个文件里讲了什么',
+    userText: '基于刚才的资料，我们继续往下分析。',
+    agentName: 'Dora'
+  };
+  applyConversationConfig('dora', config, 'dora');
+  showToast('已进入可继续对话模式');
 }
 
 function toggleAgentSwitch(event) {
@@ -1894,19 +2146,51 @@ function expandConversationSidebar() {
 function toggleDoraSidebar(open) {
   const workspace = $('doraWorkspace');
   workspace.classList.toggle('sidebar-open', typeof open === 'boolean' ? open : !workspace.classList.contains('sidebar-open'));
+  if (workspace.classList.contains('sidebar-open')) expandDoraLibraryConversationGroups();
+}
+
+function expandDoraLibraryConversationGroups() {
+  document.querySelectorAll('.dora-side-panel .conversation-library-history, .conversation-side .conversation-library-history').forEach(history => {
+    history.closest('.conversation-group')?.classList.remove('is-collapsed');
+  });
 }
 
 function selectConversationEntry(scope, type, target) {
   const newButton = scope === 'dora' ? $('doraNewConversation') : $('expertNewConversation');
-  const historySelector = scope === 'dora' ? '.dora-side-history button' : '.conversation-history button';
+  const historySelector = scope === 'dora' ? '.dora-side-panel .conversation-history button' : '.conversation-side .conversation-history button';
+  if (scope !== 'dora') {
+    document.querySelectorAll('.conversation-side-action').forEach(item => item.classList.remove('active'));
+  }
   if (newButton) newButton.classList.toggle('active', type === 'new');
   document.querySelectorAll(historySelector).forEach(item => item.classList.remove('active'));
   if (type === 'history' && target) {
     target.classList.add('active');
+    if (scope === 'dora' && target.classList.contains('has-unread')) {
+      target.classList.remove('has-unread');
+      target.dataset.unread = '';
+    }
     if (scope === 'expert' && target.classList.contains('has-unread')) {
       target.classList.remove('has-unread');
       target.dataset.unread = '';
       clearExpertUnread(currentConversationType);
+    }
+    if (scope === 'expert' && isReadonlyLibraryConversation && !target.closest('.conversation-library-history')) {
+      const title = target.textContent.trim();
+      applyConversationConfig('dora', {
+        ...conversationConfigs.dora,
+        sidebarCollapsed: false,
+        title,
+        history: title,
+        userText: '继续查看这条历史会话。'
+      }, 'dora');
+    }
+    if (scope === 'expert' && currentConversationType === 'dora' && !target.closest('.conversation-library-history')) {
+      const title = target.textContent.trim();
+      if (title) {
+        $('conversationTitle').textContent = title;
+        $('conversationHistoryTitle').textContent = title;
+        $('conversationUserText').textContent = '继续查看这条历史会话。';
+      }
     }
   }
 }
@@ -2256,8 +2540,7 @@ function saveLibrarySnapshot(mode) {
   closeLibraryPopconfirm();
   syncLibraryStateButtons();
   setSavedLibraryAsset(INITIAL_LIBRARY_ASSET);
-  const copy = mode === 'sync' ? '已同步会话文件的最新快照到资料库' : mode === 'overwrite' ? '已覆盖存入资料库快照' : '已另存新文件到资料库';
-  showToast(copy);
+  showLibrarySavedToast(INITIAL_LIBRARY_ASSET.name);
 }
 
 function saveLibrarySnapshotAsNew() {
@@ -2585,11 +2868,24 @@ function downloadFile(fileName) {
 
 function shareFile(fileName) {
   activeShareFileName = fileName;
+  activeShareMode = 'file';
+  activeShareGenerated = true;
   const panel = ensureSharePopover();
-  const title = panel.querySelector('.share-pop-title');
-  const link = panel.querySelector('.share-pop-link');
-  if (title) title.textContent = `分享 ${fileName}`;
-  if (link) link.textContent = `https://dora.local/share/${encodeURIComponent(fileName)}`;
+  panel.classList.remove('is-conversation-share');
+  panel.innerHTML = buildFileSharePopover(fileName);
+  panel.classList.add('open');
+}
+
+function shareConversation() {
+  const conversationTitle = $('conversationTitle')?.textContent?.trim() || '本次会话';
+  activeShareFileName = conversationTitle;
+  activeShareMode = 'conversation';
+  activeShareScope = 'platform';
+  activeShareReplay = true;
+  activeShareGenerated = false;
+  const panel = ensureSharePopover();
+  panel.classList.add('is-conversation-share');
+  renderConversationSharePopover();
   panel.classList.add('open');
 }
 
@@ -2638,14 +2934,7 @@ function commitOutputLibrarySave(fileName, mode) {
   }
   pendingOutputLibrarySave = null;
   closeLibraryPopconfirm();
-  const actionCopy = mode === 'sync'
-    ? '同步更新到资料库'
-    : mode === 'overwrite'
-      ? '覆盖存入资料库'
-      : mode === 'direct'
-        ? '存入资料库'
-        : '另存新文件到资料库';
-  showToast(`已将 ${file.name} ${actionCopy}`);
+  showLibrarySavedToast(file.name);
 }
 
 function saveSkillToBackend(fileName) {
@@ -2665,10 +2954,15 @@ function ensureSharePopover() {
   panel = document.createElement('div');
   panel.id = 'sharePopover';
   panel.className = 'share-popover';
-  panel.innerHTML = `
+  document.body.appendChild(panel);
+  return panel;
+}
+
+function buildFileSharePopover(fileName) {
+  return `
     <div class="share-pop-title">分享文件</div>
     <div class="share-pop-desc">可复制链接或选择成员发送。</div>
-    <div class="share-pop-link"></div>
+    <div class="share-pop-link">${getShareLink()}</div>
     <div class="share-pop-members">
       <button onclick="sendShareToMember('Nina')">Nina</button>
       <button onclick="sendShareToMember('Alex')">Alex</button>
@@ -2679,13 +2973,93 @@ function ensureSharePopover() {
       <button class="is-primary" onclick="closeSharePopover()">完成</button>
     </div>
   `;
-  document.body.appendChild(panel);
-  return panel;
+}
+
+function renderConversationSharePopover() {
+  const panel = ensureSharePopover();
+  const isPublic = activeShareScope === 'public';
+  const modeLabel = activeShareReplay ? '开启回放' : '静态结果';
+  const scopeLabel = isPublic ? '公开可见' : '平台用户可见';
+  panel.innerHTML = `
+    <div class="share-pop-head">
+      <div class="share-pop-title">分享对话</div>
+      <label class="share-replay-toggle">
+        <span>演示回放</span>
+        <input type="checkbox" ${activeShareReplay ? 'checked' : ''} onchange="toggleShareReplay(this.checked)" />
+        <i></i>
+      </label>
+    </div>
+    <div class="share-option-list" role="radiogroup" aria-label="分享范围">
+      <button class="share-radio ${activeShareScope === 'platform' ? 'active' : ''}" onclick="setShareScope('platform')"><span></span>平台用户可见</button>
+      <button class="share-radio ${isPublic ? 'active' : ''}" onclick="setShareScope('public')"><span></span>公开可见</button>
+    </div>
+    <div class="share-replay-desc">
+      ${activeShareReplay
+        ? '接收方将按执行顺序观看 Agent 输出过程的动画回放。'
+        : '接收方直接看到最终静态结果，不播放流式动画。'}
+      两种模式都会包含消息、执行动作、输入文件和输出产物。
+    </div>
+    ${isPublic ? `
+      <div class="share-risk-alert">
+        <strong>确认公开分享此会话</strong>
+        <p>公开分享后，任何获得链接的人都可以查看本次会话，包括消息内容、执行动作、输入文件和输出产物。请确认内容不包含密码、密钥、Token、个人隐私、客户数据或商业机密。作为分享发起人，你需要对公开内容的合规性负责。</p>
+      </div>
+    ` : `
+      <div class="share-safe-note">平台内有权限的用户可通过链接查看本次会话，包括消息内容、执行动作、输入文件和输出产物。</div>
+    `}
+    ${activeShareGenerated ? `
+      <div class="share-generated-card">
+        <div class="share-status-tags"><span>${scopeLabel}</span><span>${modeLabel}</span><span>包含全部会话文件</span></div>
+        <div class="share-pop-link">${getShareLink()}</div>
+        <button class="share-copy-done" onclick="copyShareLink()">已复制</button>
+      </div>
+      <div class="share-pop-actions">
+        <button onclick="resetConversationShareLink()">重新设置</button>
+        <button class="is-primary" onclick="closeSharePopover()">完成</button>
+      </div>
+    ` : `
+      <div class="share-pop-actions">
+        <button onclick="closeSharePopover()">取消</button>
+        <button class="is-primary" onclick="generateShareLink()">${isPublic ? '确认公开并生成链接' : '生成链接'}</button>
+      </div>
+    `}
+  `;
 }
 
 function closeSharePopover() {
   const panel = $('sharePopover');
   if (panel) panel.classList.remove('open');
+}
+
+function setShareScope(scope) {
+  activeShareScope = scope;
+  activeShareGenerated = false;
+  renderConversationSharePopover();
+}
+
+function toggleShareReplay(checked) {
+  activeShareReplay = checked;
+  activeShareGenerated = false;
+  renderConversationSharePopover();
+}
+
+function generateShareLink() {
+  activeShareGenerated = true;
+  renderConversationSharePopover();
+  showToast(`已生成 ${activeShareFileName || '本次会话'} 的分享链接`);
+}
+
+function resetConversationShareLink() {
+  activeShareGenerated = false;
+  renderConversationSharePopover();
+}
+
+function getShareLink() {
+  if (activeShareMode === 'conversation') {
+    const replay = activeShareReplay ? 'replay=1' : 'replay=0';
+    return `https://dora.local/share/conversation/${encodeURIComponent(activeShareFileName || '本次会话')}?scope=${activeShareScope}&${replay}`;
+  }
+  return `https://dora.local/share/${encodeURIComponent(activeShareFileName || '文件')}`;
 }
 
 function copyShareLink() {
@@ -2730,12 +3104,43 @@ function deleteOutputFile(fileName) {
    7. Toast
    ========================================================================= */
 let toastTimer = null;
-function showToast(text) {
+function showToast(text, options = {}) {
   const toast = $('toast');
-  toast.textContent = text;
+  toast.classList.toggle('is-action-toast', Boolean(options.actionLabel));
+  toast.innerHTML = '';
+  if (options.type === 'success') {
+    const icon = document.createElement('span');
+    icon.className = 'toast-success-icon';
+    icon.textContent = '✓';
+    toast.appendChild(icon);
+  }
+  const copy = document.createElement('span');
+  copy.className = 'toast-copy';
+  copy.textContent = text;
+  toast.appendChild(copy);
+  if (options.actionLabel && typeof options.onAction === 'function') {
+    const action = document.createElement('button');
+    action.type = 'button';
+    action.className = 'toast-action';
+    action.textContent = options.actionLabel;
+    action.onclick = () => {
+      toast.classList.remove('show');
+      options.onAction();
+    };
+    toast.appendChild(action);
+  }
   toast.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), options.duration || 2600);
+}
+
+function showLibrarySavedToast(fileName) {
+  showToast(`已将 ${fileName} 存入资料库`, {
+    type: 'success',
+    actionLabel: '去查看',
+    duration: 4200,
+    onAction: openLibraryHomeFromToast
+  });
 }
 
 
@@ -3279,9 +3684,49 @@ function renderInScenarioGenUI() {
   setTimeout(reveal, 900);
 }
 
-function renderThinkingGenUI() {
+async function renderThinkingGenUI() {
+  const token = ++thinkingGenuiRenderToken;
   const slot = $('genuiSlot');
+  const firstChart = `
+    <div class="thinking-genui-chart genui-stream-item is-ready">
+      <div class="chart-title">问题类型影响面</div>
+      <div class="bar-row"><span>物流配送</span><div><i style="width: 84%"></i></div><strong>42%</strong></div>
+      <div class="bar-row"><span>客户服务</span><div><i style="width: 56%"></i></div><strong>28%</strong></div>
+      <div class="bar-row"><span>产品质量</span><div><i style="width: 36%"></i></div><strong>18%</strong></div>
+      <div class="bar-row"><span>价格体验</span><div><i style="width: 24%"></i></div><strong>12%</strong></div>
+    </div>
+  `;
+  const secondChartLoading = `
+    <div class="thinking-genui-chart genui-stream-item is-ready" id="thinkingGenuiTrendSlot">
+      <div class="chart-title">满意度与风险走势</div>
+      <div class="thinking-genui-loading">
+        <span>正在生成趋势图</span>
+        <i></i><i></i><i></i>
+      </div>
+    </div>
+  `;
+  const secondChart = `
+    <div class="thinking-genui-chart genui-stream-item is-ready">
+      <div class="chart-title">满意度与风险走势</div>
+      <div class="trend-chart">
+        <span style="height: 34%"><i>3.9</i></span>
+        <span style="height: 48%"><i>3.7</i></span>
+        <span style="height: 62%"><i>3.6</i></span>
+        <span style="height: 78%"><i>3.2</i></span>
+        <span style="height: 56%"><i>3.5</i></span>
+        <span style="height: 42%"><i>3.8</i></span>
+      </div>
+      <div class="trend-axis"><span>1月</span><span>2月</span><span>3月</span><span>4月</span><span>5月</span><span>6月</span></div>
+      <div class="trend-note">4月物流投诉拉高，满意度触底后回升。</div>
+    </div>
+  `;
+  const metricCards = `
+    <div class="genui-stream-item"><span>核心判断</span><strong>物流配送优先处理</strong><p>它同时满足高占比、广影响、低满意度三个条件，不只是“反馈最多”。</p></div>
+    <div class="genui-stream-item"><span>行动建议</span><strong>先压 SLA，再统一客服口径</strong><p>建议先复盘延迟交付与包装破损，再把客服处理口径固化成 SOP。</p></div>
+    <div class="genui-stream-item"><span>风险提示</span><strong>重点客户集中流失风险</strong><p>物流问题集中在高价值客户和局部区域，若不处理会继续拖低复购。</p></div>
+  `;
   slot.hidden = false;
+  slot.classList.remove('is-visible');
   slot.innerHTML = `
     <div class="thinking-genui-card">
       <div class="thinking-genui-head">
@@ -3290,20 +3735,9 @@ function renderThinkingGenUI() {
           <strong>客户反馈归因看板</strong>
         </div>
       </div>
-      <div class="thinking-genui-grid">
-        <div class="thinking-genui-chart">
-          <div class="chart-title">问题类型影响面</div>
-          <div class="bar-row"><span>物流配送</span><div><i style="width: 84%"></i></div><strong>42%</strong></div>
-          <div class="bar-row"><span>客户服务</span><div><i style="width: 56%"></i></div><strong>28%</strong></div>
-          <div class="bar-row"><span>产品质量</span><div><i style="width: 36%"></i></div><strong>18%</strong></div>
-          <div class="bar-row"><span>价格体验</span><div><i style="width: 24%"></i></div><strong>12%</strong></div>
-        </div>
-        <div class="thinking-genui-metrics">
-          <div><span>核心判断</span><strong>物流优先</strong><p>同时满足高占比、广影响、低满意度三个条件。</p></div>
-          <div><span>建议动作</span><strong>SLA 复盘</strong><p>先压物流，再统一客服处理口径。</p></div>
-        </div>
-      </div>
-      <div class="thinking-genui-evidence">
+      <div class="thinking-genui-grid" id="thinkingGenuiCharts">${firstChart}${secondChartLoading}</div>
+      <div class="thinking-genui-metrics genui-stream-section" id="thinkingGenuiMetrics" hidden></div>
+      <div class="thinking-genui-evidence genui-stream-section" id="thinkingGenuiEvidence" hidden>
         <span>证据链</span>
         <a onclick="openPreview('xlsx','客户反馈明细.xlsx')">客户反馈明细.xlsx</a>
         <a onclick="openPreview('xlsx','反馈分类结果.xlsx')">反馈分类结果.xlsx</a>
@@ -3313,6 +3747,38 @@ function renderThinkingGenUI() {
   `;
   requestAnimationFrame(() => slot.classList.add('is-visible'));
   scrollToBottom();
+
+  await sleep(2200);
+  if (token !== thinkingGenuiRenderToken) return false;
+  const trendSlot = $('thinkingGenuiTrendSlot');
+  if (trendSlot) trendSlot.outerHTML = secondChart;
+  scrollToBottom();
+
+  await sleep(1400);
+  if (token !== thinkingGenuiRenderToken) return false;
+  const metrics = $('thinkingGenuiMetrics');
+  if (metrics) {
+    metrics.innerHTML = metricCards;
+    metrics.hidden = false;
+    requestAnimationFrame(() => {
+      metrics.classList.add('is-ready');
+      metrics.querySelectorAll('.genui-stream-item').forEach((item, index) => {
+        item.style.transitionDelay = `${index * 260}ms`;
+        item.classList.add('is-ready');
+      });
+    });
+  }
+  scrollToBottom();
+
+  await sleep(1200);
+  if (token !== thinkingGenuiRenderToken) return false;
+  const evidence = $('thinkingGenuiEvidence');
+  if (evidence) {
+    evidence.hidden = false;
+    requestAnimationFrame(() => evidence.classList.add('is-ready'));
+  }
+  scrollToBottom();
+  return true;
 }
 
 async function showLeadPill(text, holdMs = 1400) {
@@ -3613,6 +4079,7 @@ async function renderLiveOutputsStage(stage) {
    ========================================================================= */
 function resetScenario() {
   clearScenario();
+  thinkingGenuiRenderToken += 1;
   actionCount = 0; nodeCounter = 0;
   liveOutputProgressShown = false;
   scenarioVisibleOutputCount = 0;
@@ -3732,10 +4199,11 @@ function playScenario(startAt = 0) {
   const GENUI_START = PPT_DONE + 800;
   const GENUI_RENDER = GENUI_START + 1200;
   const SUMMARY_START = GENUI_START + 4200;
+  const THINKING_FINAL_SUMMARY = SUMMARY_START + 6400;
   const ARCHIVE_HINT = SUMMARY_START + 3000;
   const ARCHIVE_START = ARCHIVE_HINT + 400;
   const ARCHIVE_DONE = ARCHIVE_START + 2200;
-  const FINAL_OUTPUTS = isPptOnlyScenario ? SUMMARY_START + 3200 : ARCHIVE_DONE + 3400;
+  const FINAL_OUTPUTS = isThinkingScenario ? THINKING_FINAL_SUMMARY + 1800 : (isPptOnlyScenario ? SUMMARY_START + 3200 : ARCHIVE_DONE + 3400);
   const SCENARIO_DONE = FINAL_OUTPUTS + 4200;
   if (startAt > 0) {
     scenarioStartedAt = Date.now() - startAt;
@@ -3927,14 +4395,23 @@ function playScenario(startAt = 0) {
       schedule(GENUI_START, () => showLeadPill('我再补一张可交互看板，方便您快速查看分布', 1200));
       schedule(GENUI_RENDER, () => renderInScenarioGenUI());
     }
-    schedule(SUMMARY_START, () => {
+    schedule(SUMMARY_START, async () => {
+      const runStartedAt = scenarioStartedAt;
       hideWaitLine();
+      if (isThinkingScenario) {
+        setResult(`
+          <p>关键判断已经收敛出来了。我正在把问题占比、满意度走势、证据链和建议动作整理成一张可交互洞察卡，先让您能直观看到判断是怎么来的。</p>
+        `);
+        updateThinkingFrameworkStatus('正在生成可交互洞察卡', 4);
+        await sleep(700);
+        const genuiDone = await renderThinkingGenUI();
+        if (!genuiDone || runStartedAt !== scenarioStartedAt) return;
+        setResult(copy.finalSummary, { isFinal: true });
+        updateThinkingFrameworkStatus('分析闭环已完成', 4, true);
+        return;
+      }
       setResult(copy.finalSummary, { isFinal: true });
-      if (isThinkingScenario) updateThinkingFrameworkStatus('分析闭环已完成', 4, true);
     });
-    if (isThinkingScenario) {
-      schedule(SUMMARY_START + 700, () => renderThinkingGenUI());
-    }
     if (isPptOnlyScenario) {
       schedule(FINAL_OUTPUTS, () => {
         const finalItems = [
@@ -4114,6 +4591,40 @@ function initConvResize() {
   });
 }
 
+function getScrollableElement(target) {
+  let node = target instanceof Element ? target : target?.parentElement;
+  while (node && node !== document.body) {
+    const style = window.getComputedStyle(node);
+    const canScrollY = /(auto|scroll)/.test(style.overflowY) && node.scrollHeight > node.clientHeight;
+    const canScrollX = /(auto|scroll)/.test(style.overflowX) && node.scrollWidth > node.clientWidth;
+    if (canScrollY || canScrollX) return node;
+    node = node.parentElement;
+  }
+  return document.scrollingElement || document.documentElement;
+}
+
+function showTransientScrollbar(node) {
+  if (!node) return;
+  node.classList.add('is-scrolling');
+  window.clearTimeout(node._scrollbarTimer);
+  node._scrollbarTimer = window.setTimeout(() => {
+    node.classList.remove('is-scrolling');
+  }, 900);
+}
+
+function initTransientScrollbars() {
+  document.addEventListener('wheel', event => {
+    showTransientScrollbar(getScrollableElement(event.target));
+  }, { capture: true, passive: true });
+  document.addEventListener('touchmove', event => {
+    showTransientScrollbar(getScrollableElement(event.target));
+  }, { capture: true, passive: true });
+  window.addEventListener('scroll', event => {
+    const target = event.target === document ? (document.scrollingElement || document.documentElement) : event.target;
+    showTransientScrollbar(target);
+  }, true);
+}
+
 
 /* =========================================================================
    18. 全局事件绑定
@@ -4206,6 +4717,8 @@ function init() {
 
   // 初始化会话页拖拽分割条
   initConvResize();
+  initTransientScrollbars();
+  expandDoraLibraryConversationGroups();
 
   // 标记剧本可以播放（但默认进入 Dora 首页，不会立即播）
   hasScenarioBooted = true;

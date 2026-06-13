@@ -18,6 +18,8 @@
 | ChatBI → Dora 迁移工具 Demo | 三段式迁移工作台，覆盖预检扫描、目标 Agent 确认、执行报告与旧服务收尾 | `chatbi-dora-migration-tool/prototype.html` |
 | 添加数据目录 | 后台配置页中通过向导添加数据目录 | `add-data-catalog/prototype.html` |
 | 通用管理 · 权限管理 Tab | 复刻后台通用管理页面框架，新增一个空白权限管理 Tab | `permission-management-tab/prototype.html` |
+| Dora 移动端新 UX | 基于 PC 合并原型的移动端版本，覆盖 Dora、专家、资源库、会话文件、资料详情与语音输入 | `dora-mobile-newux/prototype.html` |
+| Agent 配置标签交互 | 在 Agent 配置气泡内完成标签选择、新建、分组整理与校验的 3 个对比方案 | `agent-tags-in-config/prototype.html` |
 
 ---
 
@@ -42,6 +44,12 @@ uxdemo/
 │   └── interaction-spec.md          # 交互逻辑文档
 ├── permission-management-tab/
 │   ├── prototype.html               # 通用管理 · 权限管理 Tab
+│   └── interaction-spec.md          # 交互逻辑文档
+├── agent-tags-in-config/
+│   ├── prototype.html               # Agent 配置标签交互
+│   └── interaction-spec.md          # 交互逻辑文档
+├── dora-mobile-newux/
+│   ├── prototype.html               # Dora 移动端新 UX 原型
 │   └── interaction-spec.md          # 交互逻辑文档
 ├── chatbi-migration/
 │   ├── prototype.html               # 迁移工具原型

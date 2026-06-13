@@ -305,6 +305,14 @@
       background: #fff;
       padding: 10px 12px;
       box-shadow: 0 5px 18px rgba(9, 30, 64, 0.04);
+      text-align: left;
+      color: inherit;
+      transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+    }
+    .business-kpi.active {
+      border-color: rgba(37, 98, 255, 0.34);
+      background: linear-gradient(145deg, #fff, #eef4ff);
+      transform: translateY(-1px);
     }
     .business-kpi span {
       display: block;
@@ -329,6 +337,134 @@
     }
     .business-kpi.warning strong,
     .business-kpi.warning em { color: var(--orange); }
+    .dashboard-interactive-panel {
+      margin: 0 0 12px;
+      border: 1px solid rgba(218, 221, 229, 0.9);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 12px;
+      box-shadow: 0 8px 22px rgba(9, 30, 64, 0.05);
+    }
+    .dashboard-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .dashboard-panel-head strong {
+      color: var(--ink-11);
+      font-size: 14px;
+    }
+    .dashboard-range-switch {
+      display: inline-flex;
+      padding: 3px;
+      border: 1px solid var(--ink-4);
+      border-radius: 999px;
+      background: var(--ink-2);
+    }
+    .dashboard-range-switch button {
+      height: 24px;
+      border: none;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--ink-9);
+      font-size: 11px;
+      padding: 0 9px;
+    }
+    .dashboard-range-switch button.active {
+      background: #fff;
+      color: var(--brand-7);
+      font-weight: 800;
+      box-shadow: 0 4px 12px rgba(9, 30, 64, 0.08);
+    }
+    .dashboard-chart {
+      height: 92px;
+      display: flex;
+      align-items: end;
+      gap: 8px;
+      padding: 8px 2px 2px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(247, 248, 250, 0.72), rgba(255, 255, 255, 0));
+    }
+    .dashboard-bar {
+      flex: 1;
+      min-width: 0;
+      display: grid;
+      align-content: end;
+      justify-items: center;
+      gap: 5px;
+      color: var(--ink-8);
+      font-size: 10px;
+    }
+    .dashboard-bar i {
+      display: block;
+      width: 100%;
+      max-width: 24px;
+      min-height: 12px;
+      border-radius: 999px 999px 6px 6px;
+      background: linear-gradient(180deg, #7BA2FF, var(--brand-7));
+      opacity: 0.86;
+    }
+    .dashboard-bar.is-low i {
+      background: linear-gradient(180deg, #FFB492, var(--orange));
+    }
+    .dashboard-drill-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .dashboard-drill-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 42px;
+      padding: 8px 10px;
+      border: 1px solid var(--ink-3);
+      border-radius: 12px;
+      background: var(--ink-2);
+    }
+    .dashboard-drill-rank {
+      width: 24px;
+      height: 24px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--brand-1);
+      color: var(--brand-7);
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .dashboard-drill-copy {
+      min-width: 0;
+      flex: 1;
+      display: grid;
+      gap: 2px;
+    }
+    .dashboard-drill-copy strong {
+      color: var(--ink-11);
+      font-size: 12px;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .dashboard-drill-copy span {
+      color: var(--ink-9);
+      font-size: 11px;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .dashboard-drill-value {
+      color: var(--orange);
+      font-size: 12px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
     .dora-insight-panel {
       display: grid;
       gap: 8px;
@@ -1676,6 +1812,57 @@
       gap: 12px;
       padding-bottom: 4px;
     }
+    .agent-flat-menu {
+      display: grid;
+      gap: 10px;
+    }
+    .agent-flat-option {
+      width: 100%;
+      min-height: 58px;
+      border: 1px solid var(--ink-4);
+      border-radius: 16px;
+      background: var(--ink-2);
+      color: inherit;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      text-align: left;
+    }
+    .agent-flat-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      color: var(--brand-7);
+      font-size: 16px;
+      font-weight: 900;
+    }
+    .agent-flat-copy {
+      min-width: 0;
+      flex: 1;
+      display: grid;
+      gap: 3px;
+    }
+    .agent-flat-copy strong {
+      color: var(--ink-11);
+      font-size: 14px;
+      line-height: 1.25;
+    }
+    .agent-flat-copy span {
+      color: var(--ink-9);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .agent-flat-chevron {
+      color: var(--ink-8);
+      font-size: 18px;
+      flex-shrink: 0;
+    }
     .side-sheet {
       top: 0;
       left: auto;
@@ -2624,6 +2811,7 @@
       <div class="variant-config-options">
         <button class="variant-config-option" type="button" data-variant-key="framework" data-variant-value="side-menu" onclick="setVariant('framework', 'side-menu')">方案A：侧边菜单</button>
         <button class="variant-config-option" type="button" data-variant-key="framework" data-variant-value="more-menu" onclick="setVariant('framework', 'more-menu')">方案B：更多菜单</button>
+        <button class="variant-config-option" type="button" data-variant-key="framework" data-variant-value="flat-menu" onclick="setVariant('framework', 'flat-menu')">方案C：菜单平铺</button>
       </div>
     </div>
     <div class="variant-config-group">
@@ -2653,7 +2841,7 @@
         <div class="header-title">
           <strong>Dora超级智能体</strong>
         </div>
-        <button class="icon-btn" id="homeMoreBtn" type="button" onclick="openAgentMoreSheet('history')" aria-label="更多菜单" data-anno="方案B：通过右上角更多菜单承载当前 Agent 的会话记录和定时任务。" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
+        <button class="icon-btn" id="homeMoreBtn" type="button" onclick="openAgentFrameworkMenu()" aria-label="更多菜单" data-anno="方案B/C：通过右上角更多菜单承载当前 Agent 的会话记录和定时任务。" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
       </header>
       <div class="content-scroll">
         <div class="home-hero">
@@ -2671,10 +2859,21 @@
               <span>2026-06-08 更新</span>
             </div>
             <div class="business-kpi-grid">
-              <div class="business-kpi"><span>昨日销售额</span><strong>¥482.6万</strong><em style="color:var(--orange)">↓ 8.4%</em></div>
-              <div class="business-kpi"><span>新增商机</span><strong>126</strong><em>↑ 15.2%</em></div>
-              <div class="business-kpi"><span>回款完成率</span><strong>72.8%</strong><em>差 7.2%</em></div>
-              <div class="business-kpi warning"><span>风险客户</span><strong>9</strong><em>需跟进</em></div>
+              <button class="business-kpi active" type="button" data-dashboard-kpi="sales" onclick="switchDashboardKpi('sales')"><span>昨日销售额</span><strong>¥482.6万</strong><em style="color:var(--orange)">↓ 8.4%</em></button>
+              <button class="business-kpi" type="button" data-dashboard-kpi="opportunity" onclick="switchDashboardKpi('opportunity')"><span>新增商机</span><strong>126</strong><em>↑ 15.2%</em></button>
+              <button class="business-kpi" type="button" data-dashboard-kpi="payment" onclick="switchDashboardKpi('payment')"><span>回款完成率</span><strong>72.8%</strong><em>差 7.2%</em></button>
+              <button class="business-kpi warning" type="button" data-dashboard-kpi="risk" onclick="switchDashboardKpi('risk')"><span>风险客户</span><strong>9</strong><em>需跟进</em></button>
+            </div>
+            <div class="dashboard-interactive-panel" data-anno="首页仪表盘在手机端支持点击 KPI 下钻、切换周期和查看异常明细，模拟真实移动端看板交互。">
+              <div class="dashboard-panel-head">
+                <strong id="dashboardPanelTitle">昨日销售额趋势</strong>
+                <div class="dashboard-range-switch">
+                  <button class="active" type="button" data-dashboard-range="7d" onclick="switchDashboardRange('7d')">7天</button>
+                  <button type="button" data-dashboard-range="30d" onclick="switchDashboardRange('30d')">30天</button>
+                </div>
+              </div>
+              <div class="dashboard-chart" id="dashboardChart"></div>
+              <div class="dashboard-drill-list" id="dashboardDrillList"></div>
             </div>
             <div class="dora-insight-panel" data-anno="Dora 首页以主动经营洞察承接业务用户，不要求用户先理解 Agent 架构。">
               <div class="insight-card">
@@ -2823,7 +3022,7 @@
         <button class="icon-btn" id="newConversationBtn" type="button" onclick="startNewConversation()" aria-label="新对话" data-anno="当前会话可直接开启同类型新对话。" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h6"/><path d="M17 3v8"/><path d="M13 7h8"/></svg></button>
         <button class="icon-btn" id="conversationShareBtn" type="button" onclick="openConversationShare()" aria-label="转发会话" data-anno="会话分享在当前页进入选择模式，底部面板承载分享设置和分享方式。"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 17 20 12 15 7"/><path d="M4 18v-2a4 4 0 0 1 4-4h12"/></svg></button>
         <button class="icon-btn" type="button" onclick="openFilesSheet()" aria-label="会话文件" data-anno="PC 右侧资料面板在手机端改为底部 Sheet，保留来源/产物切换。"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6.5h6l2 2h9v9.5a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-9.5a2 2 0 0 1 2-2Z"/><path d="M3.5 8.5V6a2 2 0 0 1 2-2h3.2l1.8 2.5"/></svg></button>
-        <button class="icon-btn" id="conversationMoreBtn" type="button" onclick="openAgentMoreSheet('history')" aria-label="更多菜单" data-anno="方案B：会话页右上角更多菜单承载当前 Agent 的会话记录和定时任务。" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
+        <button class="icon-btn" id="conversationMoreBtn" type="button" onclick="openAgentFrameworkMenu()" aria-label="更多菜单" data-anno="方案B/C：会话页右上角更多菜单承载当前 Agent 的会话记录和定时任务。" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
       </header>
       <div class="chat-body" id="chatBody"></div>
       <div class="share-panel" id="sharePanel"></div>
@@ -3026,10 +3225,83 @@
     let shareTarget = 'conversation';
     let activeExpertFilter = 'all';
     let activeExpertQuick = 'recent';
+    let activeDashboardKpi = 'sales';
+    let activeDashboardRange = '7d';
     let currentConversationMeta = {
       agentName: 'Dora超级智能体',
       title: '华东销售经营日报分析',
       replyAvatar: 'D'
+    };
+
+    const dashboardData = {
+      sales: {
+        title: '昨日销售额趋势',
+        bars: {
+          '7d': [76, 82, 88, 79, 92, 84, 66],
+          '30d': [62, 68, 71, 80, 76, 84, 69]
+        },
+        labels: {
+          '7d': ['06/02', '06/03', '06/04', '06/05', '06/06', '06/07', '06/08'],
+          '30d': ['第1周', '第2周', '第3周', '第4周', '本周', '均值', '昨日']
+        },
+        lowIndex: 6,
+        drill: [
+          ['苏南渠道', 'KA 客户订单延迟确认', '↓18.7%'],
+          ['南京区域', '报价后停留超过 3 天', '↓9.4%'],
+          ['无锡区域', '回款节点后移影响确认', '↓7.8%']
+        ]
+      },
+      opportunity: {
+        title: '新增商机趋势',
+        bars: {
+          '7d': [42, 51, 58, 62, 74, 81, 88],
+          '30d': [44, 49, 56, 64, 72, 80, 88]
+        },
+        labels: {
+          '7d': ['06/02', '06/03', '06/04', '06/05', '06/06', '06/07', '06/08'],
+          '30d': ['第1周', '第2周', '第3周', '第4周', '本周', '均值', '昨日']
+        },
+        lowIndex: -1,
+        drill: [
+          ['高意向商机', '新增 42 个，但跟进率下降', '+15.2%'],
+          ['市场活动线索', '618 预热带来增量', '+23.5%'],
+          ['老客复购商机', '报价确认速度偏慢', '+6.1%']
+        ]
+      },
+      payment: {
+        title: '回款完成率趋势',
+        bars: {
+          '7d': [80, 78, 76, 75, 74, 73, 72],
+          '30d': [85, 82, 80, 78, 76, 74, 72]
+        },
+        labels: {
+          '7d': ['06/02', '06/03', '06/04', '06/05', '06/06', '06/07', '06/08'],
+          '30d': ['第1周', '第2周', '第3周', '第4周', '本周', '均值', '昨日']
+        },
+        lowIndex: 6,
+        drill: [
+          ['宝钢湛江钢铁', '付款节点从 6/8 延至 6/12', '¥28万'],
+          ['广东中南钢铁', '合同审批未完成', '¥16万'],
+          ['珠海格力电器', '补充验收单后可回款', '¥8万']
+        ]
+      },
+      risk: {
+        title: '风险客户分布',
+        bars: {
+          '7d': [22, 28, 31, 35, 42, 54, 64],
+          '30d': [18, 24, 30, 39, 47, 55, 64]
+        },
+        labels: {
+          '7d': ['06/02', '06/03', '06/04', '06/05', '06/06', '06/07', '06/08'],
+          '30d': ['第1周', '第2周', '第3周', '第4周', '本周', '均值', '昨日']
+        },
+        lowIndex: 6,
+        drill: [
+          ['逾期回款客户', '5 个客户超过承诺节点', '5'],
+          ['订单确认延迟', '3 个 KA 客户待确认', '3'],
+          ['商机阶段异常', '1 个负责人未更新阶段', '1']
+        ]
+      }
     };
 
     const expertFilters = [
@@ -3196,13 +3468,17 @@
     }
 
     function renderVariantBar() {
-      const frameworkLabel = variantState.framework === 'side-menu' ? '侧边菜单' : '更多菜单';
+      const frameworkLabelMap = {
+        'side-menu': '侧边菜单',
+        'more-menu': '更多菜单',
+        'flat-menu': '菜单平铺'
+      };
       const titleLabelMap = {
         'title-only': '仅标题',
         'agent-only': '仅名称',
         'agent-title': '名称+标题'
       };
-      $('variantSummary').textContent = `${frameworkLabel} · ${titleLabelMap[variantState.conversationTitle]}`;
+      $('variantSummary').textContent = `${frameworkLabelMap[variantState.framework]} · ${titleLabelMap[variantState.conversationTitle]}`;
       document.querySelectorAll('[data-variant-key]').forEach((button) => {
         button.classList.toggle('active', variantState[button.dataset.variantKey] === button.dataset.variantValue);
       });
@@ -3210,7 +3486,7 @@
     }
 
     function renderFrameworkChrome() {
-      const moreMenu = variantState.framework === 'more-menu';
+      const moreMenu = variantState.framework === 'more-menu' || variantState.framework === 'flat-menu';
       $('homeHistoryBtn').hidden = moreMenu;
       $('homeMoreBtn').hidden = !moreMenu;
       $('conversationHistoryBtn').hidden = moreMenu;
@@ -3233,6 +3509,42 @@
       const groupLabel = key === 'framework' ? '框架方案' : '会话标题';
       const optionLabel = document.querySelector(`[data-variant-key="${key}"][data-variant-value="${value}"]`)?.textContent || '方案';
       showToast(`已切换：${groupLabel} / ${optionLabel}`);
+    }
+
+    function renderDashboardPanel() {
+      const data = dashboardData[activeDashboardKpi];
+      $('dashboardPanelTitle').textContent = data.title;
+      document.querySelectorAll('[data-dashboard-kpi]').forEach((button) => {
+        button.classList.toggle('active', button.dataset.dashboardKpi === activeDashboardKpi);
+      });
+      document.querySelectorAll('[data-dashboard-range]').forEach((button) => {
+        button.classList.toggle('active', button.dataset.dashboardRange === activeDashboardRange);
+      });
+      $('dashboardChart').innerHTML = data.bars[activeDashboardRange].map((value, index) => `
+        <span class="dashboard-bar ${index === data.lowIndex ? 'is-low' : ''}">
+          <i style="height:${value}%"></i>
+          <span>${data.labels[activeDashboardRange][index]}</span>
+        </span>
+      `).join('');
+      $('dashboardDrillList').innerHTML = data.drill.map((item, index) => `
+        <div class="dashboard-drill-item">
+          <span class="dashboard-drill-rank">${index + 1}</span>
+          <span class="dashboard-drill-copy"><strong>${item[0]}</strong><span>${item[1]}</span></span>
+          <span class="dashboard-drill-value">${item[2]}</span>
+        </div>
+      `).join('');
+    }
+
+    function switchDashboardKpi(key) {
+      activeDashboardKpi = key;
+      renderDashboardPanel();
+      const label = document.querySelector(`[data-dashboard-kpi="${key}"] span`)?.textContent || '指标';
+      showToast(`已查看：${label}`);
+    }
+
+    function switchDashboardRange(range) {
+      activeDashboardRange = range;
+      renderDashboardPanel();
     }
 
     function handleVariantOption(option) {
@@ -3796,6 +4108,32 @@
       `;
     }
 
+    function openAgentFrameworkMenu() {
+      if (variantState.framework === 'flat-menu') {
+        openAgentFlatMenu();
+        return;
+      }
+      openAgentMoreSheet('history');
+    }
+
+    function openAgentFlatMenu() {
+      const agent = activeAgentForMoreMenu();
+      openSheet(agent.name, `
+        <div class="agent-flat-menu" data-anno="方案C：菜单平铺先展示两个入口，再进入对应的会话记录或定时任务内容。">
+          <button class="agent-flat-option" type="button" onclick="openAgentMoreSheet('history')">
+            <span class="agent-flat-icon">记</span>
+            <span class="agent-flat-copy"><strong>会话记录</strong><span>查看这个 Agent 的历史会话和未读提醒</span></span>
+            <span class="agent-flat-chevron">›</span>
+          </button>
+          <button class="agent-flat-option" type="button" onclick="openAgentMoreSheet('tasks')">
+            <span class="agent-flat-icon">时</span>
+            <span class="agent-flat-copy"><strong>定时任务</strong><span>管理自动推送、异常提醒和周期任务</span></span>
+            <span class="agent-flat-chevron">›</span>
+          </button>
+        </div>
+      `, 'agent-more');
+    }
+
     function openAgentMoreSheet(tab = 'history') {
       const agent = activeAgentForMoreMenu();
       const isHistory = tab === 'history';
@@ -4273,6 +4611,7 @@
     });
 
     renderVariantBar();
+    renderDashboardPanel();
     renderExperts();
   </script>
 </body>
