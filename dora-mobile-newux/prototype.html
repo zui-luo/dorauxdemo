@@ -193,7 +193,10 @@
       -webkit-overflow-scrolling: touch;
     }
     #screen-home .content-scroll {
-      padding-bottom: 292px;
+      padding-bottom: 190px;
+    }
+    body[data-home-plan="recommended"] #screen-home .content-scroll {
+      padding-bottom: 132px;
     }
     #screen-experts .content-scroll,
     #screen-space .content-scroll {
@@ -305,6 +308,14 @@
       background: #fff;
       padding: 10px 12px;
       box-shadow: 0 5px 18px rgba(9, 30, 64, 0.04);
+      text-align: left;
+      color: inherit;
+      transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+    }
+    .business-kpi.active {
+      border-color: rgba(37, 98, 255, 0.34);
+      background: linear-gradient(145deg, #fff, #eef4ff);
+      transform: translateY(-1px);
     }
     .business-kpi span {
       display: block;
@@ -329,6 +340,640 @@
     }
     .business-kpi.warning strong,
     .business-kpi.warning em { color: var(--orange); }
+    .dashboard-interactive-panel {
+      margin: 0 0 12px;
+      border: 1px solid rgba(218, 221, 229, 0.9);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 12px;
+      box-shadow: 0 8px 22px rgba(9, 30, 64, 0.05);
+    }
+    .dashboard-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .dashboard-panel-head strong {
+      color: var(--ink-11);
+      font-size: 14px;
+    }
+    .dashboard-range-switch {
+      display: inline-flex;
+      padding: 3px;
+      border: 1px solid var(--ink-4);
+      border-radius: 999px;
+      background: var(--ink-2);
+    }
+    .dashboard-range-switch button {
+      height: 24px;
+      border: none;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--ink-9);
+      font-size: 11px;
+      padding: 0 9px;
+    }
+    .dashboard-range-switch button.active {
+      background: #fff;
+      color: var(--brand-7);
+      font-weight: 800;
+      box-shadow: 0 4px 12px rgba(9, 30, 64, 0.08);
+    }
+    .dashboard-chart {
+      position: relative;
+      height: 150px;
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      align-items: end;
+      gap: 7px;
+      padding: 10px 8px 8px;
+      border-radius: 12px;
+      background:
+        linear-gradient(180deg, rgba(247, 248, 250, 0.78), rgba(255, 255, 255, 0)),
+        repeating-linear-gradient(180deg, transparent 0, transparent 27px, rgba(218, 221, 229, 0.58) 28px);
+    }
+    .dashboard-bar {
+      position: relative;
+      min-width: 0;
+      height: 100%;
+      border: none;
+      background: transparent;
+      padding: 0;
+      display: grid;
+      grid-template-rows: 18px 1fr 16px;
+      justify-items: center;
+      gap: 5px;
+      color: var(--ink-8);
+      font-size: 10px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .dashboard-bar-plot {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .dashboard-bar i {
+      display: block;
+      width: min(24px, 72%);
+      min-height: 12px;
+      border-radius: 7px 7px 3px 3px;
+      background: linear-gradient(180deg, #7BA2FF, var(--brand-7));
+      opacity: 0.86;
+    }
+    .dashboard-bar.is-low i {
+      background: linear-gradient(180deg, #FFB492, var(--orange));
+    }
+    .dashboard-bar-value {
+      position: static;
+      transform: none;
+      color: var(--brand-7);
+      font-size: 10px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .dashboard-bar.is-low .dashboard-bar-value {
+      color: var(--orange);
+    }
+    .dashboard-bar-label {
+      display: block;
+      color: var(--ink-8);
+      font-size: 10px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .dashboard-bar.is-low::after {
+      content: "异常";
+      position: absolute;
+      top: 25px;
+      right: -5px;
+      min-width: 28px;
+      height: 18px;
+      border-radius: 999px;
+      background: var(--orange-soft);
+      color: var(--orange);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 900;
+    }
+    .dashboard-drill-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .dashboard-drill-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 42px;
+      padding: 8px 10px;
+      border: 1px solid var(--ink-3);
+      border-radius: 12px;
+      background: var(--ink-2);
+      color: inherit;
+      text-align: left;
+    }
+    .dashboard-drill-rank {
+      width: 24px;
+      height: 24px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--brand-1);
+      color: var(--brand-7);
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .dashboard-drill-copy {
+      min-width: 0;
+      flex: 1;
+      display: grid;
+      gap: 2px;
+    }
+    .dashboard-drill-copy strong {
+      color: var(--ink-11);
+      font-size: 12px;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .dashboard-drill-copy span {
+      color: var(--ink-9);
+      font-size: 11px;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .dashboard-drill-value {
+      color: var(--orange);
+      font-size: 12px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .home-plan-recommend {
+      display: none;
+      padding-bottom: 16px;
+    }
+    body[data-home-plan="recommended"] .home-plan-stream {
+      display: none;
+    }
+    body[data-home-plan="recommended"] .home-plan-recommend {
+      display: block;
+    }
+    .recommend-tab-panel[hidden] {
+      display: none !important;
+    }
+    .recommend-home-stack {
+      position: relative;
+      padding-top: 22px;
+    }
+    .recommend-home-stack::before,
+    .recommend-home-stack::after {
+      content: "";
+      position: absolute;
+      left: 28px;
+      right: 28px;
+      height: 52px;
+      border-radius: 14px;
+      background: #eaf2ff;
+      box-shadow: 0 8px 20px rgba(37, 98, 255, 0.08);
+    }
+    .recommend-home-stack::before {
+      top: 0;
+      opacity: 0.56;
+    }
+    .recommend-home-stack::after {
+      top: 11px;
+      left: 18px;
+      right: 18px;
+      opacity: 0.78;
+    }
+    .recommend-home-card {
+      position: relative;
+      z-index: 1;
+      border: 1px solid rgba(218, 221, 229, 0.96);
+      border-radius: 18px;
+      background: #fff;
+      padding: 14px;
+      box-shadow: 0 14px 38px rgba(9, 30, 64, 0.12);
+    }
+    .recommend-home-card h2 {
+      margin: 0 0 12px;
+      color: var(--ink-11);
+      font-size: 17px;
+      line-height: 1.2;
+    }
+    .recommend-kpi-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .recommend-kpi {
+      min-height: 72px;
+      border: 1px solid var(--ink-4);
+      border-radius: 9px;
+      background: #fff;
+      color: inherit;
+      padding: 8px 7px;
+      text-align: left;
+    }
+    .recommend-kpi.hot {
+      background: #ffe8ef;
+      border-color: #ffd0dc;
+    }
+    .recommend-kpi span {
+      display: block;
+      color: var(--ink-9);
+      font-size: 11px;
+      line-height: 1.2;
+    }
+    .recommend-kpi strong {
+      display: block;
+      margin-top: 8px;
+      color: var(--ink-11);
+      font-size: 22px;
+      line-height: 1;
+    }
+    .recommend-kpi.hot strong,
+    .recommend-kpi.hot em {
+      color: #ff4f73;
+    }
+    .recommend-kpi em {
+      display: block;
+      margin-top: 7px;
+      color: var(--green);
+      font-size: 11px;
+      font-style: normal;
+      font-weight: 800;
+    }
+    .recommend-bar-chart {
+      height: 132px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #f8fbff 0%, #fff 100%);
+      display: grid;
+      grid-template-columns: repeat(10, minmax(0, 1fr));
+      align-items: end;
+      gap: 9px;
+      padding: 18px 12px;
+      margin-bottom: 12px;
+    }
+    .recommend-bar-chart button {
+      height: 100%;
+      border: none;
+      background: transparent;
+      padding: 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .recommend-bar-chart i {
+      width: 100%;
+      max-width: 24px;
+      min-height: 16px;
+      border-radius: 7px;
+      background: linear-gradient(180deg, #8fa2ff, #5d78f4);
+    }
+    .recommend-bar-chart button.hot i {
+      background: linear-gradient(180deg, #ff7a94, #ff4f73);
+    }
+    .recommend-insight-list {
+      display: grid;
+      gap: 8px;
+    }
+    .recommend-insight-item {
+      min-height: 56px;
+      border: 1px solid var(--ink-4);
+      border-radius: 13px;
+      background: #fff;
+      color: inherit;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px;
+      text-align: left;
+    }
+    .recommend-insight-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--brand-1);
+      color: var(--brand-7);
+      font-size: 14px;
+      font-weight: 900;
+    }
+    .recommend-insight-item strong {
+      display: block;
+      color: var(--ink-11);
+      font-size: 13px;
+      line-height: 1.25;
+    }
+    .recommend-insight-item span:last-child span {
+      display: block;
+      margin-top: 3px;
+      color: var(--ink-9);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+    .recommend-primary-action {
+      width: 100%;
+      height: 46px;
+      margin-top: 12px;
+      border: none;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #5369ff, #6c58ff);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 900;
+    }
+    .recommended-home-content {
+      display: grid;
+      gap: 12px;
+    }
+    .recommended-section {
+      border: 1px solid rgba(218, 221, 229, 0.92);
+      border-radius: 16px;
+      background: #fff;
+      padding: 12px;
+      box-shadow: 0 10px 26px rgba(9, 30, 64, 0.08);
+    }
+    .recommended-section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .recommended-section-head strong {
+      color: var(--ink-11);
+      font-size: 15px;
+      line-height: 1.25;
+    }
+    .recommended-section-head span {
+      color: var(--ink-8);
+      font-size: 11px;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+    .practice-card {
+      width: 100%;
+      border: 1px solid var(--ink-4);
+      border-radius: 13px;
+      background: linear-gradient(135deg, #f7faff 0%, #fff 76%);
+      color: inherit;
+      padding: 11px;
+      text-align: left;
+    }
+    .practice-card + .practice-card {
+      margin-top: 8px;
+    }
+    .practice-card strong {
+      display: block;
+      color: var(--ink-11);
+      font-size: 14px;
+      line-height: 1.25;
+    }
+    .practice-card span {
+      display: block;
+      margin-top: 5px;
+      color: var(--ink-9);
+      font-size: 12px;
+      line-height: 1.38;
+    }
+    .recommended-row {
+      width: 100%;
+      border: none;
+      border-top: 1px solid var(--ink-3);
+      background: transparent;
+      color: inherit;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 58px;
+      padding: 10px 0;
+      text-align: left;
+    }
+    .recommended-row:first-of-type {
+      border-top: none;
+      padding-top: 0;
+    }
+    .recommended-row:last-child {
+      padding-bottom: 0;
+    }
+    .recommended-avatar,
+    .recommended-file {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .recommended-avatar {
+      background: var(--brand-1);
+      color: var(--brand-7);
+    }
+    .recommended-file {
+      background: #fff6e8;
+      color: #b46900;
+    }
+    .recommended-row-copy {
+      min-width: 0;
+      flex: 1;
+    }
+    .recommended-row-copy strong {
+      display: block;
+      color: var(--ink-11);
+      font-size: 14px;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .recommended-row-copy span {
+      display: block;
+      margin-top: 4px;
+      color: var(--ink-9);
+      font-size: 11px;
+      line-height: 1.35;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .recommended-row em {
+      color: var(--brand-7);
+      font-size: 11px;
+      font-style: normal;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .home-content-switch {
+      display: inline-flex;
+      justify-self: center;
+      align-self: center;
+      gap: 4px;
+      padding: 3px;
+      border-radius: 999px;
+      background: rgba(232, 238, 250, 0.92);
+      margin: 0 auto;
+      touch-action: pan-y;
+    }
+    .home-content-switch button {
+      height: 24px;
+      min-width: 50px;
+      border: none;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--ink-9);
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .home-content-switch button.active {
+      background: var(--brand-7);
+      color: #fff;
+    }
+    body[data-home-plan="stream"] .home-content-switch {
+      display: none;
+    }
+    body[data-home-plan="recommended"] .recommend-block {
+      display: none;
+    }
+    body[data-home-plan="recommended"] .home-sender-dock {
+      gap: 5px;
+      padding-top: 8px;
+      background:
+        linear-gradient(180deg, rgba(247, 248, 250, 0), rgba(255, 255, 255, 0.88) 42%, rgba(255, 255, 255, 0.96) 100%);
+      backdrop-filter: blur(14px);
+    }
+    body[data-home-plan="recommended"] .home-plan-recommend {
+      touch-action: pan-y;
+    }
+    .lineage-sheet {
+      display: grid;
+      gap: 12px;
+    }
+    .lineage-summary {
+      border: 1px solid rgba(37, 98, 255, 0.16);
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(234, 240, 255, 0.96), #fff);
+      padding: 14px;
+    }
+    .lineage-summary strong {
+      display: block;
+      color: var(--ink-11);
+      font-size: 17px;
+      line-height: 1.25;
+      margin-bottom: 6px;
+    }
+    .lineage-summary span {
+      color: var(--ink-9);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .lineage-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .lineage-meta {
+      border: 1px solid var(--ink-3);
+      border-radius: 12px;
+      background: #fff;
+      padding: 10px;
+    }
+    .lineage-meta span {
+      display: block;
+      color: var(--ink-9);
+      font-size: 11px;
+      margin-bottom: 5px;
+    }
+    .lineage-meta strong {
+      color: var(--ink-11);
+      font-size: 13px;
+      line-height: 1.25;
+    }
+    .lineage-section {
+      border: 1px solid var(--ink-3);
+      border-radius: 16px;
+      background: #fff;
+      padding: 12px;
+    }
+    .lineage-section-title {
+      margin: 0 0 10px;
+      color: var(--ink-9);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .lineage-source-list,
+    .lineage-step-list,
+    .lineage-sample-list {
+      display: grid;
+      gap: 8px;
+    }
+    .lineage-source,
+    .lineage-step,
+    .lineage-sample {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      min-height: 36px;
+      color: var(--ink-10);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .lineage-source-icon,
+    .lineage-step-index {
+      width: 24px;
+      height: 24px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: var(--brand-1);
+      color: var(--brand-7);
+      font-size: 10px;
+      font-weight: 900;
+    }
+    .lineage-step-index {
+      background: var(--ink-2);
+      color: var(--ink-9);
+    }
+    .lineage-source strong,
+    .lineage-step strong,
+    .lineage-sample strong {
+      display: block;
+      color: var(--ink-11);
+      font-size: 13px;
+      margin-bottom: 2px;
+    }
+    .lineage-sample {
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 10px;
+      background: var(--ink-2);
+      padding: 9px 10px;
+    }
+    .lineage-sample span {
+      color: var(--ink-9);
+      font-size: 11px;
+    }
     .dora-insight-panel {
       display: grid;
       gap: 8px;
@@ -451,8 +1096,8 @@
       bottom: calc(68px + var(--safe-bottom));
       z-index: 42;
       display: grid;
-      gap: 8px;
-      padding: 22px 16px 12px;
+      gap: 7px;
+      padding: 18px 16px 10px;
       background:
         linear-gradient(180deg, rgba(247, 248, 250, 0), rgba(247, 248, 250, 0.76) 28%, rgba(255, 255, 255, 0.94) 100%);
       backdrop-filter: blur(20px);
@@ -517,6 +1162,79 @@
       gap: 8px;
       padding: 10px;
       border-top: 1px solid var(--ink-3);
+    }
+    .voice-sender {
+      border: 1px solid rgba(218, 221, 229, 0.94);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: none;
+      overflow: hidden;
+    }
+    .voice-sender .sender-files {
+      padding: 8px 10px 0;
+    }
+    .voice-compact-row {
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+    }
+    .voice-primary-btn {
+      min-width: 0;
+      flex: 1;
+      height: 38px;
+      border: none;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--brand-7), var(--purple));
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      font-size: 14px;
+      font-weight: 800;
+      white-space: nowrap;
+      box-shadow: 0 8px 22px rgba(37, 98, 255, 0.18);
+    }
+    .voice-primary-btn svg {
+      width: 17px;
+      height: 17px;
+      flex-shrink: 0;
+    }
+    .keyboard-btn {
+      color: var(--ink-9);
+      background: var(--ink-2);
+    }
+    .keyboard-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+    .sender-text-panel {
+      display: none;
+      min-width: 0;
+      flex: 1;
+    }
+    .voice-sender.expanded .sender-text-panel {
+      display: block;
+    }
+    .voice-sender.expanded .voice-primary-btn {
+      display: none;
+    }
+    .voice-sender textarea {
+      width: 100%;
+      height: 38px;
+      min-height: 38px;
+      max-height: 74px;
+      border: 1px solid var(--ink-4);
+      border-radius: 18px;
+      outline: none;
+      resize: none;
+      padding: 9px 12px;
+      color: var(--ink-11);
+      font-size: 14px;
+      line-height: 18px;
+      background: #fff;
     }
     .tool-strip {
       display: flex;
@@ -1168,6 +1886,67 @@
       font-size: 13px;
       line-height: 1.45;
     }
+    .expert-welcome {
+      min-height: 100%;
+      display: grid;
+      align-content: center;
+      gap: 16px;
+      padding: 28px 18px 170px;
+    }
+    .expert-welcome-hero {
+      display: grid;
+      justify-items: center;
+      gap: 10px;
+      text-align: center;
+    }
+    .expert-welcome-hero .avatar {
+      width: 58px;
+      height: 58px;
+      border-radius: 20px;
+      font-size: 22px;
+    }
+    .expert-welcome-hero strong {
+      color: var(--ink-11);
+      font-size: 19px;
+      line-height: 1.2;
+    }
+    .expert-welcome-hero p {
+      margin: 0;
+      color: var(--ink-9);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .expert-welcome-tags {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .expert-question-list {
+      display: grid;
+      gap: 9px;
+    }
+    .expert-question {
+      width: 100%;
+      min-height: 46px;
+      border: 1px solid var(--ink-4);
+      border-radius: 14px;
+      background: #fff;
+      color: var(--ink-10);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 11px 12px;
+      text-align: left;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .expert-question span {
+      color: var(--brand-7);
+      font-weight: 900;
+      flex-shrink: 0;
+    }
     .message {
       display: flex;
       gap: 9px;
@@ -1580,7 +2359,7 @@
       right: 0;
       bottom: calc(68px + var(--safe-bottom));
       z-index: 45;
-      padding: 10px 12px;
+      padding: 8px 12px;
       background: rgba(255, 255, 255, 0.95);
       border-top: 1px solid var(--ink-4);
       backdrop-filter: blur(18px);
@@ -1676,6 +2455,57 @@
       gap: 12px;
       padding-bottom: 4px;
     }
+    .agent-flat-menu {
+      display: grid;
+      gap: 10px;
+    }
+    .agent-flat-option {
+      width: 100%;
+      min-height: 58px;
+      border: 1px solid var(--ink-4);
+      border-radius: 16px;
+      background: var(--ink-2);
+      color: inherit;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      text-align: left;
+    }
+    .agent-flat-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      color: var(--brand-7);
+      font-size: 16px;
+      font-weight: 900;
+    }
+    .agent-flat-copy {
+      min-width: 0;
+      flex: 1;
+      display: grid;
+      gap: 3px;
+    }
+    .agent-flat-copy strong {
+      color: var(--ink-11);
+      font-size: 14px;
+      line-height: 1.25;
+    }
+    .agent-flat-copy span {
+      color: var(--ink-9);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .agent-flat-chevron {
+      color: var(--ink-8);
+      font-size: 18px;
+      flex-shrink: 0;
+    }
     .side-sheet {
       top: 0;
       left: auto;
@@ -1767,6 +2597,7 @@
       gap: 12px;
       padding-bottom: 10px;
     }
+    .detail-chat-layout .voice-sender,
     .detail-chat-layout .compact-sender {
       flex-shrink: 0;
       margin-top: 10px;
@@ -2397,30 +3228,7 @@
       right: 14px;
       bottom: calc(16px + var(--safe-bottom));
       z-index: 42;
-      min-height: 48px;
-      border: 1px solid rgba(255, 255, 255, 0.62);
-      border-radius: 999px;
-      background:
-        radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.62), transparent 26%),
-        linear-gradient(135deg, #0047FD 0%, #6F55E8 52%, #18A982 100%);
-      box-shadow: none;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 8px;
-      color: #fff;
-    }
-    .detail-chat-bar input {
-      min-width: 0;
-      flex: 1;
-      border: none;
-      outline: none;
-      background: transparent;
-      color: #fff;
-      font-size: 14px;
-    }
-    .detail-chat-bar input::placeholder {
-      color: rgba(255, 255, 255, 0.86);
+      color: var(--ink-11);
     }
     .detail-chat-action {
       width: 36px;
@@ -2624,6 +3432,7 @@
       <div class="variant-config-options">
         <button class="variant-config-option" type="button" data-variant-key="framework" data-variant-value="side-menu" onclick="setVariant('framework', 'side-menu')">方案A：侧边菜单</button>
         <button class="variant-config-option" type="button" data-variant-key="framework" data-variant-value="more-menu" onclick="setVariant('framework', 'more-menu')">方案B：更多菜单</button>
+        <button class="variant-config-option" type="button" data-variant-key="framework" data-variant-value="flat-menu" onclick="setVariant('framework', 'flat-menu')">方案C：菜单平铺</button>
       </div>
     </div>
     <div class="variant-config-group">
@@ -2632,6 +3441,13 @@
         <button class="variant-config-option" type="button" data-variant-key="conversationTitle" data-variant-value="title-only" onclick="setVariant('conversationTitle', 'title-only')">方案1：仅标题</button>
         <button class="variant-config-option" type="button" data-variant-key="conversationTitle" data-variant-value="agent-only" onclick="setVariant('conversationTitle', 'agent-only')">方案2：仅名称</button>
         <button class="variant-config-option" type="button" data-variant-key="conversationTitle" data-variant-value="agent-title" onclick="setVariant('conversationTitle', 'agent-title')">方案3：名称+标题</button>
+      </div>
+    </div>
+    <div class="variant-config-group">
+      <span>首页方案</span>
+      <div class="variant-config-options">
+        <button class="variant-config-option" type="button" data-variant-key="homePlan" data-variant-value="stream" onclick="setVariant('homePlan', 'stream')">流式</button>
+        <button class="variant-config-option" type="button" data-variant-key="homePlan" data-variant-value="recommended" onclick="setVariant('homePlan', 'recommended')">带推荐</button>
       </div>
     </div>
   </div>
@@ -2653,10 +3469,10 @@
         <div class="header-title">
           <strong>Dora超级智能体</strong>
         </div>
-        <button class="icon-btn" id="homeMoreBtn" type="button" onclick="openAgentMoreSheet('history')" aria-label="更多菜单" data-anno="方案B：通过右上角更多菜单承载当前 Agent 的会话记录和定时任务。" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
+        <button class="icon-btn" id="homeMoreBtn" type="button" onclick="openAgentFrameworkMenu()" aria-label="更多菜单" data-anno="方案B/C：通过右上角更多菜单承载当前 Agent 的会话记录和定时任务。" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
       </header>
       <div class="content-scroll">
-        <div class="home-hero">
+        <div class="home-hero home-plan-stream">
           <section class="home-block greeting-block">
             <div class="dora-greeting">
               <div class="hero-copy">
@@ -2671,10 +3487,21 @@
               <span>2026-06-08 更新</span>
             </div>
             <div class="business-kpi-grid">
-              <div class="business-kpi"><span>昨日销售额</span><strong>¥482.6万</strong><em style="color:var(--orange)">↓ 8.4%</em></div>
-              <div class="business-kpi"><span>新增商机</span><strong>126</strong><em>↑ 15.2%</em></div>
-              <div class="business-kpi"><span>回款完成率</span><strong>72.8%</strong><em>差 7.2%</em></div>
-              <div class="business-kpi warning"><span>风险客户</span><strong>9</strong><em>需跟进</em></div>
+              <button class="business-kpi active" type="button" data-dashboard-kpi="sales" onclick="switchDashboardKpi('sales', true)"><span>昨日销售额</span><strong>¥482.6万</strong><em style="color:var(--orange)">↓ 8.4%</em></button>
+              <button class="business-kpi" type="button" data-dashboard-kpi="opportunity" onclick="switchDashboardKpi('opportunity', true)"><span>新增商机</span><strong>126</strong><em>↑ 15.2%</em></button>
+              <button class="business-kpi" type="button" data-dashboard-kpi="payment" onclick="switchDashboardKpi('payment', true)"><span>回款完成率</span><strong>72.8%</strong><em>差 7.2%</em></button>
+              <button class="business-kpi warning" type="button" data-dashboard-kpi="risk" onclick="switchDashboardKpi('risk', true)"><span>风险客户</span><strong>9</strong><em>需跟进</em></button>
+            </div>
+            <div class="dashboard-interactive-panel" data-anno="首页仪表盘在手机端支持点击 KPI 下钻、切换周期和查看异常明细，模拟真实移动端看板交互。">
+              <div class="dashboard-panel-head">
+                <strong id="dashboardPanelTitle">昨日销售额趋势</strong>
+                <div class="dashboard-range-switch">
+                  <button class="active" type="button" data-dashboard-range="7d" onclick="switchDashboardRange('7d')">7天</button>
+                  <button type="button" data-dashboard-range="30d" onclick="switchDashboardRange('30d')">30天</button>
+                </div>
+              </div>
+              <div class="dashboard-chart" id="dashboardChart"></div>
+              <div class="dashboard-drill-list" id="dashboardDrillList"></div>
             </div>
             <div class="dora-insight-panel" data-anno="Dora 首页以主动经营洞察承接业务用户，不要求用户先理解 Agent 架构。">
               <div class="insight-card">
@@ -2701,6 +3528,105 @@
             </div>
           </section>
         </div>
+        <div class="home-hero home-plan-recommend">
+          <section class="home-block greeting-block">
+            <div class="dora-greeting">
+              <div class="hero-copy">
+                <h1>王总，上午好</h1>
+              </div>
+            </div>
+          </section>
+          <section class="recommend-tab-panel recommend-home-stack" id="homeInsightPanel" data-anno="首页方案：带推荐。Dora 先生成今日洞察卡，用户可切换洞察/推荐。">
+            <div class="recommend-home-card">
+              <h2>Dora 今日洞察</h2>
+              <div class="recommend-kpi-row">
+                <button class="recommend-kpi hot" type="button" onclick="openDashboardLineage('sales', 'metric')"><span>昨日销售额</span><strong>428万</strong><em>-12.8%</em></button>
+                <button class="recommend-kpi" type="button" onclick="openDashboardLineage('opportunity', 'metric')"><span>新增商机</span><strong>36个</strong><em>+8.4%</em></button>
+                <button class="recommend-kpi hot" type="button" onclick="openDashboardLineage('payment', 'metric')"><span>回款完成率</span><strong>71%</strong><em>-5.1%</em></button>
+              </div>
+              <div class="recommend-bar-chart">
+                <button type="button" onclick="openDashboardLineage('sales', 'trend', 0)"><i style="height:42%"></i></button>
+                <button type="button" onclick="openDashboardLineage('sales', 'trend', 1)"><i style="height:66%"></i></button>
+                <button type="button" onclick="openDashboardLineage('sales', 'trend', 2)"><i style="height:54%"></i></button>
+                <button type="button" onclick="openDashboardLineage('sales', 'trend', 3)"><i style="height:82%"></i></button>
+                <button type="button" onclick="openDashboardLineage('sales', 'trend', 4)"><i style="height:58%"></i></button>
+                <button type="button" onclick="openDashboardLineage('sales', 'trend', 5)"><i style="height:58%"></i></button>
+                <button type="button" onclick="openDashboardLineage('sales', 'trend', 6)"><i style="height:58%"></i></button>
+                <button type="button" onclick="openDashboardLineage('sales', 'trend', 6)"><i style="height:58%"></i></button>
+                <button class="hot" type="button" onclick="openDashboardLineage('sales', 'trend', 6)"><i style="height:92%"></i></button>
+                <button type="button" onclick="openDashboardLineage('sales', 'trend', 6)"><i style="height:74%"></i></button>
+              </div>
+              <div class="recommend-insight-list">
+                <button class="recommend-insight-item" type="button" onclick="openDashboardLineage('sales', 'drill', 0)"><span class="recommend-insight-mark">华</span><span><strong>华东二区 KA 客户延迟签约</strong><span>点击 KPI 后查看指标下钻，不直接发送任务</span></span></button>
+                <button class="recommend-insight-item" type="button" onclick="openDashboardLineage('opportunity', 'drill', 0)"><span class="recommend-insight-mark">新</span><span><strong>新增商机质量提升但周期变长</strong><span>点击 KPI 后查看指标下钻，不直接发送任务</span></span></button>
+                <button class="recommend-insight-item" type="button" onclick="openDashboardLineage('risk', 'drill', 0)"><span class="recommend-insight-mark">3</span><span><strong>3 个风险客户需要本周跟进</strong><span>点击 KPI 后查看指标下钻，不直接发送任务</span></span></button>
+              </div>
+              <button class="recommend-primary-action" type="button" onclick="sendRecommendedQuestion('帮我分析今日洞察里的销售下滑、商机周期和风险客户')">帮我分析</button>
+            </div>
+          </section>
+          <section class="recommend-tab-panel recommended-home-content" id="homeRecommendPanel" hidden data-anno="首页方案：推荐页展示最佳实践、专家和资料三类工作入口。">
+            <div class="recommended-section">
+              <div class="recommended-section-head">
+                <strong>推荐最佳实践</strong>
+                <span>按今日异常匹配</span>
+              </div>
+              <button class="practice-card" type="button" onclick="sendRecommendedQuestion('套用销售下滑归因 SOP，帮我拆解苏南渠道问题')">
+                <strong>销售下滑归因 SOP</strong>
+                <span>从区域、渠道、商机转化和回款四步定位主要原因。</span>
+              </button>
+              <button class="practice-card" type="button" onclick="sendRecommendedQuestion('生成重点客户回款跟进模板，并列出今天优先联系名单')">
+                <strong>重点客户回款跟进模板</strong>
+                <span>适合处理延期回款，输出联系人、金额和预计到账节点。</span>
+              </button>
+              <button class="practice-card" type="button" onclick="sendRecommendedQuestion('用商机转化漏斗复盘昨天新增商机质量')">
+                <strong>商机转化漏斗复盘</strong>
+                <span>对比新增、跟进、报价、赢单阶段，识别卡点。</span>
+              </button>
+            </div>
+            <div class="recommended-section">
+              <div class="recommended-section-head">
+                <strong>推荐专家</strong>
+                <span>可直接进入会话</span>
+              </div>
+              <button class="recommended-row" type="button" onclick="openConversation('smart')">
+                <span class="recommended-avatar">问</span>
+                <span class="recommended-row-copy"><strong>智能问数</strong><span>适合追问指标口径、异常区域和客户明细</span></span>
+                <em>进入</em>
+              </button>
+              <button class="recommended-row" type="button" onclick="openConversation('analysis')">
+                <span class="recommended-avatar">析</span>
+                <span class="recommended-row-copy"><strong>经营分析助手</strong><span>擅长把销售、商机和回款串成经营判断</span></span>
+                <em>进入</em>
+              </button>
+              <button class="recommended-row" type="button" onclick="openConversation('report')">
+                <span class="recommended-avatar">报</span>
+                <span class="recommended-row-copy"><strong>智能报告</strong><span>把今日洞察整理成日报或管理层简报</span></span>
+                <em>进入</em>
+              </button>
+            </div>
+            <div class="recommended-section">
+              <div class="recommended-section-head">
+                <strong>推荐资料</strong>
+                <span>来自资料库</span>
+              </div>
+              <button class="recommended-row" type="button" onclick="openAssetDetail('html')">
+                <span class="recommended-file">HTML</span>
+                <span class="recommended-row-copy"><strong>销售日报看板.html</strong><span>华东区销售额、商机、回款的可视化看板</span></span>
+                <em>打开</em>
+              </button>
+              <button class="recommended-row" type="button" onclick="openAssetDetail('ppt')">
+                <span class="recommended-file">PPT</span>
+                <span class="recommended-row-copy"><strong>重点客户跟进方案.pptx</strong><span>覆盖 KA 客户风险分级和跟进动作</span></span>
+                <em>打开</em>
+              </button>
+              <button class="recommended-row" type="button" onclick="openAssetDetail('md')">
+                <span class="recommended-file">MD</span>
+                <span class="recommended-row-copy"><strong>销售指标口径说明.md</strong><span>解释昨日销售额、商机和回款完成率口径</span></span>
+                <em>打开</em>
+              </button>
+            </div>
+          </section>
+        </div>
       </div>
       <div class="home-sender-dock">
         <section class="recommend-block">
@@ -2713,14 +3639,20 @@
             <button class="recommend-pill secondary" type="button" onclick="sendRecommendedQuestion('生成能耗优化方案')">生成能耗优化方案 <span>→</span></button>
           </div>
         </section>
-        <div class="compact-sender" data-anno="首页 Sender 复用会话页输入框样式，支持添加上下文、语音输入和发送。">
+        <div class="home-content-switch" id="homeContentSwitch" data-anno="首页方案：带推荐时，用户可在洞察和推荐之间切换。">
+          <button class="active" type="button" onclick="switchRecommendedHomeTab('insight')">洞察</button>
+          <button type="button" onclick="switchRecommendedHomeTab('recommend')">推荐</button>
+        </div>
+        <div class="voice-sender" id="homeSender" data-anno="首页 Sender 默认语音优先，点击键盘展开文字输入，减少底部占高。">
           <div class="sender-files" id="homeFiles"></div>
-          <textarea id="homeInput">帮我分析华东区昨天销售额下降的原因，重点看苏南渠道、商机转化和回款情况</textarea>
-          <div class="compact-tools">
+          <div class="voice-compact-row">
             <button class="round-btn" type="button" onclick="openToolSheet('home')">＋</button>
-            <span style="flex:1"></span>
-            <button class="round-btn mic-btn" type="button" onclick="openVoiceSheet('home')" aria-label="语音输入" data-anno="手机端新增语音输入，识别结果可插入输入框或直接发送。"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8 21h8"/></svg></button>
-            <button class="round-btn primary" type="button" onclick="openConversation('dora')">↑</button>
+            <button class="voice-primary-btn" type="button" onclick="openVoiceSheet('home')" aria-label="语音输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8 21h8"/></svg><span>说出你的问题</span></button>
+            <div class="sender-text-panel">
+              <textarea id="homeInput" placeholder="输入问题"></textarea>
+            </div>
+            <button class="round-btn keyboard-btn" type="button" onclick="toggleSenderText('home')" aria-label="键盘输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h.01"/><path d="M11 9h.01"/><path d="M15 9h.01"/><path d="M17 13h.01"/><path d="M13 13h.01"/><path d="M9 13h.01"/><path d="M7 17h10"/></svg></button>
+            <button class="round-btn primary" type="button" onclick="openConversation('dora')" aria-label="发送">↑</button>
           </div>
         </div>
       </div>
@@ -2823,18 +3755,20 @@
         <button class="icon-btn" id="newConversationBtn" type="button" onclick="startNewConversation()" aria-label="新对话" data-anno="当前会话可直接开启同类型新对话。" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h6"/><path d="M17 3v8"/><path d="M13 7h8"/></svg></button>
         <button class="icon-btn" id="conversationShareBtn" type="button" onclick="openConversationShare()" aria-label="转发会话" data-anno="会话分享在当前页进入选择模式，底部面板承载分享设置和分享方式。"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 17 20 12 15 7"/><path d="M4 18v-2a4 4 0 0 1 4-4h12"/></svg></button>
         <button class="icon-btn" type="button" onclick="openFilesSheet()" aria-label="会话文件" data-anno="PC 右侧资料面板在手机端改为底部 Sheet，保留来源/产物切换。"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6.5h6l2 2h9v9.5a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-9.5a2 2 0 0 1 2-2Z"/><path d="M3.5 8.5V6a2 2 0 0 1 2-2h3.2l1.8 2.5"/></svg></button>
-        <button class="icon-btn" id="conversationMoreBtn" type="button" onclick="openAgentMoreSheet('history')" aria-label="更多菜单" data-anno="方案B：会话页右上角更多菜单承载当前 Agent 的会话记录和定时任务。" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
+        <button class="icon-btn" id="conversationMoreBtn" type="button" onclick="openAgentFrameworkMenu()" aria-label="更多菜单" data-anno="方案B/C：会话页右上角更多菜单承载当前 Agent 的会话记录和定时任务。" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
       </header>
       <div class="chat-body" id="chatBody"></div>
       <div class="share-panel" id="sharePanel"></div>
       <footer class="chat-footer">
-        <div class="compact-sender" data-anno="会话页 Sender 保留文件引用能力，并可通过麦克风继续语音追问。">
+        <div class="voice-sender" id="chatSender" data-anno="会话页 Sender 默认语音追问，点击键盘展开文字输入和文件引用。">
           <div class="sender-files" id="chatFiles"></div>
-          <textarea id="chatInput" placeholder="输入需求，或 @ 引用会话文件"></textarea>
-          <div class="compact-tools">
+          <div class="voice-compact-row">
             <button class="round-btn" type="button" onclick="openToolSheet('chat')">＋</button>
-            <span style="flex:1"></span>
-            <button class="round-btn mic-btn" type="button" onclick="openVoiceSheet('chat')" aria-label="语音输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8 21h8"/></svg></button>
+            <button class="voice-primary-btn" type="button" onclick="openVoiceSheet('chat')" aria-label="语音输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8 21h8"/></svg><span>继续语音追问</span></button>
+            <div class="sender-text-panel">
+              <textarea id="chatInput" placeholder="输入需求，或 @ 引用会话文件"></textarea>
+            </div>
+            <button class="round-btn keyboard-btn" type="button" onclick="toggleSenderText('chat')" aria-label="键盘输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h.01"/><path d="M11 9h.01"/><path d="M15 9h.01"/><path d="M17 13h.01"/><path d="M13 13h.01"/><path d="M9 13h.01"/><path d="M7 17h10"/></svg></button>
             <button class="round-btn primary" type="button" onclick="sendChat()">↑</button>
           </div>
         </div>
@@ -2935,11 +3869,18 @@
           </div>
         </div>
       </div>
-      <div class="detail-chat-bar" data-anno="资料库详情保留底部追问能力，用户可围绕当前资料继续让 Dora 解释或生成新内容。">
-        <button class="detail-chat-action" type="button" onclick="openToolSheet('detail')" aria-label="添加上下文"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
-        <input id="detailInput" placeholder="去问 Dora" />
-        <button class="detail-chat-action" type="button" onclick="openVoiceSheet('detail')" aria-label="语音输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8 21h8"/></svg></button>
-        <button class="detail-chat-action primary" type="button" onclick="sendDetailQuestion()" aria-label="发送"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.7 3.7 20.3 12 3.7 20.3 6.8 12 3.7 3.7Z"/><path d="M6.8 12h13.5"/></svg></button>
+      <div class="detail-chat-bar" data-anno="资料库详情 Sender 也采用语音优先模式，避免遮挡文件预览内容。">
+        <div class="voice-sender" id="detailSender">
+          <div class="voice-compact-row">
+            <button class="round-btn" type="button" onclick="openToolSheet('detail')">＋</button>
+            <button class="voice-primary-btn" type="button" onclick="openVoiceSheet('detail')" aria-label="语音输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8 21h8"/></svg><span>围绕资料提问</span></button>
+            <div class="sender-text-panel">
+              <textarea id="detailInput" placeholder="去问 Dora"></textarea>
+            </div>
+            <button class="round-btn keyboard-btn" type="button" onclick="toggleSenderText('detail')" aria-label="键盘输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h.01"/><path d="M11 9h.01"/><path d="M15 9h.01"/><path d="M17 13h.01"/><path d="M13 13h.01"/><path d="M9 13h.01"/><path d="M7 17h10"/></svg></button>
+            <button class="round-btn primary" type="button" onclick="sendDetailQuestion()" aria-label="发送">↑</button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -3016,7 +3957,8 @@
     let currentConversationType = 'dora';
     let variantState = {
       framework: 'more-menu',
-      conversationTitle: 'agent-title'
+      conversationTitle: 'agent-title',
+      homePlan: 'stream'
     };
     let currentConversationHasOutputs = true;
     let conversationShareMode = false;
@@ -3026,10 +3968,169 @@
     let shareTarget = 'conversation';
     let activeExpertFilter = 'all';
     let activeExpertQuick = 'recent';
+    let activeDashboardKpi = 'sales';
+    let activeDashboardRange = '7d';
+    let recommendedHomeTab = 'insight';
+    let homeSwipeStart = null;
     let currentConversationMeta = {
       agentName: 'Dora超级智能体',
       title: '华东销售经营日报分析',
       replyAvatar: 'D'
+    };
+
+    const dashboardData = {
+      sales: {
+        title: '昨日销售额趋势',
+        metric: '昨日销售额',
+        value: '¥482.6万',
+        definition: '取华东区已确认收入订单的含税销售额，剔除冲销单和内部调拨单。',
+        freshness: '2026-06-08 08:12',
+        owner: '销售经营数据集 / Admin',
+        unit: '万',
+        values: {
+          '7d': [556, 571, 596, 548, 628, 574, 483],
+          '30d': [521, 548, 563, 602, 574, 598, 483]
+        },
+        sources: [
+          ['BI', 'FineBI 销售日报看板'],
+          ['CRM', 'CRM 商机与订单明细'],
+          ['ERP', 'ERP 收入确认流水']
+        ],
+        steps: ['按组织树过滤华东区', '剔除冲销与内部调拨', '按订单确认日期汇总销售额', '与前 7 日均值计算环比差异'],
+        samples: [
+          ['宝钢湛江钢铁', '¥128.4万'],
+          ['珠海格力电器', '¥96.2万'],
+          ['广东中南钢铁', '¥72.8万']
+        ],
+        bars: {
+          '7d': [58, 64, 75, 55, 92, 66, 36],
+          '30d': [48, 56, 60, 78, 66, 74, 38]
+        },
+        labels: {
+          '7d': ['06/02', '06/03', '06/04', '06/05', '06/06', '06/07', '06/08'],
+          '30d': ['第1周', '第2周', '第3周', '第4周', '本周', '均值', '昨日']
+        },
+        lowIndex: 6,
+        drill: [
+          ['苏南渠道', 'KA 客户订单延迟确认', '↓18.7%'],
+          ['南京区域', '报价后停留超过 3 天', '↓9.4%'],
+          ['无锡区域', '回款节点后移影响确认', '↓7.8%']
+        ]
+      },
+      opportunity: {
+        title: '新增商机趋势',
+        metric: '新增商机',
+        value: '126',
+        definition: '统计昨日新建且负责人归属华东区的有效商机，排除重复线索和测试商机。',
+        freshness: '2026-06-08 08:05',
+        owner: 'CRM 商机数据集 / Sales Ops',
+        unit: '',
+        values: {
+          '7d': [82, 96, 104, 111, 119, 123, 126],
+          '30d': [78, 86, 94, 103, 114, 121, 126]
+        },
+        sources: [
+          ['CRM', 'CRM 商机主表'],
+          ['MKT', '市场活动线索池'],
+          ['USR', '销售负责人组织映射']
+        ],
+        steps: ['过滤昨日创建商机', '按负责人组织归属华东区', '合并市场活动线索来源', '排除重复客户和测试数据'],
+        samples: [
+          ['高意向商机', '42 个'],
+          ['市场活动线索', '51 个'],
+          ['老客复购商机', '33 个']
+        ],
+        bars: {
+          '7d': [34, 42, 50, 58, 70, 82, 92],
+          '30d': [38, 44, 52, 61, 72, 83, 92]
+        },
+        labels: {
+          '7d': ['06/02', '06/03', '06/04', '06/05', '06/06', '06/07', '06/08'],
+          '30d': ['第1周', '第2周', '第3周', '第4周', '本周', '均值', '昨日']
+        },
+        lowIndex: -1,
+        drill: [
+          ['高意向商机', '新增 42 个，但跟进率下降', '+15.2%'],
+          ['市场活动线索', '618 预热带来增量', '+23.5%'],
+          ['老客复购商机', '报价确认速度偏慢', '+6.1%']
+        ]
+      },
+      payment: {
+        title: '回款完成率趋势',
+        metric: '回款完成率',
+        value: '72.8%',
+        definition: '已到账金额 / 当日计划回款金额，计划金额来自客户回款节点，到账金额来自财务收款流水。',
+        freshness: '2026-06-08 08:18',
+        owner: '回款风险监控主题 / Finance Admin',
+        unit: '%',
+        values: {
+          '7d': [81, 79, 77, 76, 75, 74, 73],
+          '30d': [86, 83, 81, 79, 76, 74, 73]
+        },
+        sources: [
+          ['FIN', '财务收款流水'],
+          ['CRM', '客户回款计划'],
+          ['ERP', '合同应收账款']
+        ],
+        steps: ['读取当日计划回款节点', '匹配财务到账流水', '按客户合并到账金额', '计算完成率并识别延期客户'],
+        samples: [
+          ['宝钢湛江钢铁', '延期 ¥28万'],
+          ['广东中南钢铁', '延期 ¥16万'],
+          ['珠海格力电器', '待补单 ¥8万']
+        ],
+        bars: {
+          '7d': [88, 80, 72, 66, 58, 49, 42],
+          '30d': [92, 84, 76, 68, 58, 49, 42]
+        },
+        labels: {
+          '7d': ['06/02', '06/03', '06/04', '06/05', '06/06', '06/07', '06/08'],
+          '30d': ['第1周', '第2周', '第3周', '第4周', '本周', '均值', '昨日']
+        },
+        lowIndex: 6,
+        drill: [
+          ['宝钢湛江钢铁', '付款节点从 6/8 延至 6/12', '¥28万'],
+          ['广东中南钢铁', '合同审批未完成', '¥16万'],
+          ['珠海格力电器', '补充验收单后可回款', '¥8万']
+        ]
+      },
+      risk: {
+        title: '风险客户分布',
+        metric: '风险客户',
+        value: '9',
+        definition: '命中逾期回款、订单确认延迟、商机阶段异常任一规则的客户数，按客户去重。',
+        freshness: '2026-06-08 08:20',
+        owner: '客户风险规则集 / Dora 自动巡检',
+        unit: '',
+        values: {
+          '7d': [3, 4, 4, 5, 6, 8, 9],
+          '30d': [2, 3, 4, 5, 7, 8, 9]
+        },
+        sources: [
+          ['FIN', '逾期回款明细'],
+          ['CRM', '订单与商机阶段'],
+          ['RULE', '经营风险规则配置']
+        ],
+        steps: ['执行三类风险规则', '按客户统一编码去重', '计算风险等级和影响金额', '生成今日优先跟进列表'],
+        samples: [
+          ['逾期回款客户', '5 个'],
+          ['订单确认延迟', '3 个'],
+          ['商机阶段异常', '1 个']
+        ],
+        bars: {
+          '7d': [24, 32, 38, 48, 60, 76, 90],
+          '30d': [20, 28, 38, 50, 65, 78, 90]
+        },
+        labels: {
+          '7d': ['06/02', '06/03', '06/04', '06/05', '06/06', '06/07', '06/08'],
+          '30d': ['第1周', '第2周', '第3周', '第4周', '本周', '均值', '昨日']
+        },
+        lowIndex: 6,
+        drill: [
+          ['逾期回款客户', '5 个客户超过承诺节点', '5'],
+          ['订单确认延迟', '3 个 KA 客户待确认', '3'],
+          ['商机阶段异常', '1 个负责人未更新阶段', '1']
+        ]
+      }
     };
 
     const expertFilters = [
@@ -3051,6 +4152,16 @@
       { id: 'market', initial: '营', title: '营销复盘助手', creator: 'Marketing Admin', desc: '活动复盘、客群洞察和转化分析，辅助市场团队优化投放。', tone: 'rose', tags: ['市场', '运营'], usage: '2.65k', favorite: false, created: false, recent: true, unread: 0, conversation: 'market' },
       { id: 'risk', initial: '险', title: '法务风险助手', creator: 'Legal Admin', desc: '合同风险、异常客户和合规预警归因，支持法务快速跟进。', tone: 'rose', tags: ['法务'], usage: '1.24k', favorite: false, created: false, recent: false, unread: 0, conversation: 'risk' }
     ];
+
+    const expertStarterQuestions = {
+      smart: ['帮我查一下苏南渠道昨日销售额下降最多的客户', '对比近 7 天高意向商机转化率', '列出回款完成率低于 80% 的区域'],
+      report: ['把这次经营分析整理成日报摘要', '生成一页领导汇报版 PPT 大纲', '把异常原因和行动项整理成表格'],
+      analysis: ['拆解华东区销售额下降的主要原因', '分析预算完成率低于目标的区域', '找出影响回款完成率的关键客户'],
+      model: ['解释销售额和回款完成率的指标口径', '帮我检查这个指标是否有重复计算', '把商机转化模型的字段关系讲清楚'],
+      finance: ['查询华东区昨日回款延期客户', '分析差旅费用本月异常增长原因', '列出采购付款待审批金额最高的部门'],
+      market: ['复盘 618 活动带来的新增商机质量', '分析市场活动线索到订单的转化漏斗', '找出客群触达后复购率最高的活动'],
+      risk: ['检查重点客户合同中的付款风险', '列出当前需要法务优先跟进的客户', '分析逾期回款客户的合同条款风险']
+    };
 
     const conversationTurns = {
       dora: [
@@ -3196,13 +4307,24 @@
     }
 
     function renderVariantBar() {
-      const frameworkLabel = variantState.framework === 'side-menu' ? '侧边菜单' : '更多菜单';
+      const frameworkLabelMap = {
+        'side-menu': '侧边菜单',
+        'more-menu': '更多菜单',
+        'flat-menu': '菜单平铺'
+      };
       const titleLabelMap = {
         'title-only': '仅标题',
         'agent-only': '仅名称',
         'agent-title': '名称+标题'
       };
-      $('variantSummary').textContent = `${frameworkLabel} · ${titleLabelMap[variantState.conversationTitle]}`;
+      const homePlanLabelMap = {
+        stream: '流式',
+        recommended: '带推荐'
+      };
+      $('variantSummary').textContent = `${frameworkLabelMap[variantState.framework]} · ${titleLabelMap[variantState.conversationTitle]} · ${homePlanLabelMap[variantState.homePlan]}`;
+      document.body.dataset.homePlan = variantState.homePlan;
+      if ($('homeSender')) $('homeSender').classList.remove('expanded');
+      setupRecommendedHomeGestures();
       document.querySelectorAll('[data-variant-key]').forEach((button) => {
         button.classList.toggle('active', variantState[button.dataset.variantKey] === button.dataset.variantValue);
       });
@@ -3210,7 +4332,7 @@
     }
 
     function renderFrameworkChrome() {
-      const moreMenu = variantState.framework === 'more-menu';
+      const moreMenu = variantState.framework === 'more-menu' || variantState.framework === 'flat-menu';
       $('homeHistoryBtn').hidden = moreMenu;
       $('homeMoreBtn').hidden = !moreMenu;
       $('conversationHistoryBtn').hidden = moreMenu;
@@ -3230,9 +4352,133 @@
       if (key === 'framework') closeSheets();
       renderVariantBar();
       if (key === 'conversationTitle') renderConversationHeader();
-      const groupLabel = key === 'framework' ? '框架方案' : '会话标题';
+      if (key === 'homePlan') switchRecommendedHomeTab('insight');
+      const groupLabel = key === 'framework' ? '框架方案' : key === 'homePlan' ? '首页方案' : '会话标题';
       const optionLabel = document.querySelector(`[data-variant-key="${key}"][data-variant-value="${value}"]`)?.textContent || '方案';
       showToast(`已切换：${groupLabel} / ${optionLabel}`);
+    }
+
+    function renderDashboardPanel() {
+      const data = dashboardData[activeDashboardKpi];
+      $('dashboardPanelTitle').textContent = data.title;
+      document.querySelectorAll('[data-dashboard-kpi]').forEach((button) => {
+        button.classList.toggle('active', button.dataset.dashboardKpi === activeDashboardKpi);
+      });
+      document.querySelectorAll('[data-dashboard-range]').forEach((button) => {
+        button.classList.toggle('active', button.dataset.dashboardRange === activeDashboardRange);
+      });
+      $('dashboardChart').innerHTML = data.bars[activeDashboardRange].map((value, index) => `
+        <button class="dashboard-bar ${index === data.lowIndex ? 'is-low' : ''}" type="button" onclick="openDashboardLineage('${activeDashboardKpi}', 'trend', ${index})">
+          <span class="dashboard-bar-value">${data.values[activeDashboardRange][index]}${data.unit}</span>
+          <span class="dashboard-bar-plot"><i style="height:${value}%"></i></span>
+          <span class="dashboard-bar-label">${data.labels[activeDashboardRange][index]}</span>
+        </button>
+      `).join('');
+      $('dashboardDrillList').innerHTML = data.drill.map((item, index) => `
+        <button class="dashboard-drill-item" type="button" onclick="openDashboardLineage('${activeDashboardKpi}', 'drill', ${index})">
+          <span class="dashboard-drill-rank">${index + 1}</span>
+          <span class="dashboard-drill-copy"><strong>${item[0]}</strong><span>${item[1]}</span></span>
+          <span class="dashboard-drill-value">${item[2]}</span>
+        </button>
+      `).join('');
+    }
+
+    function switchDashboardKpi(key, showLineage = false) {
+      activeDashboardKpi = key;
+      renderDashboardPanel();
+      const label = document.querySelector(`[data-dashboard-kpi="${key}"] span`)?.textContent || '指标';
+      if (showLineage) {
+        openDashboardLineage(key, 'metric');
+        return;
+      }
+      showToast(`已查看：${label}`);
+    }
+
+    function switchDashboardRange(range) {
+      activeDashboardRange = range;
+      renderDashboardPanel();
+    }
+
+    function switchRecommendedHomeTab(tab) {
+      recommendedHomeTab = tab;
+      document.querySelectorAll('#homeContentSwitch button').forEach((button) => {
+        button.classList.toggle('active', button.textContent.trim() === (tab === 'insight' ? '洞察' : '推荐'));
+      });
+      const insightPanel = $('homeInsightPanel');
+      const recommendPanel = $('homeRecommendPanel');
+      if (insightPanel && recommendPanel) {
+        insightPanel.hidden = tab !== 'insight';
+        recommendPanel.hidden = tab !== 'recommend';
+      }
+      showToast(tab === 'insight' ? '已切换到洞察' : '已切换到推荐');
+    }
+
+    function setupRecommendedHomeGestures() {
+      const homePlan = document.querySelector('.home-plan-recommend');
+      const switcher = $('homeContentSwitch');
+      [homePlan, switcher].forEach((target) => {
+        if (!target || target.dataset.swipeReady) return;
+        target.dataset.swipeReady = 'true';
+        target.addEventListener('touchstart', (event) => {
+          if (variantState.homePlan !== 'recommended') return;
+          const touch = event.touches[0];
+          homeSwipeStart = { x: touch.clientX, y: touch.clientY };
+        }, { passive: true });
+        target.addEventListener('touchend', (event) => {
+          if (!homeSwipeStart || variantState.homePlan !== 'recommended') return;
+          const touch = event.changedTouches[0];
+          const deltaX = touch.clientX - homeSwipeStart.x;
+          const deltaY = touch.clientY - homeSwipeStart.y;
+          homeSwipeStart = null;
+          if (Math.abs(deltaX) < 54 || Math.abs(deltaX) < Math.abs(deltaY) * 1.35) return;
+          if (deltaX < 0 && recommendedHomeTab === 'insight') switchRecommendedHomeTab('recommend');
+          if (deltaX > 0 && recommendedHomeTab === 'recommend') switchRecommendedHomeTab('insight');
+        }, { passive: true });
+      });
+    }
+
+    function openDashboardLineage(key = activeDashboardKpi, sourceType = 'metric', index = 0) {
+      const data = dashboardData[key];
+      const rangeLabel = activeDashboardRange === '7d' ? '近 7 天' : '近 30 天';
+      const trendLabel = data.labels[activeDashboardRange][index] || data.labels[activeDashboardRange].at(-1);
+      const drill = data.drill[index] || data.drill[0];
+      const contextText = sourceType === 'trend'
+        ? `当前查看 ${trendLabel} 的${data.metric}趋势点，系统展示该时间点的来源和计算链路。`
+        : sourceType === 'drill'
+          ? `当前查看“${drill[0]}”明细项，系统展示该异常/贡献项如何被计算出来。`
+          : `当前查看${data.metric}指标卡，系统展示口径、来源和更新时间。`;
+      openSheet(`${data.metric} · 数据溯源`, `
+        <div class="lineage-sheet" data-anno="数据溯源用于解释指标来自哪里、怎么算出来、何时更新，增强移动端看板可信度。">
+          <div class="lineage-summary">
+            <strong>${data.value}</strong>
+            <span>${contextText}</span>
+          </div>
+          <div class="lineage-meta-grid">
+            <div class="lineage-meta"><span>指标口径</span><strong>${data.definition}</strong></div>
+            <div class="lineage-meta"><span>更新时间</span><strong>${data.freshness}</strong></div>
+            <div class="lineage-meta"><span>统计范围</span><strong>华东区 · ${rangeLabel}</strong></div>
+            <div class="lineage-meta"><span>负责人</span><strong>${data.owner}</strong></div>
+          </div>
+          <div class="lineage-section">
+            <p class="lineage-section-title">数据来源</p>
+            <div class="lineage-source-list">
+              ${data.sources.map((item) => `<div class="lineage-source"><span class="lineage-source-icon">${item[0]}</span><span><strong>${item[1]}</strong><span>已通过权限校验，参与本次指标计算</span></span></div>`).join('')}
+            </div>
+          </div>
+          <div class="lineage-section">
+            <p class="lineage-section-title">计算链路</p>
+            <div class="lineage-step-list">
+              ${data.steps.map((step, stepIndex) => `<div class="lineage-step"><span class="lineage-step-index">${stepIndex + 1}</span><span><strong>${step}</strong><span>自动执行并记录在本次看板刷新日志中</span></span></div>`).join('')}
+            </div>
+          </div>
+          <div class="lineage-section">
+            <p class="lineage-section-title">${sourceType === 'drill' ? '当前明细' : '样例明细'}</p>
+            <div class="lineage-sample-list">
+              ${(sourceType === 'drill' ? [drill, ...data.samples.slice(0, 2)] : data.samples).map((item) => `<div class="lineage-sample"><strong>${item[0]}</strong><span>${item[1]}</span></div>`).join('')}
+            </div>
+          </div>
+        </div>
+      `);
     }
 
     function handleVariantOption(option) {
@@ -3369,6 +4615,34 @@
       ` : '';
       $('chatBody').innerHTML = shareHeader + turns.map(conversationTurnHtml).join('');
       renderCoordinationTimeline();
+    }
+
+    function currentExpertProfile() {
+      return experts.find((expert) => expert.conversation === currentConversationType) || experts[0];
+    }
+
+    function renderExpertNewConversation() {
+      const expert = currentExpertProfile();
+      const questions = expertStarterQuestions[currentConversationType] || expertStarterQuestions.smart;
+      $('chatBody').innerHTML = `
+        <div class="expert-welcome">
+          <div class="expert-welcome-hero">
+            <span class="avatar ${expert.tone}">${expert.initial}</span>
+            <strong>${expert.title}</strong>
+            <p>你好，我是${expert.title}。${expert.desc} 你可以直接语音提问，也可以从下面的问题开始。</p>
+            <div class="expert-welcome-tags">${expert.tags.map((tag) => `<span class="tag">${tag}</span>`).join('')}</div>
+          </div>
+          <div class="expert-question-list">
+            ${questions.map((question) => `<button class="expert-question" type="button" data-question="${question}" onclick="useExpertStarterQuestion(this.dataset.question)">${question}<span>→</span></button>`).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function useExpertStarterQuestion(question) {
+      $('chatInput').value = question;
+      expandSenderText('chat');
+      showToast('已填入推荐问题');
     }
 
     function openConversationShare() {
@@ -3531,14 +4805,10 @@
       $('conversationBackBtn').hidden = currentConversationType === 'dora';
       $('newConversationBtn').hidden = false;
       setScreen('conversation');
-      $('chatBody').innerHTML = `
-        <div class="chat-empty-state">
-          <strong>开始新的${nextMeta.agentName}会话</strong>
-          <span>在下方输入需求，或添加资料、会话文件后再发送。</span>
-        </div>
-      `;
+      renderExpertNewConversation();
       $('chatInput').value = '';
       $('chatFiles').innerHTML = '';
+      $('chatSender').classList.remove('expanded');
       showToast('已开启新对话');
     }
 
@@ -3796,6 +5066,32 @@
       `;
     }
 
+    function openAgentFrameworkMenu() {
+      if (variantState.framework === 'flat-menu') {
+        openAgentFlatMenu();
+        return;
+      }
+      openAgentMoreSheet('history');
+    }
+
+    function openAgentFlatMenu() {
+      const agent = activeAgentForMoreMenu();
+      openSheet(agent.name, `
+        <div class="agent-flat-menu" data-anno="方案C：菜单平铺先展示两个入口，再进入对应的会话记录或定时任务内容。">
+          <button class="agent-flat-option" type="button" onclick="openAgentMoreSheet('history')">
+            <span class="agent-flat-icon">记</span>
+            <span class="agent-flat-copy"><strong>会话记录</strong><span>查看这个 Agent 的历史会话和未读提醒</span></span>
+            <span class="agent-flat-chevron">›</span>
+          </button>
+          <button class="agent-flat-option" type="button" onclick="openAgentMoreSheet('tasks')">
+            <span class="agent-flat-icon">时</span>
+            <span class="agent-flat-copy"><strong>定时任务</strong><span>管理自动推送、异常提醒和周期任务</span></span>
+            <span class="agent-flat-chevron">›</span>
+          </button>
+        </div>
+      `, 'agent-more');
+    }
+
     function openAgentMoreSheet(tab = 'history') {
       const agent = activeAgentForMoreMenu();
       const isHistory = tab === 'history';
@@ -3843,11 +5139,13 @@
 
     function sendRecommendedQuestion(question) {
       $('homeInput').value = question;
+      expandSenderText('home');
       openConversation('dora');
     }
 
     function targetFilesContainer() {
       if (activeContext === 'chat') return $('chatFiles');
+      if (activeContext === 'detailSheet') return $('detailSheetFiles');
       if (activeContext === 'detail') return null;
       return $('homeFiles');
     }
@@ -4022,6 +5320,42 @@
       showToast(`已添加 ${count} 个${def.assetLabel}`);
     }
 
+    function senderHtml(context, textId, placeholder, voiceLabel, sendAction, includeReference = false) {
+      return `
+        <div class="voice-sender" id="${context}Sender">
+          <div class="sender-files" id="${context}Files"></div>
+          <div class="voice-compact-row">
+            <button class="round-btn" type="button" onclick="openToolSheet('${context}')">＋</button>
+            <button class="voice-primary-btn" type="button" onclick="openVoiceSheet('${context}')" aria-label="语音输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8 21h8"/></svg><span>${voiceLabel}</span></button>
+            <div class="sender-text-panel">
+              <textarea id="${textId}" placeholder="${placeholder}"></textarea>
+            </div>
+            ${includeReference ? `<button class="tool-pill" type="button" onclick="openFilesSheet('input')">@ 引用</button>` : ''}
+            <button class="round-btn keyboard-btn" type="button" onclick="toggleSenderText('${context}')" aria-label="键盘输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h.01"/><path d="M11 9h.01"/><path d="M15 9h.01"/><path d="M17 13h.01"/><path d="M13 13h.01"/><path d="M9 13h.01"/><path d="M7 17h10"/></svg></button>
+            <button class="round-btn primary" type="button" onclick="${sendAction}" aria-label="发送">↑</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function senderForContext(context) {
+      return $(`${context}Sender`);
+    }
+
+    function toggleSenderText(context) {
+      const sender = senderForContext(context);
+      if (!sender) return;
+      sender.classList.toggle('expanded');
+      sender.querySelector('textarea')?.focus();
+    }
+
+    function expandSenderText(context) {
+      const sender = senderForContext(context);
+      if (!sender) return;
+      sender.classList.add('expanded');
+      sender.querySelector('textarea')?.focus();
+    }
+
     function openVoiceSheet(context) {
       activeContext = context;
       voiceSeconds = 0;
@@ -4064,6 +5398,7 @@
       const input = inputForContext();
       input.value = recognizedText;
       closeSheets();
+      expandSenderText(activeContext);
       showToast('已回填到输入框');
     }
 
@@ -4075,6 +5410,7 @@
     function inputForContext() {
       if (activeContext === 'chat') return $('chatInput');
       if (activeContext === 'detail') return $('detailInput');
+      if (activeContext === 'detailSheet') return $('detailSheetInput');
       return $('homeInput');
     }
 
@@ -4082,6 +5418,7 @@
       const input = inputForContext();
       input.value = $('voiceTranscriptText')?.textContent || voiceTranscript;
       closeSheets();
+      expandSenderText(activeContext);
       showToast('语音已转为文字');
     }
 
@@ -4092,6 +5429,7 @@
       closeSheets();
       if (activeContext === 'chat') sendChat();
       else if (activeContext === 'home') openConversation('dora');
+      else if (activeContext === 'detail') sendDetailQuestion();
       else showToast('已发送语音需求');
     }
 
@@ -4147,43 +5485,26 @@
     }
 
     function openDetailChatSheet() {
-      activeContext = 'detail';
+      activeContext = 'detailSheet';
       openSheet('基于当前资料处理', `
         <div class="segmented">
           <button class="active" type="button">根据文件回答</button>
           <button type="button">对文件进行修改</button>
         </div>
         <div class="message agent" style="margin:0 0 12px"><span class="avatar small">D</span><div class="bubble">我可以读取当前资料内容，继续解释规则、改页面、生成新版本或追溯来源会话。</div></div>
-        <div class="compact-sender">
-          <textarea id="detailSheetInput" placeholder="例如：把预测规则改成近 6 个月加权平均"></textarea>
-          <div class="compact-tools">
-            <button class="round-btn" type="button" onclick="openToolSheet('detail')">＋</button>
-            <button class="tool-pill" type="button" onclick="openFilesSheet('input')">@ 引用</button>
-            <span style="flex:1"></span>
-            <button class="round-btn mic-btn" type="button" onclick="openVoiceSheet('detail')" aria-label="语音输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8 21h8"/></svg></button>
-            <button class="round-btn primary" type="button" onclick="closeSheets();showToast('已提交资料处理任务')">↑</button>
-          </div>
-        </div>
+        ${senderHtml('detailSheet', 'detailSheetInput', '例如：把预测规则改成近 6 个月加权平均', '说出处理要求', "closeSheets();showToast('已提交资料处理任务')", true)}
       `);
     }
 
     function startDetailSheetConversation() {
-      activeContext = 'detail';
+      activeContext = 'detailSheet';
       openSheet('Dora', `
         <div class="detail-chat-layout">
           <div class="detail-chat-thread">
             <div class="info-card"><strong>${$('detailTitle').textContent}</strong><p>已开启新的资料对话，可以继续围绕当前资料发起追问。</p></div>
             <div class="message agent" style="margin:0"><span class="avatar small">D</span><div class="bubble">我已准备好基于当前资料回答。你可以问我指标含义、预测规则、风险原因，或让我生成新的行动清单。</div></div>
           </div>
-          <div class="compact-sender">
-            <textarea id="detailSheetInput" placeholder="继续追问当前资料"></textarea>
-            <div class="compact-tools">
-              <button class="round-btn" type="button" onclick="openToolSheet('detail')">＋</button>
-              <span style="flex:1"></span>
-              <button class="round-btn mic-btn" type="button" onclick="openVoiceSheet('detail')" aria-label="语音输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8 21h8"/></svg></button>
-              <button class="round-btn primary" type="button" onclick="showToast('已继续追问当前资料')">↑</button>
-            </div>
-          </div>
+          ${senderHtml('detailSheet', 'detailSheetInput', '继续追问当前资料', '继续语音追问', "showToast('已继续追问当前资料')")}
         </div>
       `, 'detail-chat');
     }
@@ -4200,15 +5521,7 @@
             <div class="message user" style="margin:0;justify-content:flex-end"><div class="bubble">${text}</div></div>
             <div class="message agent" style="margin:0"><span class="avatar small">D</span><div class="bubble">我已读取当前资料。这个文件主要包含销售预测、逐月销售趋势、预测规则配置和风险提示。你可以继续让我解释某个指标、修改规则，或基于这份资料生成新的行动清单。</div></div>
           </div>
-          <div class="compact-sender">
-            <textarea id="detailSheetInput" placeholder="继续追问当前资料"></textarea>
-            <div class="compact-tools">
-              <button class="round-btn" type="button" onclick="openToolSheet('detail')">＋</button>
-              <span style="flex:1"></span>
-              <button class="round-btn mic-btn" type="button" onclick="openVoiceSheet('detail')" aria-label="语音输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8 21h8"/></svg></button>
-              <button class="round-btn primary" type="button" onclick="showToast('已继续追问当前资料')">↑</button>
-            </div>
-          </div>
+          ${senderHtml('detailSheet', 'detailSheetInput', '继续追问当前资料', '继续语音追问', "showToast('已继续追问当前资料')")}
         </div>
       `, 'detail-chat');
     }
@@ -4273,6 +5586,7 @@
     });
 
     renderVariantBar();
+    renderDashboardPanel();
     renderExperts();
   </script>
 </body>
