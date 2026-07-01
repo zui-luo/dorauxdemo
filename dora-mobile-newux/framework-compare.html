@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Dora Mobile · 框架方案对比</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      --brand: #0047FD;
+      --brand-soft: #EAF0FF;
+      --ink-1: #fff;
+      --ink-2: #F7F8FA;
+      --ink-3: #EFF1F6;
+      --ink-4: #E1E5EF;
+      --ink-8: #7D879F;
+      --ink-9: #59637C;
+      --ink-11: #091640;
+      --green: #1F9A70;
+      --orange: #F26B4F;
+      --purple: #7857FF;
+      --pink: #FF4FB3;
+      --shadow: 0 18px 54px rgba(9, 30, 64, 0.18);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      color: var(--ink-11);
+      background: #DCE2EE;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .page {
+      height: 100%;
+      display: grid;
+      grid-template-columns: minmax(320px, 420px) minmax(430px, 1fr);
+      gap: 24px;
+      padding: 22px;
+      position: relative;
+    }
+    .page.notes-compact {
+      grid-template-columns: 1fr;
+    }
+    .page.notes-compact .stage {
+      grid-column: 1;
+    }
+    .control-panel {
+      min-height: 0;
+      overflow: auto;
+      border: 1px solid rgba(255, 255, 255, 0.62);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.74);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      padding: 18px;
+    }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .control-panel h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.25;
+    }
+    .panel-toggle {
+      height: 32px;
+      border: 1px solid rgba(0, 71, 253, 0.24);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--brand);
+      padding: 0 12px;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .panel-toggle.active {
+      background: var(--brand);
+      color: #fff;
+      border-color: var(--brand);
+    }
+    .control-panel p {
+      margin: 8px 0 0;
+      color: var(--ink-9);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .control-panel.compact {
+      position: absolute;
+      top: 22px;
+      left: 22px;
+      z-index: 40;
+      width: auto;
+      min-height: auto;
+      overflow: visible;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+      padding: 0;
+    }
+    .control-panel.compact .panel-head {
+      justify-content: flex-end;
+    }
+    .control-panel.compact h1,
+    .control-panel.compact .intro-copy,
+    .control-panel.compact .scheme-list,
+    .control-panel.compact .route-info {
+      display: none;
+    }
+    .control-panel.compact .panel-toggle {
+      height: 40px;
+      padding: 0 18px;
+      box-shadow: 0 10px 26px rgba(0, 71, 253, 0.22);
+    }
+    .scheme-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .scheme-card {
+      width: 100%;
+      border: 1px solid var(--ink-4);
+      border-radius: 16px;
+      background: #fff;
+      color: inherit;
+      padding: 13px;
+      text-align: left;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+    }
+    .scheme-card.active {
+      border-color: rgba(0, 71, 253, 0.72);
+      background: linear-gradient(135deg, var(--brand-soft), #fff);
+      box-shadow: 0 10px 28px rgba(0, 71, 253, 0.18);
+      transform: translateY(-1px);
+    }
+    .scheme-card strong {
+      display: block;
+      font-size: 15px;
+      line-height: 1.3;
+    }
+    .scheme-card span {
+      display: block;
+      margin-top: 5px;
+      color: var(--ink-9);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .stage {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      position: relative;
+    }
+    .phone {
+      width: min(430px, 100%);
+      height: min(860px, calc(100vh - 44px));
+      position: relative;
+      overflow: hidden;
+      border-radius: 36px;
+      background: var(--ink-2);
+      box-shadow: 0 0 0 1px rgba(9, 30, 64, 0.08), 0 30px 80px rgba(9, 30, 64, 0.24);
+    }
+    .host-head {
+      height: 56px;
+      border-bottom: 1px solid var(--ink-4);
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 10;
+    }
+    .host-head strong { font-size: 17px; }
+    .host-btn {
+      position: absolute;
+      top: 10px;
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--ink-11);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .host-btn.left { left: 9px; }
+    .host-btn.right { right: 9px; }
+    .host-btn svg { width: 23px; height: 23px; }
+    .screen {
+      position: absolute;
+      inset: 56px 0 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--ink-2);
+    }
+    .screen-head {
+      min-height: 58px;
+      padding: 10px 14px 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(247, 248, 250, 0.92);
+      border-bottom: 1px solid rgba(225, 229, 239, 0.78);
+      backdrop-filter: blur(16px);
+      z-index: 4;
+    }
+    .screen-title {
+      min-width: 0;
+      flex: 1;
+      display: grid;
+      gap: 2px;
+    }
+    .screen-title strong {
+      font-size: 17px;
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .screen-title span {
+      color: var(--ink-9);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .icon-btn, .round-btn {
+      border: 1px solid var(--ink-4);
+      background: #fff;
+      color: var(--ink-11);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+    }
+    .text-btn {
+      height: 34px;
+      border-radius: 999px;
+      padding: 0 11px;
+      border: 1px solid rgba(0, 71, 253, 0.22);
+      background: var(--brand-soft);
+      color: var(--brand);
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .header-action {
+      height: 34px;
+      border: 1px solid rgba(0, 71, 253, 0.18);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--brand);
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .round-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+    }
+    .primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .content {
+      min-height: 0;
+      flex: 1;
+      overflow: auto;
+      padding: 14px 14px 134px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .no-tab .content { padding-bottom: 86px; }
+    .card {
+      border: 1px solid var(--ink-4);
+      border-radius: 18px;
+      background: #fff;
+      padding: 14px;
+      box-shadow: 0 8px 22px rgba(9, 30, 64, 0.06);
+    }
+    .card + .card { margin-top: 12px; }
+    .greeting {
+      border: none;
+      background: transparent;
+      box-shadow: none;
+      padding: 6px 2px 2px;
+    }
+    .greeting h2 { margin: 0; font-size: 24px; }
+    .greeting p { margin: 7px 0 0; color: var(--ink-9); font-size: 13px; line-height: 1.45; }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .kpi {
+      border: 1px solid var(--ink-4);
+      border-radius: 14px;
+      background: #fff;
+      padding: 10px 8px;
+    }
+    .kpi span { color: var(--ink-9); font-size: 11px; }
+    .kpi strong { display:block; margin-top: 6px; color: var(--brand); font-size: 19px; }
+    .bars {
+      height: 132px;
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      align-items: end;
+      padding: 14px 10px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #F8FBFF, #fff);
+    }
+    .bars i {
+      border-radius: 7px 7px 3px 3px;
+      background: linear-gradient(180deg, #86A6FF, var(--brand));
+    }
+    .bars i.hot { background: linear-gradient(180deg, #FF9C86, var(--orange)); }
+    .row-list {
+      display: grid;
+      gap: 9px;
+    }
+    .row {
+      width: 100%;
+      min-height: 58px;
+      border: 1px solid var(--ink-4);
+      border-radius: 15px;
+      background: #fff;
+      color: inherit;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px;
+      text-align: left;
+    }
+    .avatar, .file-badge, .source-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 13px;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--brand-soft);
+      color: var(--brand);
+      font-weight: 900;
+      font-size: 13px;
+    }
+    .file-badge { background: #E9F8F2; color: var(--green); }
+    .source-badge { background: #FFF0E8; color: var(--orange); }
+    .row-copy { min-width: 0; flex: 1; }
+    .row-copy strong {
+      display: block;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .row-copy span {
+      display: block;
+      margin-top: 4px;
+      color: var(--ink-9);
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .action-link {
+      color: var(--brand);
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .sender {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: calc(74px + var(--safe-bottom));
+      z-index: 8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 58px;
+      border: 1px solid var(--ink-4);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.96);
+      padding: 8px;
+      box-shadow: 0 12px 30px rgba(9, 30, 64, 0.12);
+      backdrop-filter: blur(18px);
+    }
+    .no-tab .sender { bottom: calc(12px + var(--safe-bottom)); }
+    .scheme-b.screen-home .content { padding-bottom: 108px; }
+    .scheme-b.screen-home .sender {
+      left: 0;
+      right: 0;
+      bottom: 0;
+      min-height: 74px;
+      border-right: none;
+      border-bottom: none;
+      border-left: none;
+      border-radius: 24px 24px 0 0;
+      padding: 10px 12px calc(10px + var(--safe-bottom));
+      box-shadow: none;
+      background: rgba(255, 255, 255, 0.98);
+    }
+    .sender-main {
+      flex: 1;
+      height: 40px;
+      border: none;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--brand), var(--purple));
+      color: #fff;
+      font-weight: 900;
+    }
+    .sender-input {
+      flex: 1;
+      height: 40px;
+      border: 1px solid var(--ink-4);
+      border-radius: 999px;
+      background: #fff;
+      padding: 0 13px;
+      min-width: 0;
+    }
+    .bottom-nav {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 7;
+      height: calc(68px + var(--safe-bottom));
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      padding: 7px 18px calc(7px + var(--safe-bottom));
+      background: rgba(255,255,255,0.9);
+      border-top: 1px solid rgba(225, 229, 239, 0.8);
+      backdrop-filter: blur(18px);
+    }
+    .bottom-nav button {
+      border: none;
+      background: transparent;
+      color: var(--ink-8);
+      display: grid;
+      place-items: center;
+      gap: 2px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .bottom-nav button.active { color: var(--brand); }
+    .nav-dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 8px;
+      background: currentColor;
+      opacity: 0.86;
+    }
+    .drawer-mask {
+      position: absolute;
+      inset: 56px 0 0;
+      z-index: 30;
+      display: none;
+      background: rgba(9, 22, 64, 0.35);
+    }
+    .drawer-mask.open { display: block; }
+    .drawer-mask.menu-open { background: transparent; }
+    .toast {
+      position: absolute;
+      left: 50%;
+      bottom: calc(96px + var(--safe-bottom));
+      z-index: 60;
+      transform: translateX(-50%);
+      min-height: 36px;
+      border-radius: 999px;
+      background: rgba(9, 22, 64, 0.86);
+      color: #fff;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 0 14px;
+      font-size: 12px;
+      font-weight: 800;
+      pointer-events: none;
+    }
+    .toast.show { display: inline-flex; }
+    .drawer {
+      background: #fff;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .drawer.side-drawer {
+      width: 74%;
+      min-width: 300px;
+      height: 100%;
+      padding: 22px 14px 18px;
+    }
+    .drawer.b-menu-overlay {
+      position: absolute;
+      inset: 0;
+      background: var(--ink-2);
+      box-shadow: none;
+      gap: 0;
+    }
+    .drawer.b-menu-overlay.push-in {
+      animation: bMenuPushIn 0.28s cubic-bezier(0.2, 0.86, 0.22, 1) both;
+    }
+    @keyframes bMenuPushIn {
+      from {
+        transform: translateX(-92%);
+        box-shadow: 20px 0 42px rgba(9, 30, 64, 0.16);
+      }
+      to {
+        transform: translateX(0);
+        box-shadow: none;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .drawer.b-menu-overlay.push-in {
+        animation: none;
+      }
+    }
+    .b-menu-body {
+      min-height: 0;
+      flex: 1;
+      overflow: auto;
+      padding: 22px 22px 92px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .b-menu-overlay .bottom-nav {
+      position: absolute;
+    }
+    .drawer.action-sheet {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: calc(12px + var(--safe-bottom));
+      border-radius: 24px;
+      padding: 14px;
+    }
+    .drawer h3 { margin: 0; font-size: 18px; }
+    .side-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 4px 16px;
+    }
+    .profile-dot {
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      background: #D9D9D9;
+      flex-shrink: 0;
+    }
+    .side-profile strong { display: block; font-size: 16px; }
+    .side-title {
+      margin: 0 0 12px;
+      font-size: 24px;
+      line-height: 1.15;
+    }
+    .side-action-list {
+      display: grid;
+      gap: 9px;
+    }
+    .module-shortcuts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 0 0 8px;
+    }
+    .module-shortcut {
+      min-height: 72px;
+      border: 1px solid var(--ink-4);
+      border-radius: 15px;
+      background: #fff;
+      color: inherit;
+      display: grid;
+      place-items: center;
+      gap: 7px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .module-shortcut .avatar,
+    .module-shortcut .file-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 11px;
+    }
+    .side-action {
+      width: 100%;
+      min-height: 52px;
+      border: 1px solid var(--ink-4);
+      border-radius: 14px;
+      background: #fff;
+      color: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      text-align: left;
+      font-size: 15px;
+      font-weight: 800;
+    }
+    .side-search {
+      min-height: 48px;
+      border: 1px solid var(--ink-4);
+      border-radius: 14px;
+      background: #fff;
+      color: var(--ink-8);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 13px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .side-group-title {
+      margin: 12px 0 2px;
+      color: var(--ink-11);
+      font-size: 15px;
+      font-weight: 900;
+    }
+    .history-list {
+      display: grid;
+      gap: 4px;
+    }
+    .history-label {
+      margin: 10px 0 2px;
+      color: var(--ink-8);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .history-item {
+      width: 100%;
+      border: none;
+      background: transparent;
+      color: var(--ink-11);
+      min-height: 34px;
+      padding: 4px 0;
+      text-align: left;
+      font-size: 14px;
+      line-height: 1.3;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .menu-page {
+      display: grid;
+      gap: 12px;
+      padding: 6px 2px 0;
+    }
+    .menu-kicker {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 2px;
+    }
+    .menu-kicker strong {
+      font-size: 24px;
+      line-height: 1.15;
+    }
+    .menu-user-chip {
+      min-width: 0;
+      height: 30px;
+      border: 1px solid var(--ink-4);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.76);
+      color: var(--ink-9);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 10px 0 7px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .menu-user-chip::before {
+      content: "";
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      background: #D9D9D9;
+      flex-shrink: 0;
+    }
+    .menu-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 2px 2px 4px;
+    }
+    .menu-profile strong { font-size: 15px; }
+    .menu-title {
+      margin: 0;
+      font-size: 23px;
+      line-height: 1.15;
+    }
+    .insight-card {
+      width: 100%;
+      min-height: 58px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #165DFF, #714DFF);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      text-align: left;
+      box-shadow: 0 12px 24px rgba(0, 71, 253, 0.22);
+    }
+    .insight-card strong { display: block; font-size: 14px; }
+    .insight-card span { display: block; margin-top: 4px; font-size: 11px; opacity: 0.86; }
+    .drawer-section {
+      border: 1px solid var(--ink-4);
+      border-radius: 16px;
+      padding: 10px;
+    }
+    .drawer-section strong { display:block; margin-bottom: 8px; font-size: 13px; }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 9px;
+    }
+    .menu-tile {
+      min-height: 76px;
+      border: 1px solid var(--ink-4);
+      border-radius: 15px;
+      background: #fff;
+      color: inherit;
+      display: grid;
+      align-content: center;
+      justify-items: start;
+      gap: 4px;
+      padding: 11px;
+      text-align: left;
+    }
+    .menu-tile strong { font-size: 14px; }
+    .menu-tile span { color: var(--ink-9); font-size: 11px; }
+    .route-info {
+      margin-top: 14px;
+      border-top: 1px solid var(--ink-4);
+      padding-top: 12px;
+      display: grid;
+      gap: 6px;
+    }
+    .route-info strong {
+      color: var(--ink-11);
+      font-size: 12px;
+    }
+    .route-info span {
+      color: var(--ink-9);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .route-info p {
+      margin: 0;
+      color: var(--ink-9);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    @media (max-width: 900px) {
+      body { overflow: hidden; }
+      .page {
+        min-height: 100dvh;
+        height: 100dvh;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: 10px;
+        padding: 12px;
+      }
+      .control-panel.compact {
+        position: static;
+        z-index: auto;
+        justify-self: start;
+        grid-row: 1;
+      }
+      .page.notes-compact {
+        grid-template-columns: 1fr;
+      }
+      .page.notes-compact .stage {
+        grid-row: 2;
+      }
+      .stage {
+        align-items: start;
+      }
+      .phone {
+        width: min(430px, calc(100vw - 24px));
+        height: min(860px, calc(100dvh - 76px));
+      }
+      .page:not(.notes-compact) {
+        overflow: auto;
+        height: auto;
+      }
+      .page:not(.notes-compact) .phone {
+        height: min(820px, calc(100dvh - 260px));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="page">
+    <aside class="control-panel" id="controlPanel">
+      <div class="panel-head">
+        <h1>框架方案对比</h1>
+        <button class="panel-toggle" id="toggleNotesBtn" type="button" data-action="toggleNotes">收起说明</button>
+      </div>
+      <p class="intro-copy">粉色实线代表下钻到二级页，需要返回；粉色虚线代表当前层内切换，不改变返回栈。右侧手机可以直接点击体验。</p>
+      <div class="scheme-list" id="schemeList"></div>
+      <div class="route-info">
+        <strong>当前路径</strong>
+        <div id="routeNote"></div>
+        <p id="stackText">返回栈：首页</p>
+      </div>
+    </aside>
+    <section class="stage">
+      <div class="phone" id="phone">
+        <div class="host-head">
+          <button class="host-btn left" type="button" data-action="back" aria-label="返回">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg>
+          </button>
+          <strong>Dora平台</strong>
+          <button class="host-btn right" type="button" aria-label="宿主更多">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="12" cy="19" r="1.9"/></svg>
+          </button>
+        </div>
+        <div class="screen" id="screen"></div>
+        <div class="drawer-mask" id="drawerMask" onclick="if(event.target===this) closeDrawer()"></div>
+        <div class="toast" id="toast"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const byId = (id) => document.getElementById(id);
+    const schemes = {
+      a: {
+        title: 'A 固定 3 Tab + 会话二级页',
+        desc: '首页承载仪表板，Dora/专家会话都下钻为沉浸页。',
+        rules: [
+          ['一级结构', '首页 / 专家团 / 资源库保留底部 Tab'],
+          ['Dora 历史与任务', '首页右上更多菜单承载'],
+          ['返回心智', 'Dora 会话返回首页，专家会话返回专家列表'],
+          ['适合验证', '只把会话页无 Tab 化，当前框架是否够用']
+        ]
+      },
+      b: {
+        title: 'B 覆盖菜单 + 沉浸会话',
+        desc: '首页和会话保持沉浸，点击菜单打开带 Tab 的覆盖层。',
+        rules: [
+          ['一级结构', '首页无 Tab，菜单覆盖层内部有平台 Tab'],
+          ['Dora 历史与任务', '覆盖菜单固定承载'],
+          ['返回心智', '菜单不入栈，从专家团进入专家后返回菜单'],
+          ['适合验证', '覆盖菜单是否能兼顾管理和沉浸会话']
+        ]
+      },
+      c: {
+        title: 'C 侧边菜单 + 沉浸会话',
+        desc: '首页作为主工作台，所有管理入口收进侧边菜单。',
+        rules: [
+          ['一级结构', '不使用底部 Tab，侧边菜单承载模块入口'],
+          ['Dora 历史与任务', '侧边菜单固定分组'],
+          ['返回心智', '所有会话返回首页，菜单只是覆盖层'],
+          ['适合验证', '企业微信 H5 能否采用更轻框架']
+        ]
+      }
+    };
+    let scheme = 'a';
+    let screen = 'home';
+    let stack = ['home'];
+    let drawerOpen = false;
+    let drawerType = 'menu';
+    let activeAgent = 'dora';
+    let menuTab = 'dora';
+    let reopenDrawerOnHome = false;
+    let reopenBMenuOnHome = false;
+    let notesCollapsed = false;
+    let toastTimer = 0;
+    let swipeStartX = 0;
+    let swipeStartY = 0;
+    let swipeStartTime = 0;
+
+    function setScheme(next) {
+      scheme = next;
+      screen = 'home';
+      stack = [screen];
+      drawerOpen = false;
+      drawerType = 'menu';
+      menuTab = 'dora';
+      reopenDrawerOnHome = false;
+      reopenBMenuOnHome = false;
+      activeAgent = 'dora';
+      render();
+    }
+
+    function push(next, options = {}) {
+      if (next === screen) {
+        drawerOpen = false;
+        render();
+        return;
+      }
+      if (options.reopenDrawerOnHome) reopenDrawerOnHome = true;
+      syncAgent(next);
+      stack.push(next);
+      screen = next;
+      drawerOpen = false;
+      drawerType = 'menu';
+      render();
+    }
+
+    function replace(next) {
+      syncAgent(next);
+      screen = next;
+      stack[stack.length - 1] = next;
+      drawerOpen = false;
+      drawerType = 'menu';
+      render();
+    }
+
+    function openDashboard() {
+      screen = 'home';
+      stack = ['home'];
+      drawerOpen = false;
+      drawerType = 'menu';
+      menuTab = 'dora';
+      reopenBMenuOnHome = false;
+      activeAgent = 'dora';
+      render();
+    }
+
+    function openFromMenu(next) {
+      syncAgent(next);
+      screen = next;
+      stack = ['home', next];
+      drawerOpen = false;
+      drawerType = 'menu';
+      reopenBMenuOnHome = scheme === 'b' && next.startsWith('expert');
+      render();
+    }
+
+    function sendConversation(next) {
+      syncAgent(next);
+      screen = next;
+      if (next === 'doraExisting') {
+        stack = ['home', next];
+      } else if (next === 'expertChat') {
+        const root = stack.includes('expertList') ? 'expertList' : 'home';
+        stack = [root, next];
+      } else {
+        stack[stack.length - 1] = next;
+      }
+      drawerOpen = false;
+      drawerType = 'menu';
+      render();
+    }
+
+    function syncAgent(next) {
+      if (next.startsWith('expert')) activeAgent = 'expert';
+      if (next.startsWith('dora') || next === 'home') activeAgent = 'dora';
+    }
+
+    function goBack() {
+      if (drawerOpen) {
+        closeDrawer();
+        return;
+      }
+      if (stack.length > 1) {
+        stack.pop();
+        screen = stack[stack.length - 1];
+      } else {
+        screen = 'home';
+      }
+      syncAgent(screen);
+      if (scheme === 'c' && screen === 'home' && reopenDrawerOnHome) {
+        drawerOpen = true;
+        reopenDrawerOnHome = false;
+      }
+      if (scheme === 'b' && screen === 'home' && reopenBMenuOnHome) {
+        drawerOpen = true;
+        drawerType = 'menu';
+        reopenBMenuOnHome = false;
+      }
+      render();
+    }
+
+    function openDrawer() {
+      drawerType = 'menu';
+      if (scheme === 'b') {
+        drawerOpen = true;
+        renderDrawer();
+        return;
+      }
+      drawerOpen = true;
+      renderDrawer();
+    }
+
+    function openMoreMenu() {
+      drawerType = scheme === 'b' && screen.startsWith('expert') ? 'agent' : 'menu';
+      drawerOpen = true;
+      renderDrawer();
+    }
+
+    function closeDrawer() {
+      drawerOpen = false;
+      drawerType = 'menu';
+      hideDrawer();
+    }
+
+    function hideDrawer() {
+      byId('drawerMask').classList.remove('open', 'menu-open');
+    }
+
+    function showToast(text) {
+      clearTimeout(toastTimer);
+      byId('toast').textContent = text;
+      byId('toast').classList.add('show');
+      toastTimer = setTimeout(() => byId('toast').classList.remove('show'), 1300);
+    }
+
+    function schemeCardHtml(key, item) {
+      return `<button class="scheme-card ${scheme === key ? 'active' : ''}" type="button" data-scheme="${key}"><strong>${item.title}</strong><span>${item.desc}</span></button>`;
+    }
+
+    function renderControls() {
+      byId('schemeList').innerHTML = Object.entries(schemes).map(([key, item]) => schemeCardHtml(key, item)).join('');
+      byId('page').classList.toggle('notes-compact', notesCollapsed);
+      byId('controlPanel').classList.toggle('compact', notesCollapsed);
+      byId('toggleNotesBtn').classList.toggle('active', notesCollapsed);
+      byId('toggleNotesBtn').textContent = notesCollapsed ? '展开说明' : '收起说明';
+    }
+
+    function screenShell({ title, subtitle = '', back = false, more = false, menu = false, menuLeft = false, newChat = false, conversationActions = false, body = '', sender = '', tab = true, head = true }) {
+      const noTab = !tab || scheme === 'c' || (scheme === 'b' && screen === 'home');
+      const leadingMenu = menuLeft || (menu && ['b', 'c'].includes(scheme) && screen === 'home');
+      return `
+        ${head ? `
+          <div class="screen-head">
+            ${back ? `<button class="icon-btn" type="button" data-action="back" aria-label="返回">‹</button>` : ''}
+            ${leadingMenu ? `<button class="icon-btn" type="button" data-action="drawer" aria-label="菜单">☰</button>` : ''}
+            <div class="screen-title"><strong>${title}</strong>${subtitle ? `<span>${subtitle}</span>` : ''}</div>
+            ${newChat ? `<button class="text-btn" type="button" data-push="doraNew">新会话</button>` : ''}
+            ${conversationActions ? `<button class="header-action" type="button" data-action="conversationFiles" aria-label="会话文件">会话文件</button><button class="header-action" type="button" data-action="share" aria-label="分享">分享</button>` : ''}
+            ${menu && !leadingMenu ? `<button class="icon-btn" type="button" data-action="drawer" aria-label="菜单">☰</button>` : ''}
+            ${more ? `<button class="icon-btn" type="button" data-action="more" aria-label="更多">…</button>` : ''}
+          </div>
+        ` : ''}
+        <div class="content">${body}</div>
+        ${sender}
+        ${noTab ? '' : bottomNav()}
+      `;
+    }
+
+    function bottomNav() {
+      return `
+        <nav class="bottom-nav">
+          <button class="${screen === 'home' ? 'active' : ''}" type="button" data-replace="home"><span class="nav-dot"></span><span>Dora</span></button>
+          <button class="${screen === 'expertList' ? 'active' : ''}" type="button" data-replace="expertList"><span class="nav-dot"></span><span>专家团</span></button>
+          <button class="${screen === 'space' ? 'active' : ''}" type="button" data-replace="space"><span class="nav-dot"></span><span>资源库</span></button>
+        </nav>
+      `;
+    }
+
+    function senderHtml(label, action, mode = 'push') {
+      const actionAttr = mode === 'send' ? 'data-send' : mode === 'replace' ? 'data-replace' : 'data-push';
+      return `
+        <div class="sender">
+          <button class="round-btn" type="button">＋</button>
+          <button class="sender-main" type="button" ${actionAttr}="${action}">${label}</button>
+          <button class="round-btn" type="button">⌨</button>
+          <button class="round-btn primary" type="button" ${actionAttr}="${action}">↑</button>
+        </div>
+      `;
+    }
+
+    function homeHtml() {
+      const body = `
+        <section class="card greeting"><h2>王总，上午好</h2><p>Dora 已整理华东区昨日经营日报，发现 1 个需要跟进的异常。</p></section>
+        <section class="card">
+          <strong>华东销售经营看板</strong>
+          <div class="kpi-grid">
+            <div class="kpi"><span>昨日销售额</span><strong>428万</strong></div>
+            <div class="kpi"><span>新增商机</span><strong>36</strong></div>
+            <div class="kpi"><span>回款完成率</span><strong>71%</strong></div>
+          </div>
+          <div class="bars"><i style="height:42%"></i><i style="height:58%"></i><i style="height:66%"></i><i style="height:52%"></i><i style="height:76%"></i><i style="height:62%"></i><i class="hot" style="height:90%"></i></div>
+        </section>
+      `;
+      return screenShell({
+        title: 'Dora平台',
+        subtitle: scheme === 'b' ? '首页 · 菜单覆盖层' : scheme === 'c' ? '侧边菜单承载入口' : '首页 · 平台 tab',
+        menu: ['a', 'b', 'c'].includes(scheme),
+        newChat: true,
+        body,
+        sender: senderHtml('说出你的问题', 'doraExisting', 'send'),
+        tab: !['b', 'c'].includes(scheme)
+      });
+    }
+
+    function bMenuDoraHtml() {
+      return `
+        <section class="menu-page">
+          <div class="menu-kicker">
+            <strong>Dora超级智能体</strong>
+            <span class="menu-user-chip">用户XX</span>
+          </div>
+          <button class="insight-card" type="button" data-action="dashboard"><span><strong>Dora 洞察</strong><span>查看经营看板与日报</span></span><span>→</span></button>
+          <div class="side-action-list">
+            <button class="side-action" type="button" data-menu-go="taskList"><span>定时任务</span></button>
+            <button class="side-action" type="button" data-menu-go="doraNew"><span>新会话</span></button>
+          </div>
+          <div class="side-search">⌕ <span>搜索</span></div>
+          <div class="side-group-title">会话记录</div>
+          <div class="history-list">
+            <div class="history-label">今天</div>
+            <button class="history-item" type="button" data-menu-go="doraExisting">广东省潜量最高的10个客户</button>
+            <button class="history-item" type="button" data-menu-go="doraExisting">江苏省销售额</button>
+            <button class="history-item" type="button" data-menu-go="doraExisting">去年门店销售额最高的商品是哪个…</button>
+            <div class="history-label">7天内</div>
+            <button class="history-item" type="button" data-menu-go="doraExisting">江苏省销售额</button>
+            <button class="history-item" type="button" data-menu-go="doraExisting">去年门店销售额最高的商品是哪个…</button>
+            <div class="history-label">30天内</div>
+            <button class="history-item" type="button" data-menu-go="doraExisting">去年门店销售额最高的商品是哪个…</button>
+          </div>
+        </section>
+      `;
+    }
+
+    function bMenuExpertsHtml() {
+      return `
+        <section class="menu-page">
+          <div class="menu-kicker">
+            <strong>专家团</strong>
+            <span class="menu-user-chip">用户XX</span>
+          </div>
+          <div class="row-list">
+            <button class="row" type="button" data-menu-go="expertNew"><span class="avatar">问</span><span class="row-copy"><strong>智能问数</strong><span>指标口径、异常区域、客户明细</span></span><em class="action-link">进入</em></button>
+            <button class="row" type="button" data-menu-go="expertNew"><span class="avatar">析</span><span class="row-copy"><strong>经营分析助手</strong><span>销售、商机、回款串联分析</span></span><em class="action-link">进入</em></button>
+            <button class="row" type="button" data-menu-go="expertNew"><span class="avatar">报</span><span class="row-copy"><strong>智能报告</strong><span>经营日报、例会材料、复盘简报</span></span><em class="action-link">进入</em></button>
+          </div>
+        </section>
+      `;
+    }
+
+    function bMenuSpaceHtml() {
+      return `
+        <section class="menu-page">
+          <div class="menu-kicker">
+            <strong>资源库</strong>
+            <span class="menu-user-chip">用户XX</span>
+          </div>
+          <div class="row-list">
+            <button class="row" type="button"><span class="file-badge">HTML</span><span class="row-copy"><strong>销售日报看板.html</strong><span>资料库 · 可下载或追问</span></span></button>
+            <button class="row" type="button"><span class="file-badge">PPT</span><span class="row-copy"><strong>重点客户跟进方案.pptx</strong><span>资料库 · 已沉淀</span></span></button>
+          </div>
+        </section>
+      `;
+    }
+
+    function bMenuNavHtml() {
+      return `
+        <nav class="bottom-nav">
+          <button class="${menuTab === 'dora' ? 'active' : ''}" type="button" data-menu-tab="dora"><span class="nav-dot"></span><span>Dora</span></button>
+          <button class="${menuTab === 'experts' ? 'active' : ''}" type="button" data-menu-tab="experts"><span class="nav-dot"></span><span>专家团</span></button>
+          <button class="${menuTab === 'space' ? 'active' : ''}" type="button" data-menu-tab="space"><span class="nav-dot"></span><span>资源库</span></button>
+        </nav>
+      `;
+    }
+
+    function doraNewHtml() {
+      const body = `
+        <section class="card greeting" style="min-height:240px;display:grid;align-content:center;text-align:center">
+          <span class="avatar" style="margin:0 auto 12px">D</span>
+          <h2>你好，我是 Dora</h2>
+          <p>你可以直接问经营问题，也可以从推荐问题开始。</p>
+        </section>
+        <section class="card row-list">
+          <button class="row" type="button" data-send="doraExisting"><span class="source-badge">问</span><span class="row-copy"><strong>帮我分析华东区销售下滑原因</strong><span>发送后同层切换为已有会话</span></span></button>
+          <button class="row" type="button" data-send="doraExisting"><span class="source-badge">报</span><span class="row-copy"><strong>生成今日经营日报</strong><span>输出后同层切换为已有会话</span></span></button>
+        </section>
+      `;
+      const isSchemeB = scheme === 'b';
+      return screenShell({
+        title: '新会话 · Dora',
+        subtitle: routeSubtitle('新会话'),
+        back: !isSchemeB,
+        menu: isSchemeB,
+        menuLeft: isSchemeB,
+        conversationActions: true,
+        more: !isSchemeB,
+        body,
+        sender: senderHtml('说出你的问题', 'doraExisting', 'send'),
+        tab: false
+      });
+    }
+
+    function doraExistingHtml() {
+      const body = `
+        <section class="row-list">
+          <div class="row"><span class="avatar">D</span><span class="row-copy"><strong>收到，我会基于销售日报、CRM 和回款清单分析。</strong><span>Dora · 29s</span></span></div>
+          <div class="card"><strong>Dora 分析中 · 29s</strong><div class="row-list" style="margin-top:12px"><div class="row"><span class="source-badge">✓</span><span class="row-copy"><strong>读取销售日报看板</strong><span>4s</span></span></div><div class="row"><span class="source-badge">✓</span><span class="row-copy"><strong>关联 CRM 商机明细</strong><span>9s</span></span></div></div></div>
+          <button class="row" type="button"><span class="file-badge">HTML</span><span class="row-copy"><strong>苏南渠道销售下滑分析.html</strong><span>会话产物 · 未存资料库</span></span></button>
+          <div class="row" style="justify-content:flex-end;background:transparent;border:none"><span style="max-width:82%;border-radius:18px;background:var(--brand);color:#fff;padding:12px 14px;font-weight:800">把苏南渠道拆到客户层级。</span></div>
+          <div class="row"><span class="avatar">D</span><span class="row-copy"><strong>苏南渠道下降主要来自 3 个 KA 客户。</strong><span>建议确认签收时间、补充商机阶段信息。</span></span></div>
+        </section>
+      `;
+      const isSchemeB = scheme === 'b';
+      return screenShell({
+        title: '华东销售经营日报分析',
+        subtitle: routeSubtitle('已有会话'),
+        back: !isSchemeB,
+        menu: isSchemeB,
+        menuLeft: isSchemeB,
+        conversationActions: true,
+        more: !isSchemeB,
+        body,
+        sender: senderHtml('继续语音追问', 'doraExisting', 'replace'),
+        tab: false
+      });
+    }
+
+    function expertListHtml() {
+      const body = `
+        <section class="card row-list">
+          <button class="row" type="button" data-push="expertNew"><span class="avatar">问</span><span class="row-copy"><strong>智能问数</strong><span>指标口径、异常区域、客户明细</span></span><em class="action-link">进入</em></button>
+          <button class="row" type="button" data-push="expertNew"><span class="avatar">析</span><span class="row-copy"><strong>经营分析助手</strong><span>销售、商机、回款串联分析</span></span><em class="action-link">进入</em></button>
+          <button class="row" type="button" data-push="expertNew"><span class="avatar">报</span><span class="row-copy"><strong>智能报告</strong><span>经营日报、例会材料、复盘简报</span></span><em class="action-link">进入</em></button>
+        </section>
+      `;
+      return screenShell({ title: '专家团', subtitle: scheme === 'c' ? '模块入口' : '一级 Tab', back: scheme === 'c', menu: scheme === 'c', body, tab: scheme !== 'c' });
+    }
+
+    function expertNewHtml() {
+      const body = `
+        <section class="card greeting" style="min-height:250px;display:grid;align-content:center;text-align:center">
+          <span class="avatar" style="margin:0 auto 12px">问</span>
+          <h2>智能问数</h2>
+          <p>我可以帮你追问指标口径、异常客户和明细数据。</p>
+        </section>
+        <section class="card row-list">
+          <button class="row" type="button" data-send="expertChat"><span class="source-badge">问</span><span class="row-copy"><strong>苏南渠道下降涉及哪些客户？</strong><span>发送后同层切换为专家会话</span></span></button>
+        </section>
+      `;
+      return screenShell({ title: '新会话 · 智能问数', subtitle: '专家会话二级页', back: true, conversationActions: true, more: true, body, sender: senderHtml('向专家提问', 'expertChat', 'send'), tab: false });
+    }
+
+    function expertChatHtml() {
+      const body = `
+        <section class="row-list">
+          <div class="row" style="justify-content:flex-end;background:transparent;border:none"><span style="max-width:82%;border-radius:18px;background:var(--brand);color:#fff;padding:12px 14px;font-weight:800">苏南渠道下降涉及哪些客户？</span></div>
+          <div class="row"><span class="avatar">问</span><span class="row-copy"><strong>主要涉及宝钢湛江钢铁、珠海格力电器、广东中南钢铁。</strong><span>共同特征是订单确认延迟。</span></span></div>
+        </section>
+      `;
+      return screenShell({ title: '智能问数', subtitle: '苏南渠道客户明细', back: true, conversationActions: true, more: true, body, sender: senderHtml('继续语音追问', 'expertChat', 'replace'), tab: false });
+    }
+
+    function spaceHtml() {
+      const body = `
+        <section class="card row-list">
+          <button class="row" type="button"><span class="file-badge">HTML</span><span class="row-copy"><strong>销售日报看板.html</strong><span>资料库 · 可下载或追问</span></span></button>
+          <button class="row" type="button"><span class="file-badge">PPT</span><span class="row-copy"><strong>重点客户跟进方案.pptx</strong><span>资料库 · 已沉淀</span></span></button>
+        </section>
+      `;
+      return screenShell({ title: '资源库', subtitle: scheme === 'c' ? '模块入口' : '一级 Tab', back: scheme === 'c', menu: scheme === 'c', body, tab: scheme !== 'c' });
+    }
+
+    function taskListHtml() {
+      const isExpert = activeAgent === 'expert';
+      const body = `
+        <section class="card row-list">
+          <button class="row" type="button"><span class="source-badge">时</span><span class="row-copy"><strong>${isExpert ? '每周一 09:00 推送指标异常客户' : '每日 20:00 生成华东经营日报'}</strong><span>运行中 · 下一次今天 20:00</span></span></button>
+          <button class="row" type="button"><span class="source-badge">醒</span><span class="row-copy"><strong>${isExpert ? '销售额波动超过 10% 时提醒' : '重点客户回款异常提醒'}</strong><span>运行中 · 异常触发</span></span></button>
+        </section>
+      `;
+      return screenShell({ title: '定时任务', subtitle: isExpert ? '智能问数专家自动任务' : 'Dora 自动任务', back: true, more: true, body, tab: false });
+    }
+
+    function routeSubtitle(label) {
+      if (scheme === 'a') return `${label} · 返回首页`;
+      if (scheme === 'b') return `${label} · 返回洞察页`;
+      return `${label} · 返回首页`;
+    }
+
+    function renderScreen() {
+      const map = {
+        home: homeHtml,
+        doraNew: doraNewHtml,
+        doraExisting: doraExistingHtml,
+        expertList: expertListHtml,
+        expertNew: expertNewHtml,
+        expertChat: expertChatHtml,
+        space: spaceHtml,
+        taskList: taskListHtml
+      };
+      byId('screen').className = `screen scheme-${scheme} screen-${screen} ${['doraNew', 'doraExisting', 'expertNew', 'expertChat', 'taskList'].includes(screen) || scheme === 'c' || (scheme === 'b' && screen === 'home') ? 'no-tab' : ''}`;
+      byId('screen').innerHTML = (map[screen] || homeHtml)();
+    }
+
+    function renderDrawer(animate = true) {
+      if (scheme === 'b') {
+        if (drawerType === 'agent') {
+          renderAgentDrawer();
+          return;
+        }
+        renderBMenuOverlay(animate);
+        return;
+      }
+      if (scheme === 'c') {
+        renderSideDrawer({ includeModules: activeAgent !== 'expert' && !screen.startsWith('expert') });
+        return;
+      }
+      renderAgentDrawer();
+    }
+
+    function renderBMenuOverlay(animate = true) {
+      const bodyMap = {
+        dora: bMenuDoraHtml,
+        experts: bMenuExpertsHtml,
+        space: bMenuSpaceHtml
+      };
+      const drawer = `
+        <div class="drawer b-menu-overlay ${animate ? 'push-in' : ''}">
+          <div class="b-menu-body">${(bodyMap[menuTab] || bMenuDoraHtml)()}</div>
+          ${bMenuNavHtml()}
+        </div>
+      `;
+      byId('drawerMask').innerHTML = drawer;
+      byId('drawerMask').classList.add('open', 'menu-open');
+    }
+
+    function renderSideDrawer({ includeModules = true } = {}) {
+      renderAgentDrawer({ includeModules });
+    }
+
+    function renderAgentDrawer({ includeModules = false } = {}) {
+      const isExpert = activeAgent === 'expert' || screen.startsWith('expert');
+      const agentName = isExpert ? '智能问数专家' : 'Dora超级智能体';
+      const newTarget = isExpert ? 'expertNew' : 'doraNew';
+      const historyTarget = isExpert ? 'expertChat' : 'doraExisting';
+      const histories = isExpert
+        ? ['苏南渠道下降涉及哪些客户？', '按客户贡献拆解销售变化', '异常区域的明细口径']
+        : ['广东省潜量最高的10个客户', '江苏省销售额', '去年门店销售额最高的商品是哪个…'];
+      const drawer = `
+        <div class="drawer side-drawer">
+          <div class="side-profile">
+            <span class="profile-dot"></span>
+            <strong>用户XX</strong>
+          </div>
+          ${includeModules ? `
+            <div class="module-shortcuts">
+              <button class="module-shortcut" type="button" data-push="expertList" data-reopen-drawer="home"><span class="avatar">专</span><span>专家团</span></button>
+              <button class="module-shortcut" type="button" data-push="space" data-reopen-drawer="home"><span class="file-badge">库</span><span>资源库</span></button>
+            </div>
+          ` : ''}
+          <h3 class="side-title">${agentName}</h3>
+          <div class="side-action-list">
+            <button class="side-action" type="button" data-push="taskList"><span>定时任务</span></button>
+            <button class="side-action" type="button" data-replace="${newTarget}"><span>新会话</span></button>
+          </div>
+          <div class="side-search">⌕ <span>搜索</span></div>
+          <div class="side-group-title">会话记录</div>
+          <div class="history-list">
+            <div class="history-label">今天</div>
+            <button class="history-item" type="button" data-replace="${historyTarget}">${histories[0]}</button>
+            <button class="history-item" type="button" data-replace="${historyTarget}">${histories[1]}</button>
+            <button class="history-item" type="button" data-replace="${historyTarget}">${histories[2]}</button>
+            <div class="history-label">7天内</div>
+            <button class="history-item" type="button" data-replace="${historyTarget}">${histories[1]}</button>
+            <button class="history-item" type="button" data-replace="${historyTarget}">${histories[2]}</button>
+            <div class="history-label">30天内</div>
+            <button class="history-item" type="button" data-replace="${historyTarget}">${histories[2]}</button>
+          </div>
+        </div>
+      `;
+      byId('drawerMask').innerHTML = drawer;
+      byId('drawerMask').classList.add('open');
+    }
+
+    function renderNotes() {
+      const notes = [];
+      if (['doraNew', 'doraExisting'].includes(screen)) notes.push('二级页：Dora 会话容器');
+      if (['expertNew', 'expertChat'].includes(screen)) notes.push('二级页：专家会话容器');
+      if (screen === 'taskList') notes.push('实线下钻：定时任务页');
+      if (drawerOpen && scheme === 'b') notes.push('菜单覆盖层：内部切换 Tab，不进入返回栈');
+      if (['home', 'expertList', 'space'].includes(screen) && scheme !== 'c') notes.push(scheme === 'b' && screen === 'home' ? '首页：无底部 Tab' : '一级页：保留底部 Tab');
+      if (scheme === 'c') notes.push('侧边菜单：覆盖层不入栈');
+      byId('routeNote').innerHTML = notes.map((note) => `<span>${note}</span>`).join('');
+      byId('stackText').textContent = `返回栈：${stack.join(' → ')}`;
+    }
+
+    function render() {
+      renderControls();
+      renderScreen();
+      renderNotes();
+      if (drawerOpen) renderDrawer();
+      else hideDrawer();
+    }
+
+    document.addEventListener('click', (event) => {
+      const target = event.target.closest('button');
+      if (!target) return;
+      if (target.dataset.scheme) {
+        setScheme(target.dataset.scheme);
+        return;
+      }
+      if (target.dataset.replace) {
+        replace(target.dataset.replace);
+        return;
+      }
+      if (target.dataset.send) {
+        sendConversation(target.dataset.send);
+        return;
+      }
+      if (target.dataset.menuTab) {
+        menuTab = target.dataset.menuTab;
+        renderDrawer(false);
+        return;
+      }
+      if (target.dataset.menuGo) {
+        openFromMenu(target.dataset.menuGo);
+        return;
+      }
+      if (target.dataset.push) {
+        push(target.dataset.push, { reopenDrawerOnHome: target.dataset.reopenDrawer === 'home' });
+        return;
+      }
+      if (target.dataset.action === 'back') {
+        goBack();
+        return;
+      }
+      if (target.dataset.action === 'drawer') {
+        openDrawer();
+        return;
+      }
+      if (target.dataset.action === 'more') {
+        openMoreMenu();
+        return;
+      }
+      if (target.dataset.action === 'dashboard') {
+        openDashboard();
+        return;
+      }
+      if (target.dataset.action === 'conversationFiles') {
+        showToast('已打开：会话文件');
+        return;
+      }
+      if (target.dataset.action === 'share') {
+        showToast('已打开：分享');
+        return;
+      }
+      if (target.dataset.action === 'toggleNotes') {
+        notesCollapsed = !notesCollapsed;
+        renderControls();
+      }
+    });
+
+    byId('phone').addEventListener('touchstart', (event) => {
+      const touch = event.touches[0];
+      swipeStartX = touch.clientX;
+      swipeStartY = touch.clientY;
+      swipeStartTime = Date.now();
+    }, { passive: true });
+
+    byId('phone').addEventListener('touchend', (event) => {
+      const touch = event.changedTouches[0];
+      const deltaX = touch.clientX - swipeStartX;
+      const deltaY = touch.clientY - swipeStartY;
+      const elapsed = Date.now() - swipeStartTime;
+      const fromLeftEdge = swipeStartX < 48;
+      const isRightSwipe = deltaX > 76 && Math.abs(deltaY) < 58 && elapsed < 650;
+      if (fromLeftEdge && isRightSwipe) goBack();
+    }, { passive: true });
+
+    render();
+  </script>
+</body>
+</html>
