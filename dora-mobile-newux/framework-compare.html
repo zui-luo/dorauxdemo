@@ -247,6 +247,20 @@
       height: 36px;
       border-radius: 10px;
     }
+    .profile-avatar-btn {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #DDE7FF, #F0E9FF);
+      color: var(--brand);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 13px;
+      font-weight: 900;
+    }
     .text-btn {
       height: 34px;
       border-radius: 999px;
@@ -390,7 +404,7 @@
       position: absolute;
       left: 12px;
       right: 12px;
-      bottom: calc(74px + var(--safe-bottom));
+      bottom: calc(86px + var(--safe-bottom));
       z-index: 8;
       display: flex;
       align-items: center;
@@ -400,7 +414,7 @@
       border-radius: 24px;
       background: rgba(255, 255, 255, 0.96);
       padding: 8px;
-      box-shadow: 0 12px 30px rgba(9, 30, 64, 0.12);
+      box-shadow: none;
       backdrop-filter: blur(18px);
     }
     .no-tab .sender { bottom: calc(12px + var(--safe-bottom)); }
@@ -477,6 +491,7 @@
     }
     .drawer-mask.open { display: block; }
     .drawer-mask.menu-open { background: transparent; }
+    .drawer-mask.pop-open { background: transparent; }
     .toast {
       position: absolute;
       left: 50%;
@@ -508,6 +523,14 @@
       min-width: 300px;
       height: 100%;
       padding: 22px 14px 18px;
+    }
+    .drawer.side-drawer.right-drawer {
+      margin-left: auto;
+      animation: rightDrawerIn 0.24s cubic-bezier(0.2, 0.86, 0.22, 1) both;
+    }
+    @keyframes rightDrawerIn {
+      from { transform: translateX(100%); }
+      to { transform: translateX(0); }
     }
     .drawer.b-menu-overlay {
       position: absolute;
@@ -552,6 +575,39 @@
       border-radius: 24px;
       padding: 14px;
     }
+    .drawer.user-menu {
+      position: absolute;
+      top: 70px;
+      left: 14px;
+      width: 176px;
+      border: 1px solid var(--ink-4);
+      border-radius: 16px;
+      padding: 8px;
+      gap: 2px;
+      box-shadow: 0 12px 32px rgba(9, 30, 64, 0.16);
+    }
+    .user-menu-title {
+      padding: 7px 10px 6px;
+      color: var(--ink-8);
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .user-menu-item {
+      width: 100%;
+      min-height: 42px;
+      border: none;
+      border-radius: 11px;
+      background: transparent;
+      color: var(--ink-11);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      text-align: left;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .user-menu-item:active { background: var(--ink-3); }
     .drawer h3 { margin: 0; font-size: 18px; }
     .side-profile {
       display: flex;
@@ -628,6 +684,12 @@
       padding: 0 13px;
       font-size: 14px;
       font-weight: 700;
+    }
+    .search-icon {
+      width: 16px;
+      height: 16px;
+      flex: 0 0 auto;
+      stroke: currentColor;
     }
     .side-group-title {
       margin: 12px 0 2px;
@@ -878,6 +940,16 @@
           ['返回心智', '所有会话返回首页，菜单只是覆盖层'],
           ['适合验证', '企业微信 H5 能否采用更轻框架']
         ]
+      },
+      d: {
+        title: 'D 头像设置 + 右侧更多',
+        desc: '保留 A 的底部 Tab，但把账号设置和智能体菜单分离。',
+        rules: [
+          ['一级结构', '首页 / 专家团 / 资源库保留底部 Tab'],
+          ['账号入口', '每个一级 Tab 左上头像承载语言和退出'],
+          ['智能体菜单', 'Dora 和专家会话右上更多，从右侧滑出'],
+          ['适合验证', '更接近企业微信 H5 内嵌的账号与智能体分工']
+        ]
       }
     };
     let scheme = 'a';
@@ -1010,7 +1082,13 @@
     }
 
     function openMoreMenu() {
-      drawerType = scheme === 'b' && screen.startsWith('expert') ? 'agent' : 'menu';
+      drawerType = (scheme === 'b' && screen.startsWith('expert')) || scheme === 'd' ? 'agent' : 'menu';
+      drawerOpen = true;
+      renderDrawer();
+    }
+
+    function openUserMenu() {
+      drawerType = 'user';
       drawerOpen = true;
       renderDrawer();
     }
@@ -1022,7 +1100,7 @@
     }
 
     function hideDrawer() {
-      byId('drawerMask').classList.remove('open', 'menu-open');
+      byId('drawerMask').classList.remove('open', 'menu-open', 'pop-open');
     }
 
     function showToast(text) {
@@ -1044,7 +1122,7 @@
       byId('toggleNotesBtn').textContent = notesCollapsed ? '展开说明' : '收起说明';
     }
 
-    function screenShell({ title, subtitle = '', back = false, more = false, menu = false, menuLeft = false, newChat = false, conversationActions = false, body = '', sender = '', tab = true, head = true }) {
+    function screenShell({ title, subtitle = '', back = false, more = false, menu = false, menuLeft = false, profile = false, newChat = false, conversationActions = false, body = '', sender = '', tab = true, head = true }) {
       const noTab = !tab || scheme === 'c' || (scheme === 'b' && screen === 'home');
       const leadingMenu = menuLeft || (menu && ['b', 'c'].includes(scheme) && screen === 'home');
       return `
@@ -1052,6 +1130,7 @@
           <div class="screen-head">
             ${back ? `<button class="icon-btn" type="button" data-action="back" aria-label="返回">‹</button>` : ''}
             ${leadingMenu ? `<button class="icon-btn" type="button" data-action="drawer" aria-label="菜单">☰</button>` : ''}
+            ${profile ? `<button class="profile-avatar-btn" type="button" data-action="userMenu" aria-label="账号菜单">王</button>` : ''}
             <div class="screen-title"><strong>${title}</strong>${subtitle ? `<span>${subtitle}</span>` : ''}</div>
             ${newChat ? `<button class="text-btn" type="button" data-push="doraNew">新会话</button>` : ''}
             ${conversationActions ? `<button class="header-action" type="button" data-action="conversationFiles" aria-label="会话文件">会话文件</button><button class="header-action" type="button" data-action="share" aria-label="分享">分享</button>` : ''}
@@ -1087,6 +1166,10 @@
       `;
     }
 
+    function searchIconHtml() {
+      return '<svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>';
+    }
+
     function homeHtml() {
       const body = `
         <section class="card greeting"><h2>王总，上午好</h2><p>Dora 已整理华东区昨日经营日报，发现 1 个需要跟进的异常。</p></section>
@@ -1102,8 +1185,10 @@
       `;
       return screenShell({
         title: 'Dora平台',
-        subtitle: scheme === 'b' ? '首页 · 菜单覆盖层' : scheme === 'c' ? '侧边菜单承载入口' : '首页 · 平台 tab',
+        subtitle: scheme === 'b' ? '首页 · 菜单覆盖层' : scheme === 'c' ? '侧边菜单承载入口' : scheme === 'd' ? '首页 · 右侧更多' : '首页 · 平台 tab',
+        profile: scheme === 'd',
         menu: ['a', 'b', 'c'].includes(scheme),
+        more: scheme === 'd',
         newChat: true,
         body,
         sender: senderHtml('说出你的问题', 'doraExisting', 'send'),
@@ -1123,7 +1208,7 @@
             <button class="side-action" type="button" data-menu-go="taskList"><span>定时任务</span></button>
             <button class="side-action" type="button" data-menu-go="doraNew"><span>新会话</span></button>
           </div>
-          <div class="side-search">⌕ <span>搜索</span></div>
+          <div class="side-search">${searchIconHtml()} <span>搜索</span></div>
           <div class="side-group-title">会话记录</div>
           <div class="history-list">
             <div class="history-label">今天</div>
@@ -1194,14 +1279,16 @@
         </section>
       `;
       const isSchemeB = scheme === 'b';
+      const isSchemeA = scheme === 'a';
+      const isSchemeD = scheme === 'd';
       return screenShell({
         title: '新会话 · Dora',
         subtitle: routeSubtitle('新会话'),
         back: !isSchemeB,
-        menu: isSchemeB,
+        menu: isSchemeA || isSchemeB,
         menuLeft: isSchemeB,
         conversationActions: true,
-        more: !isSchemeB,
+        more: (!isSchemeA && !isSchemeB) || isSchemeD,
         body,
         sender: senderHtml('说出你的问题', 'doraExisting', 'send'),
         tab: false
@@ -1219,14 +1306,16 @@
         </section>
       `;
       const isSchemeB = scheme === 'b';
+      const isSchemeA = scheme === 'a';
+      const isSchemeD = scheme === 'd';
       return screenShell({
         title: '华东销售经营日报分析',
         subtitle: routeSubtitle('已有会话'),
         back: !isSchemeB,
-        menu: isSchemeB,
+        menu: isSchemeA || isSchemeB,
         menuLeft: isSchemeB,
         conversationActions: true,
-        more: !isSchemeB,
+        more: (!isSchemeA && !isSchemeB) || isSchemeD,
         body,
         sender: senderHtml('继续语音追问', 'doraExisting', 'replace'),
         tab: false
@@ -1241,7 +1330,7 @@
           <button class="row" type="button" data-push="expertNew"><span class="avatar">报</span><span class="row-copy"><strong>智能报告</strong><span>经营日报、例会材料、复盘简报</span></span><em class="action-link">进入</em></button>
         </section>
       `;
-      return screenShell({ title: '专家团', subtitle: scheme === 'c' ? '模块入口' : '一级 Tab', back: scheme === 'c', menu: scheme === 'c', body, tab: scheme !== 'c' });
+      return screenShell({ title: '专家团', subtitle: scheme === 'c' ? '模块入口' : '一级 Tab', back: scheme === 'c', profile: scheme === 'd', menu: scheme === 'c', body, tab: scheme !== 'c' });
     }
 
     function expertNewHtml() {
@@ -1255,7 +1344,7 @@
           <button class="row" type="button" data-send="expertChat"><span class="source-badge">问</span><span class="row-copy"><strong>苏南渠道下降涉及哪些客户？</strong><span>发送后同层切换为专家会话</span></span></button>
         </section>
       `;
-      return screenShell({ title: '新会话 · 智能问数', subtitle: '专家会话二级页', back: true, conversationActions: true, more: true, body, sender: senderHtml('向专家提问', 'expertChat', 'send'), tab: false });
+      return screenShell({ title: '新会话 · 智能问数', subtitle: '专家会话二级页', back: true, menu: scheme === 'a', conversationActions: true, more: scheme !== 'a', body, sender: senderHtml('向专家提问', 'expertChat', 'send'), tab: false });
     }
 
     function expertChatHtml() {
@@ -1265,7 +1354,7 @@
           <div class="row"><span class="avatar">问</span><span class="row-copy"><strong>主要涉及宝钢湛江钢铁、珠海格力电器、广东中南钢铁。</strong><span>共同特征是订单确认延迟。</span></span></div>
         </section>
       `;
-      return screenShell({ title: '智能问数', subtitle: '苏南渠道客户明细', back: true, conversationActions: true, more: true, body, sender: senderHtml('继续语音追问', 'expertChat', 'replace'), tab: false });
+      return screenShell({ title: '智能问数', subtitle: '苏南渠道客户明细', back: true, menu: scheme === 'a', conversationActions: true, more: scheme !== 'a', body, sender: senderHtml('继续语音追问', 'expertChat', 'replace'), tab: false });
     }
 
     function spaceHtml() {
@@ -1275,7 +1364,7 @@
           <button class="row" type="button"><span class="file-badge">PPT</span><span class="row-copy"><strong>重点客户跟进方案.pptx</strong><span>资料库 · 已沉淀</span></span></button>
         </section>
       `;
-      return screenShell({ title: '资源库', subtitle: scheme === 'c' ? '模块入口' : '一级 Tab', back: scheme === 'c', menu: scheme === 'c', body, tab: scheme !== 'c' });
+      return screenShell({ title: '资源库', subtitle: scheme === 'c' ? '模块入口' : '一级 Tab', back: scheme === 'c', profile: scheme === 'd', menu: scheme === 'c', body, tab: scheme !== 'c' });
     }
 
     function taskListHtml() {
@@ -1286,7 +1375,7 @@
           <button class="row" type="button"><span class="source-badge">醒</span><span class="row-copy"><strong>${isExpert ? '销售额波动超过 10% 时提醒' : '重点客户回款异常提醒'}</strong><span>运行中 · 异常触发</span></span></button>
         </section>
       `;
-      return screenShell({ title: '定时任务', subtitle: isExpert ? '智能问数专家自动任务' : 'Dora 自动任务', back: true, more: true, body, tab: false });
+      return screenShell({ title: '定时任务', subtitle: isExpert ? '智能问数自动任务' : 'Dora 自动任务', back: true, body, tab: false });
     }
 
     function routeSubtitle(label) {
@@ -1319,6 +1408,14 @@
         renderBMenuOverlay(animate);
         return;
       }
+      if (drawerType === 'user') {
+        renderUserMenu();
+        return;
+      }
+      if (scheme === 'd') {
+        renderAgentDrawer({ hideProfile: true, right: true });
+        return;
+      }
       if (scheme === 'c') {
         renderSideDrawer({ includeModules: activeAgent !== 'expert' && !screen.startsWith('expert') });
         return;
@@ -1346,20 +1443,32 @@
       renderAgentDrawer({ includeModules });
     }
 
-    function renderAgentDrawer({ includeModules = false } = {}) {
+    function renderUserMenu() {
+      const drawer = `
+        <div class="drawer user-menu">
+          <div class="user-menu-title">账号设置</div>
+          <button class="user-menu-item" type="button" data-action="language"><span>切换语言</span><span>中文</span></button>
+          <button class="user-menu-item" type="button" data-action="logout"><span>退出登录</span></button>
+        </div>
+      `;
+      byId('drawerMask').innerHTML = drawer;
+      byId('drawerMask').classList.add('open', 'pop-open');
+    }
+
+    function renderAgentDrawer({ includeModules = false, hideProfile = false, right = false } = {}) {
       const isExpert = activeAgent === 'expert' || screen.startsWith('expert');
-      const agentName = isExpert ? '智能问数专家' : 'Dora超级智能体';
+      const agentName = isExpert ? '智能问数' : 'Dora超级智能体';
       const newTarget = isExpert ? 'expertNew' : 'doraNew';
       const historyTarget = isExpert ? 'expertChat' : 'doraExisting';
       const histories = isExpert
         ? ['苏南渠道下降涉及哪些客户？', '按客户贡献拆解销售变化', '异常区域的明细口径']
         : ['广东省潜量最高的10个客户', '江苏省销售额', '去年门店销售额最高的商品是哪个…'];
       const drawer = `
-        <div class="drawer side-drawer">
-          <div class="side-profile">
+        <div class="drawer side-drawer ${right ? 'right-drawer' : ''}">
+          ${hideProfile ? '' : `<div class="side-profile">
             <span class="profile-dot"></span>
             <strong>用户XX</strong>
-          </div>
+          </div>`}
           ${includeModules ? `
             <div class="module-shortcuts">
               <button class="module-shortcut" type="button" data-push="expertList" data-reopen-drawer="home"><span class="avatar">专</span><span>专家团</span></button>
@@ -1371,7 +1480,7 @@
             <button class="side-action" type="button" data-push="taskList"><span>定时任务</span></button>
             <button class="side-action" type="button" data-replace="${newTarget}"><span>新会话</span></button>
           </div>
-          <div class="side-search">⌕ <span>搜索</span></div>
+          <div class="side-search">${searchIconHtml()} <span>搜索</span></div>
           <div class="side-group-title">会话记录</div>
           <div class="history-list">
             <div class="history-label">今天</div>
@@ -1450,8 +1559,22 @@
         openMoreMenu();
         return;
       }
+      if (target.dataset.action === 'userMenu') {
+        openUserMenu();
+        return;
+      }
       if (target.dataset.action === 'dashboard') {
         openDashboard();
+        return;
+      }
+      if (target.dataset.action === 'language') {
+        closeDrawer();
+        showToast('已切换语言');
+        return;
+      }
+      if (target.dataset.action === 'logout') {
+        closeDrawer();
+        showToast('已退出登录');
         return;
       }
       if (target.dataset.action === 'conversationFiles') {
